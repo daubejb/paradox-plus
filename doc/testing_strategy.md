@@ -35,7 +35,7 @@ This document establishes the official multi-layered testing protocol and verifi
 ### A. Unit Testing (Local Verification)
 Unit tests must verify logic in isolation and be runnable with a standard `cargo test`.
 1. **Deterministic Physics & Slide Clamping:**
-   *   Test targets: `server/src/physics/slide.rs`
+   *   Test targets: `protocol/src/physics.rs`
    *   Test cases: Verify that a sequence of slide triggers exceeding 16 moves is clamped to Space 1 and records a $+2$ Stroke penalty.
    *   Verify that pushbacks going below Space 1 are clamped to Space 1 and toggle player direction to `'forward'`.
 2. **Scorecard Mutation Operations:**
@@ -70,7 +70,7 @@ UI validation must occur natively inside Bevy ECS without web browsers.
 
 ## 📈 3. Roadmap Integration Tasks
 To track development progress, we list these validation steps in `04_ROADMAP.md`:
-*   `[ ]` Implement local unit tests for `SlideTracker` cycle resolutions in `server/src/physics/slide.rs`.
+*   `[ ]` Implement local unit tests for `SlideTracker` cycle resolutions in `protocol/src/physics.rs`.
 *   `[ ]` Implement AI solver policy regression test suite in `server/src/ai/mdp_solver/`.
 *   `[ ]` Build mock host migration integration runner in `server/tests/`.
 *   `[ ]` Create headless Bevy UI component verification tests in `client/tests/`.

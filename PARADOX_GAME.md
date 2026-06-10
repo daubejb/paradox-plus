@@ -187,8 +187,9 @@ To prevent infinite sliding loops (e.g. bouncing back and forth between slide tr
 
 
 ```rust
-// Struct specification for server/src/physics/slide.rs
+// Struct specification for protocol/src/physics.rs
 pub const MAX_SLIDES: usize = 16;
+
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct SlideTracker {
@@ -392,12 +393,13 @@ To ensure absolute compliance with the **300-Line Limit** for Rust source files,
 ### 1. `protocol` (Shared Crate)
 *   `src/lib.rs` (Crate boundary re-exports and shared enums)
 *   `src/migration.rs` (Host migration Postcard serialization structs and validation types)
+*   `src/physics.rs` (Stack-allocated `SlideTracker` cycle detection and clamping)
 
 ### 2. `server` (Authoritative Game Server)
 *   `src/main.rs` (Socket bootstrapper and core loop orchestrator)
-*   `src/physics/slide.rs` (Stack-allocated `SlideTracker` cycle detection and clamping)
 *   `src/physics/validation.rs` (InputValidator and physics boundary checks)
 *   `src/ai/mdp_state.rs` (1D cell discretization and state vectors)
+
 *   `src/ai/mdp_solver/mod.rs` (AI computation scheduler and async pool manager)
 *   `src/ai/mdp_solver/transitions.rs` (Stochastic transition matrix modeling)
 *   `src/ai/mdp_solver/iteration.rs` (Pure mathematical Bellman update sweeps)
