@@ -37,15 +37,35 @@ The game coordinator operates in one of two modes:
 
 ### 🔄 Hole Play Turn Structure
 Unlike traditional golf (where players alternate shots or the furthest from the pin plays first), **one player plays the entire hole from Tee Box to Green completion before the next player takes their turn.** 
+
+#### Asymmetric Information Offset (AIO)
+To mitigate the informational advantage of players who execute their turns later in the sequence, the following balancing mechanics are enforced:
+1. **Execution Order Standings Rotation:** The execution order for the hole is strictly determined by the current standings. The player with the *highest* cumulative match score (the losing player) executes last ($P_{N-1}$), giving them the maximum information advantage. The leading player must execute first ($P_0$).
+2. **First-Mover Score Offset:** The first executing player ($P_0$) receives a **$-0.5$ stroke deduction** applied to their hole score.
+3. **Card Wager Compensation:** $P_0$ is awarded **1 free Guardian Shield card** at the start of the hole's Marker Placement phase.
+
 * In a multiplayer match on a given hole, Player 0 takes consecutive shots until they land on the Green and resolve putting.
 * Once Player 0 completes the hole, Player 1 starts at the Tee Box and plays the entire hole.
 * This continues sequentially for all players.
+
+### 🖥️ Bevy UI Layout Constraints (No DOM)
+All UI overlays (such as turn notifications, standings, AIO statistics, and wager card drafting menus) must be implemented strictly inside Bevy's ECS using `bevy_ui` nodes (e.g. `Node`, `Text` components or version-specific layout engines) and standard resource states. 
+* Absolutely no HTML/CSS, DOM webviews, or JavaScript wrappers are permitted.
+* Styling properties must be defined natively in `client/src/ui/layout/` sub-modules.
+
 
 ---
 
 ## ⛳ 3. Standard Gameplay Mechanics & Terrain Strategies
 
 The course is represented as a 1-based index linear track of **Space** coordinates. Position `0` is reserved for the **Tee Box** (which behaves like a Fairway).
+
+### 📖 Scorecard Vocabulary Standards
+To eliminate ambiguity in score mutation operations, the game engine enforces three distinct scorecard metrics:
+1. **Shot Stroke ($S_{shot}$):** The fundamental cost of taking a turn (initiating a dice roll). Every action that triggers a state transition out of `AwaitingTurnState` adds exactly **$+1$ Shot Stroke** to the scorecard.
+2. **Penalty Stroke ($S_{penalty}$):** The additional cost applied to a player's scorecard by the terrain or card properties of the space they land on.
+3. **Total Turn Strokes ($S_{total}$):** The mathematical sum added to the scorecard for the turn:
+   $$S_{total} = S_{shot} + S_{penalty}$$
 
 ### 🎲 Dice Selection & Constraints
 At the start of their turn, players select the range of their potential movement:
@@ -54,7 +74,7 @@ At the start of their turn, players select the range of their potential movement
 * **Shield Override:** If the active player stands on their own active **Guardian Shield** token, the rough restriction is bypassed, allowing **1 or 2 dice**.
 
 ### 🧱 Terrain Strategy Design Pattern
-Terrain-specific logic is isolated using a Strategy pattern that resolves two actions: **Movement From** (escape checks) and **Landing On** (resolving penalties/states).
+Terrain-specific logic is isolated using a Strategy pattern that resolves two actions: **Movement From** (escape checks) and **Landing On** (resolving penalties and position updates).
 
 ```
 TerrainResolutionStrategy
@@ -69,31 +89,32 @@ TerrainResolutionStrategy
 #### Detailed Terrain Resolutions
 
 * **Fairway (`F`):**
-  * *Landing:* Adds **+1 Stroke** to the scorecard. Ball remains on tile.
+  * *Landing:* $S_{shot} = 1$, $S_{penalty} = 0 \implies S_{total} = 1$. The ball remains on the target tile.
 * **Rough (`R`):**
-  * *Classification:* Considered a **Hazard** (which permits Guardian Shield placement).
-  * *Movement From:* Enforces **1-die-only** constraint (unless overridden by player's own Guardian Shield).
-  * *Landing:* Adds **+1 Stroke** to the scorecard. Ball remains on tile.
+  * *Classification:* Considered a **Hazard** (permits Guardian Shield placement).
+  * *Movement From:* Enforces **1-die-only** constraint (unless overridden by own Guardian Shield).
+  * *Landing:* $S_{shot} = 1$, $S_{penalty} = 0 \implies S_{total} = 1$. The ball remains on the target tile.
 * **Sand Bunker (`S`):**
   * *Classification:* Hazard.
-  * *Movement From (Escape Check):* Player rolls their chosen dice. 
-    * If the roll sum is **even**, the player escapes (resolve movement normally).
-    * If the roll sum is **odd**, the escape **fails**: the player's position is unchanged, and they suffer a **+1 Stroke** total penalty for the turn (i.e. the shot itself counts as 1 stroke, with no additional penalty).
-  * *Landing:* Adds **+1 Stroke** to the scorecard. Ball remains on tile.
+  * *Movement From (Escape Check):* Player rolls chosen dice.
+    * If the roll sum is **even**, the player escapes: $S_{shot} = 1$, $S_{penalty} = 0 \implies S_{total} = 1$. Position updates to roll destination.
+    * If the roll sum is **odd**, the escape **fails**: $S_{shot} = 1$, $S_{penalty} = 0 \implies S_{total} = 1$. Position remains on the bunker tile (no movement occurs).
+  * *Landing:* $S_{shot} = 1$, $S_{penalty} = 0 \implies S_{total} = 1$. The ball remains on the bunker tile.
 * **Water Hazard (`W`):**
   * *Classification:* Hazard.
-  * *Landing:* Adds a **+1 penalty stroke** on top of the shot stroke (total **+2 Strokes** added for the turn). The ball remains on the water tile.
-  * *Movement From:* No escape check is required. The player takes their next shot from the water tile choosing 1 or 2 dice, and moves normally.
+  * *Landing:* $S_{shot} = 1$, $S_{penalty} = 1 \implies S_{total} = 2$. The ball remains on the water tile.
+  * *Movement From:* No escape check is required. The player takes their next shot from the water tile, $S_{shot} = 1$, $S_{penalty} = 0 \implies S_{total} = 1$, moving normally.
 * **Lost Ball / Out-of-Bounds (`OB`):**
   * *Classification:* Hazard.
-  * *Landing:* Adds a **+1 penalty stroke** on top of the shot stroke (total **+2 Strokes** added for the turn). The ball is reset back to the position from which the shot was taken.
+  * *Landing:* $S_{shot} = 1$, $S_{penalty} = 1 \implies S_{total} = 2$. The ball is reset back to the origin position from which the shot was taken.
 * **Green Zone (`g0` - `g3`):**
-  * *Landing:* Completes the hole. Adds **+1 Stroke** for the shot, followed by an automatic putting transition.
-  * *Putting Transition:* Resolved fully deterministically and automatically. Additional putt strokes are added to the scorecard based on the green category, immediately ending play on the hole:
-    * ⛳ **Cup (Green 0):** `+0 Putts`
-    * **Green 1:** `+1 Putt stroke`
-    * **Green 2:** `+2 Putt strokes`
-    * **Green 3:** `+3 Putt strokes`
+  * *Landing:* Completes the hole. Adds **+1 Shot Stroke** ($S_{shot} = 1$) for the approach, followed by an automatic putting transition.
+  * *Putting Transition:* Resolved fully deterministically and automatically. Additional putt strokes are added as penalty strokes ($S_{penalty} = \text{putts}$), immediately ending play on the hole:
+    * ⛳ **Cup (Green 0):** `+0 Putts` ($S_{penalty} = 0 \implies S_{total} = 1$)
+    * **Green 1:** `+1 Putt stroke` ($S_{penalty} = 1 \implies S_{total} = 2$)
+    * **Green 2:** `+2 Putt strokes` ($S_{penalty} = 2 \implies S_{total} = 3$)
+    * **Green 3:** `+3 Putt strokes` ($S_{penalty} = 3 \implies S_{total} = 4$)
+
 
 ---
 
@@ -149,8 +170,60 @@ Landing on placed tokens executes a strategy dependent on the owner of the token
     * "Pushed back" means opposite of their current movement direction (`'forward'` -> index-down, `'reverse'` -> index-up).
     * If the target space is occupied by another card or is OB (`lostBall`), they **slide forward** (in the direction of the player's current movement state) tile-by-tile until landing on a valid space.
     * A **valid space** to end the slide is any space that is NOT OB (lostBall) and NOT occupied by another wager card.
+    * If the target index is less than 0, it is strictly clamped to `0` (the Tee Box), which is always a valid landing pad.
     * If the final space they land on after the slide is a **Hazard** (Sand, Water, Rough) or a **Green**, they immediately trigger the corresponding state resolution (such as bunker escape checks, water hazard stroke penalties, or putting transitions).
-  * Owner draws 2 Banana Slip cards.
+    * Owner draws 2 Banana Slip cards.
+
+##### 🔄 Stack-Allocated Slide Cycle Detection
+To prevent infinite sliding loops (e.g. bouncing back and forth between slide triggers) and avoid dynamic heap allocations during the physics loop, the engine enforces a stack-allocated **SlideTracker**:
+* The tracker stores up to `16` visited cells in a fixed-size array.
+* If a cell index is visited twice within the same slide resolution, a cycle is detected.
+* Upon cycle detection or exceeding the `16` slide limit, the slide loop is aborted, the ball is immediately reset to the Tee Box origin (Space `0`), and the player suffers a **+2 Stroke penalty** ($S_{penalty} = 2$).
+* **Client-Side Prediction:** To eliminate visual interpolation jitter, the client and server execute the identical deterministic `SlideTracker` rules. The client will predict slide resolutions locally, but overrides its local state if the server issues a corrective state snapshot.
+
+```rust
+// Struct specification for server/src/physics/slide.rs
+pub const MAX_SLIDES: usize = 16;
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct SlideTracker {
+    pub visited_cells: [Option<usize>; MAX_SLIDES],
+    pub slide_count: usize,
+}
+
+impl SlideTracker {
+    pub fn new() -> Self {
+        Self {
+            visited_cells: [None; MAX_SLIDES],
+            slide_count: 0,
+        }
+    }
+
+    /// Records a cell visit. Returns Err if a cycle is detected or limits are exceeded.
+    pub fn record_and_check_cycle(&mut self, cell_index: usize) -> Result<(), SlideError> {
+        if self.slide_count >= MAX_SLIDES {
+            return Err(SlideError::LimitExceeded);
+        }
+        for i in 0..self.slide_count {
+            if let Some(visited) = self.visited_cells[i] {
+                if visited == cell_index {
+                    return Err(SlideError::CycleDetected);
+                }
+            }
+        }
+        self.visited_cells[self.slide_count] = Some(cell_index);
+        self.slide_count += 1;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SlideError {
+    CycleDetected,
+    LimitExceeded,
+}
+```
+
 
 #### 3. 🎲 Golden Die
 * **Prophecy (Owner Lands):** *Golden Prophecy*
@@ -172,21 +245,56 @@ Landing on placed tokens executes a strategy dependent on the owner of the token
 
 The bot decision-making is modeled as a **Markov Decision Process (MDP)** solved via **Value Iteration**.
 
-### MDP Value Iteration Algorithm
-At the start of each hole, the engine computes the expected strokes to finish the hole for all states $s = (\text{position}, \text{direction})$:
+### Discretized State Space & Markov Property
+To satisfy the Markov Property under Out-of-Bounds (OB) reset rules, the state space must track the starting position of the current shot (the origin). To prevent state-space explosion, the board is discretized into 1D cell indices. The state space $\mathcal{S}$ is represented as:
+$$s = (x_{cell}, d, x_{origin\_cell})$$
+Where:
+* $x_{cell} \in \mathbb{N}$ is the current discretized cell index.
+* $d \in \{\text{Forward}, \text{Reverse}\}$ is the current movement direction.
+* $x_{origin\_cell} \in \mathbb{N}$ is the cell index from which the current shot was taken.
 
-1. **Terminal States:** For any green zone space, $V(s) = \text{puttScore}(s)$.
+### Wager-Aware Reward Function
+The AI is wager-aware. The reward function $R(s, a, s')$ accounts for both standard terrain strokes and the expected stroke utilities of landing on wager tokens:
+$$R(s, a, s') = S_{shot} + S_{penalty} + \sum_{T \in \mathcal{T}(s')} \mathbb{E}[U(T, \text{player\_id})]$$
+Where:
+* $S_{shot} = 1$ is the shot stroke cost.
+* $S_{penalty}$ is the terrain-specific penalty stroke cost (+1 for Water, +1 for OB, etc.).
+* $\mathcal{T}(s')$ is the set of active wager tokens on the target space $s'$.
+* $U(T, \text{player\_id})$ is the stroke utility of token $T$ for the active player:
+  * Own Golden Die: $-2$ strokes.
+  * Opponent's Golden Die: $+2$ strokes.
+  * Opponent's Guardian Shield: $+1$ stroke.
+
+### MDP Value Iteration Algorithm
+At the start of its planning cycle, the engine computes the expected strokes to finish the hole for all states $s \in \mathcal{S}$ within a sliding planning window:
+
+1. **Terminal States:** For any green zone space, $V(s) = S_{shot} + S_{penalty\_putting}(s)$.
 2. **Non-Terminal States:** Initialize expected strokes as a heuristic distance: 
-   $$V(s) = \frac{|\text{spacesLength} - p|}{4.0} + 2.0$$
+   $$V(s) = \frac{|x_{green} - x_{cell}|}{4.0} + 2.0$$
 3. **Value Iteration Loop (50 sweeps):**
    For each sweep, update the value table:
-   $$V_{k+1}(s) = \min_{a \in \mathcal{A}} \sum_{s'} P(s' | s, a) \left[ R(s, a, s') + V_k(s') \right]$$
+   $$V_{k+1}(s) = \min_{a \in \mathcal{A}} \sum_{s'} P(s' \mid s, a) \left[ R(s, a, s') + V_k(s') \right]$$
    Where:
    * $\mathcal{A} = \{1\text{ die}, 2\text{ dice}\}$ (or $\{1\text{ die}\}$ if in Rough and not overridden by own Shield).
-   * $P(s' | s, a)$ is the roll probability (flat $\frac{1}{6}$ for 1D6; standard 2D6 triangular distribution for 2D6).
-   * $R(s, a, s')$ is the stroke increment resulting from the move.
-   * If a bunker escape fails, $s'$ loops back to $s$.
-   * **Simplification:** The MDP bot ignores wager tokens during Value Iteration, calculating its optimal path based solely on the static terrain types (Fairway, Rough, Sand, Water, OB, Green).
+   * $P(s' \mid s, a)$ is the transition probability distribution. If the action $a$ lands on an OB tile, the transition maps back to $s' = (x_{origin\_cell}, d, x_{origin\_cell})$ with $S_{penalty} = 1$.
+
+### ⚡ Asynchronous Solver Task Integration
+To prevent value iteration from blocking Bevy's main thread and causing frame drops, the computation runs off-thread using Bevy's `AsyncComputeTaskPool`:
+* **Epoch Validation:** Each calculation is associated with an incremental `state_epoch` ID. 
+* **Staleness Verification:** When the solver task completes, the main thread compares the task's starting epoch with the current game state epoch. If the state has mutated mid-calculation (e.g. an opponent placed a wager card or bumped the bot via a slide cascade), the task output is discarded as stale.
+* **Stale Fallback Heuristic:** If the policy is discarded as stale, the bot immediately falls back to a safe, greedy heuristic: rolling 1D6 targeting the nearest fairway or safe tile.
+
+```rust
+// Spec for server/src/ai/mdp_solver/mod.rs
+use bevy::prelude::*;
+use bevy::tasks::Task;
+
+#[derive(Resource)]
+pub struct MdpSolverTask {
+    pub task: Task<Option<Vec<u8>>>, // Returns the computed policy mapping states to actions
+    pub state_epoch: u32,            // Epoch version of the game board at task creation
+}
+```
 
 ### Action Selection
 To choose between rolling 1 or 2 dice, the engine queries the expected values $EV_{1\text{D6}}$ and $EV_{2\text{D6}}$:
@@ -199,6 +307,7 @@ To choose between rolling 1 or 2 dice, the engine queries the expected values $E
   * **Perfect (1.00):** Always selects the optimal action.
 
 ---
+
 
 ## 🌐 6. Multiplayer Synchronization & Match Length
 
@@ -223,3 +332,78 @@ The synchronized room session encapsulates the following properties:
   * Only the designated player in the draft cycle is authorized to broadcast token placement updates.
   * Out-of-turn write actions are rejected.
 * **AI Bot Host Ownership:** The host executes all AI bot turns and broadcasts the resulting state updates. If the host disconnects, the host status migrates to the next connected player with the lowest ID.
+
+### 🛡️ Authoritative Host Migration Protocol
+If the host disconnects during a transition window (e.g. after broadcasting a roll state but before resolving movement), the game coordinator suspends execution and triggers host migration.
+
+#### 1. Authoritative State Reconstruction
+* The newly promoted host (the active client with the lowest player ID) is the **sole authority** for state reconstruction. Peer-to-peer state negotiation is forbidden to prevent injection of forged game states.
+* **Client Input Buffering:** Clients continuously buffer their unacknowledged inputs for up to `120` frames (approx. 2 seconds at 60 FPS).
+* **Handshake Phase:** Upon promotion, the new host requests handshakes from all clients. Each client submits its `MigrationHandshake` containing its buffered inputs.
+* **Validation & Fast-Forward:** The new host executes a strict input validation check for every frame in the buffer (checking for duplicate sequence IDs, velocity range boundaries, and card ownership) and performs a fast-forward authoritative execution starting from the last verified server tick. Client-side computed state values are rejected.
+* **Input Lock on Timeout:** If migration exceeds 120 frames, the clients immediately lock user inputs and render a `MigrationOverlay` UI block until the handshake reconciles.
+
+#### 2. Type-Safe Serialization Schemas
+All migration payloads are serialized/deserialized using `Postcard` and compile-time verified structs in the shared `protocol` crate:
+
+```rust
+// Spec for protocol/src/migration.rs
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct ClientInputFrame {
+    pub tick: u32,
+    pub input_data: Vec<u8>, // Postcard-serialized player action payload
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct MigrationHandshake {
+    pub current_term: u64,
+    pub last_acknowledged_tick: u32,
+    pub buffered_inputs: Vec<ClientInputFrame>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct MigrationStatePayload {
+    pub state_tick: u64,
+    pub serialized_world_state: Vec<u8>, // Postcard-serialized authoritative world state
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ValidationError {
+    DuplicateInput,
+    InvalidVelocity,
+    UnownedCardActivation,
+}
+```
+
+
+---
+
+## 📂 7. Future Architectural File Layout
+
+To ensure absolute compliance with the **300-Line Limit** for Rust source files, the project's logic and UI layouts are distributed across the following modular file structure:
+
+### 1. `protocol` (Shared Crate)
+*   `src/lib.rs` (Crate boundary re-exports and shared enums)
+*   `src/migration.rs` (Host migration Postcard serialization structs and validation types)
+
+### 2. `server` (Authoritative Game Server)
+*   `src/main.rs` (Socket bootstrapper and core loop orchestrator)
+*   `src/physics/slide.rs` (Stack-allocated `SlideTracker` cycle detection and clamping)
+*   `src/physics/validation.rs` (InputValidator and physics boundary checks)
+*   `src/ai/mdp_state.rs` (1D cell discretization and state vectors)
+*   `src/ai/mdp_solver/mod.rs` (AI computation scheduler and async pool manager)
+*   `src/ai/mdp_solver/transitions.rs` (Stochastic transition matrix modeling)
+*   `src/ai/mdp_solver/iteration.rs` (Pure mathematical Bellman update sweeps)
+*   `src/ai/mdp_solver/rewards.rs` (Wager-aware and terrain-specific utility matrices)
+*   `src/ai/systems.rs` (Bevy ECS game loop wrappers and event dispatchers)
+
+### 3. `client` (WASM Game Client)
+*   `src/main.rs` (Bevy UI plugin and canvas bootstrapper)
+*   `src/ui/mod.rs` (UI state controllers)
+*   `src/ui/layout/mod.rs` (Styling property constants and node spawners)
+*   `src/ui/layout/turn_order.rs` (Bevy native node structures for player order and AIO)
+*   `src/ui/layout/wager.rs` (Bevy native UI trees for card selection and drafting)
+
+
