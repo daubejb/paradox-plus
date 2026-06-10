@@ -58,7 +58,8 @@ All UI overlays (such as turn notifications, standings, AIO statistics, and wage
 
 ## ⛳ 3. Standard Gameplay Mechanics & Terrain Strategies
 
-The course is represented as a 1-based index linear track of **Space** coordinates. Position `0` is reserved for the **Tee Box** (which behaves like a Fairway).
+The course is represented as a 1-based index linear track of **Space** coordinates. Position `0` is reserved for the **Tee Box** (which behaves like a Fairway) and is strictly a starting tile; after the first shot, a player's ball can never land on Space `0` again. The minimum active playable tile is Space `1`.
+
 
 ### 📖 Scorecard Vocabulary Standards
 To eliminate ambiguity in score mutation operations, the game engine enforces three distinct scorecard metrics:
@@ -119,9 +120,12 @@ TerrainResolutionStrategy
 ---
 
 ### 🔄 Directional Physics (Overshoot & Undershoot Laws)
-Player direction is tracked as state: `'forward'` (moving index-up) or `'reverse'` (moving index-down).
+Player direction is tracked as state: `'forward'` (moving index-up) or `'reverse'` (moving index-down). Movement direction is deterministic and always oriented relative to the Green zone; the player never chooses or makes an active decision regarding direction of travel.
+
 1. **Overshoot Law:** If a player is moving `forward` and their roll sum carries them past the maximum index of the Green zone (`maxGreenIndex`), they land on the target space (e.g. past the green) and their direction state toggles to `reverse` for their next turn.
 2. **Undershoot Law:** If a player is moving `reverse` and their roll falls below the minimum index of the Green zone (`minGreenIndex`), they land on the target space and their direction toggles back to `forward` for their next turn.
+3. **Tee Box Clamping:** If any roll or movement calculation carries a player below index `1`, the position is strictly clamped to **Space 1** (as the Tee Box at Space 0 is strictly a starting tile and can never be landed on after the first shot). In this event, their direction automatically toggles to `forward` for their next turn.
+
 
 ---
 
@@ -170,7 +174,7 @@ Landing on placed tokens executes a strategy dependent on the owner of the token
     * "Pushed back" means opposite of their current movement direction (`'forward'` -> index-down, `'reverse'` -> index-up).
     * If the target space is occupied by another card or is OB (`lostBall`), they **slide forward** (in the direction of the player's current movement state) tile-by-tile until landing on a valid space.
     * A **valid space** to end the slide is any space that is NOT OB (lostBall) and NOT occupied by another wager card.
-    * If the target index is less than 0, it is strictly clamped to `0` (the Tee Box), which is always a valid landing pad.
+    * If the target index is less than 1, it is strictly clamped to `1`, as the Tee Box (Space 0) is strictly a starting tile and cannot be landed on after the first shot.
     * If the final space they land on after the slide is a **Hazard** (Sand, Water, Rough) or a **Green**, they immediately trigger the corresponding state resolution (such as bunker escape checks, water hazard stroke penalties, or putting transitions).
     * Owner draws 2 Banana Slip cards.
 
@@ -178,8 +182,9 @@ Landing on placed tokens executes a strategy dependent on the owner of the token
 To prevent infinite sliding loops (e.g. bouncing back and forth between slide triggers) and avoid dynamic heap allocations during the physics loop, the engine enforces a stack-allocated **SlideTracker**:
 * The tracker stores up to `16` visited cells in a fixed-size array.
 * If a cell index is visited twice within the same slide resolution, a cycle is detected.
-* Upon cycle detection or exceeding the `16` slide limit, the slide loop is aborted, the ball is immediately reset to the Tee Box origin (Space `0`), and the player suffers a **+2 Stroke penalty** ($S_{penalty} = 2$).
+* Upon cycle detection or exceeding the `16` slide limit, the slide loop is aborted, the ball is immediately reset to Space `1`, and the player suffers a **+2 Stroke penalty** ($S_{penalty} = 2$).
 * **Client-Side Prediction:** To eliminate visual interpolation jitter, the client and server execute the identical deterministic `SlideTracker` rules. The client will predict slide resolutions locally, but overrides its local state if the server issues a corrective state snapshot.
+
 
 ```rust
 // Struct specification for server/src/physics/slide.rs
