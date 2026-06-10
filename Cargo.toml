@@ -1,0 +1,12 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/client",
+    "crates/server",
+    "crates/protocol",
+    "tools/critique",
+]
+
+[workspace.dependencies]
+serde = { version = "1.0", features = ["derive"] }
+postcard = { version = "1.0", features = ["alloc"] }
