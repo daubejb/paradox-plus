@@ -28,3 +28,7 @@ This sitemap registers the files, modules, and boundaries in the repository. To 
 
 ### 4. `critique` (Tooling Orchestrator)
 * `src/main.rs`: Entry point. Locates active implementation plan, sends it to `agy`, and writes critique.
+
+### 5. `doc` (Architectural Documentation)
+* `doc/testing_strategy.md`: Multi-layered testing strategy (unit, regression, integration, headless Bevy UI).
+
