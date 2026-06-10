@@ -412,3 +412,100 @@ To ensure absolute compliance with the **300-Line Limit** for Rust source files,
 *   `src/ui/layout/wager.rs` (Bevy native UI trees for card selection and drafting)
 
 
+
+---
+
+## 📊 8. Match Telemetry, Analytics, & Leaderboard Specifications
+
+This section defines the event-driven telemetry envelopes, data schemas, and analytics structures required to support game metrics, anti-cheat validation, and server-side global leaderboards.
+
+### 📈 Telemetry Data Envelopes (Type-Safe Postcard Schema)
+To ensure minimal network overhead and compile-time compatibility, all game events emit structured payloads defined in the `protocol` crate.
+
+```rust
+// Spec for protocol/src/telemetry.rs
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct TelemetryHeader {
+    pub match_id: [u8; 16],      // UUID v4 of the match session
+    pub player_id: u64,          // Unique ID of the acting player
+    pub timestamp_ms: u64,       // Unix epoch timestamp
+    pub hole_index: u8,          // Current hole (0-17)
+}
+
+/// Emitted at the completion of each hole by each player.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct HolePerformanceEvent {
+    pub header: TelemetryHeader,
+    pub shot_strokes: u8,        // Sum of S_shot
+    pub penalty_strokes: u8,     // Sum of S_penalty (hazards, cards, resets)
+    pub putts_taken: u8,         // Number of automatic putting strokes
+    pub gir: bool,               // Green in Regulation (landed on Green in <= Par - 2 shots)
+    pub scrambling: bool,        // Saved Par or better after landing in >= 1 Hazard (Bunker, Water, OB)
+}
+
+/// Emitted whenever a wager card is drafted or triggered.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct CardWagerEvent {
+    pub header: TelemetryHeader,
+    pub card_type: u8,           // 0: Guardian Shield, 1: Banana, 2: Golden Die
+    pub cell_index: u32,         // Position of placement
+    pub trigger_outcome: u8,     // 0: Draft, 1: Prophecy (Owner), 2: Trap (Opponent)
+    pub stroke_delta: i8,        // Cost added or subtracted to scorecard
+}
+
+/// Emitted by the physics engine on boundary overrides or loops.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct PhysicsAnomalyEvent {
+    pub header: TelemetryHeader,
+    pub anomaly_type: u8,        // 0: Clamp to Space 1, 1: Loop Reset to Space 1
+    pub start_cell: u32,
+    pub total_slides: u8,        // Slide count prior to clamping/reset
+}
+
+/// Emitted by the server-side AI solver on decision completion.
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct AiSolverMetrics {
+    pub header: TelemetryHeader,
+    pub elapsed_millis: u32,     // Compute time for Value Iteration
+    pub states_evaluated: u32,   // Planning window size |S|
+    pub staleness_triggered: bool, // True if policy was discarded due to mid-turn state change
+    pub fallback_executed: bool,  // True if safe heuristic took over
+}
+```
+
+### 🏆 Persistent Profile Record Schema
+The server maintains a persistent record of player profiles to drive matchmaking and leaderboard indices:
+
+```rust
+// Spec for server/src/db/profile.rs
+pub struct PlayerProfileRecord {
+    pub player_id: u64,
+    pub matches_played: u32,
+    pub matches_won: u32,
+    pub hole_in_one_count: u32,
+    pub total_albatrosses: u32,
+    pub total_eagles: u32,
+    pub total_birdies: u32,
+    pub average_putts_per_hole: f32,
+    pub scrambling_success_rate: f32,
+    pub handicap_index: f32,     // Server-calculated competitive handicap
+}
+```
+
+### 🧮 Competitive Handicap Index Formula
+To establish an equitable global leaderboard, the server dynamically calculates a **Paradox Handicap Index** modeled after professional golf regulations, adjusted for dice probability:
+
+1. **Hole Differential ($D_h$):** For each completed match, the server calculates the differential for the best 8 of the last 20 matches.
+   $$D_h = \sum_{h=0}^{17} \left( S_{total, h} - \text{Par}_h \right) \times \text{DifficultyFactor}_{\text{course}}$$
+2. **Handicap Calculation:**
+   $$\text{Handicap Index} = \text{Average}(D_{h, \text{best 8}}) \times 0.96$$
+3. **Usage:** The global leaderboard ranks players strictly by their `Handicap Index` (lowest score differential), ensuring that match performance across different course configurations is normalized.
+
+### 📡 Server Telemetry Pipeline
+1. **Authoritative Collection:** The server's main loop captures events during state mutations and pushes them to a lock-free, non-blocking queue (`crossbeam_channel::Sender<TelemetryEvent>`).
+2. **Off-Thread Logging:** An asynchronous worker thread drains the queue and serializes payloads into compression-ready logs or submits them to external endpoints, ensuring zero impact on the 60 Hz physics/network tick rate.
+
+
+
