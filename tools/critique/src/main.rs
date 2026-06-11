@@ -62,7 +62,8 @@ Your task is to analyze the implementation plan for alignment with these archite
 2. Pure Rust ECS (No DOM): Absolutely never use HTML, CSS, JavaScript, WebViews, or DOM elements. All UI must use native Bevy UI (bevy_ui, Taffy, WGSL shaders).\n\
 3. Authoritative Server Validation: Gameplay state mutations, card draws, and movement resolutions must be evaluated on the authoritative Server. The Client only renders interpolated state and sends actions.\n\
 4. Type-Safe Serialization: All network payloads must be serialized/deserialized using Postcard and compile-time verified structs/enums shared in the protocol crate.\n\
-5. Logic & Performance: Audit for logic bugs, memory issues, or performance constraints.\n\n\
+5. Logic & Performance: Audit for logic bugs, memory issues, or performance constraints.\n\
+6. ADR Verification: Ensure that the plan contains a dedicated checklist task to evaluate if any system-level design pivots occurred and document them in an Architecture Decision Record (ADR) under doc/adr/.\n\n\
 Respond with a constructive markdown critique. Include specific warnings, proposed patches or code snippets, and list any outstanding open questions.\n\n\
 IMPORTANT: You MUST NOT execute any commands, use any tools, or read/write files in this workspace. Do not output any agent planning thoughts, introduction, or summary. Output ONLY the markdown critique.";
 
