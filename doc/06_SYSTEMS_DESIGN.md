@@ -24,14 +24,13 @@ pub struct Player {
     pub player_id: u64,
 }
 
-/// Stores the authoritative fixed-point movement coordinates.
+/// Stores the authoritative, discrete game state coordinate.
 /// Read-only on the client; mutated strictly by the server.
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ball {
-    pub cell_index: u32,
-    pub slide_offset: I32F32,     // Interpolated sub-cell sliding progress
+    pub cell_index: u16,          // Bounded discrete cell index (1 to MAX_HOLE_CELLS)
     pub direction: MovementDirection,
-    pub origin_cell: u32,         // Starting cell for the current shot (for OB resets)
+    pub origin_cell: u16,         // Starting cell for the current shot (for OB resets)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -93,6 +92,21 @@ pub struct MatchStandings {
 pub struct NetworkClientConnection {
     pub connection_id: u64,
     pub out_sender: tokio::sync::mpsc::Sender<Vec<u8>>,
+}
+
+/// Pre-allocated heap buffer for serialization, preventing stack overflow on WASM
+/// while maintaining zero heap allocation in hot transmission loops.
+#[derive(Resource)]
+pub struct NetworkSerializationBuffer {
+    pub buffer: Vec<u8>,
+}
+
+impl Default for NetworkSerializationBuffer {
+    fn default() -> Self {
+        Self {
+            buffer: vec![0u8; crates::protocol::MAX_PACKET_SIZE],
+        }
+    }
 }
 
 ### C. Stack-Allocated Physics Structures
@@ -221,7 +235,20 @@ pub struct ClientActionRequest {
 QUIC socket channels run on an async thread managed by Quinn or WebTransport.
 1. **Reception**: The async task receives binary slices, deserializes them using `postcard::from_bytes`, and passes the resulting `ServerUpdate` struct to a thread-safe `crossbeam_channel::Sender`.
 2. **Bevy Integration**: A Bevy system running in the `PreUpdate` phase drains the receiver queue and dispatches `ServerUpdateEvent` instances into Bevy's ECS event channel.
-3. **Transmission**: A Bevy system in the `PostUpdate` phase listens for `ClientActionRequest`, serializes payloads via `postcard::to_allocvec_cobs` (or fixed slices), and writes them to the QUIC outbound socket queue.
+3. **Transmission & Serialization**: A Bevy system in the `PostUpdate` phase listens for `ClientActionRequest`. Rather than using heap-allocating calls like `postcard::to_allocvec`, it serializes payloads into the pre-allocated `NetworkSerializationBuffer` using `postcard::to_slice` to guarantee zero runtime heap allocations:
+   
+   ```rust
+   use postcard::to_slice;
+   use crates::protocol::MAX_PACKET_SIZE;
+
+   pub fn serialize_action(
+       action: &ClientAction, 
+       serialize_buf: &mut NetworkSerializationBuffer
+   ) -> Result<&[u8], postcard::Error> {
+       let serialized_slice = to_slice(action, &mut serialize_buf.buffer)?;
+       Ok(serialized_slice)
+   }
+   ```
 
 ---
 
@@ -231,18 +258,25 @@ QUIC socket channels run on an async thread managed by Quinn or WebTransport.
 Gameplay components (`Ball`) must only be mutated by server-state snapshots. Visual presentation (transforms) is managed by translation systems executing in Bevy's `PostUpdate` phase:
 
 ```rust
-/// Translates fixed-point coordinate indices to float-based Transform nodes.
+/// Client-side component for visual cell sliding interpolation.
+/// Completely decoupled from authoritative server game state.
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct BallVisualInterpolation {
+    pub slide_offset: f32, // Float-based visual offset progress [0.0, 1.0]
+}
+
+/// Translates discrete cell indices and client visual offsets to float-based Transform nodes.
 pub fn fixed_to_float_translation_system(
-    query: Query<(&Ball, &mut Transform), Changed<Ball>>,
+    query: Query<(&Ball, &BallVisualInterpolation, &mut Transform)>,
     course: Res<ActiveCourseTrack>,
 ) {
-    for (ball, mut transform) in query.iter_mut() {
+    for (ball, visual, mut transform) in query.iter() {
         // Calculate cell geometric coordinate from cell_index
         let cell_coord = get_cell_spatial_position(ball.cell_index);
         
-        // Add sliding sub-cell offsets
+        // Add sliding sub-cell offsets for visual smoothness
         let slide_modifier = get_cell_spatial_vector(ball.cell_index, ball.direction);
-        let offset = slide_modifier * ball.slide_offset.to_num::<f32>();
+        let offset = slide_modifier * visual.slide_offset;
         
         // Smoothly update visual Bevy transform coordinates
         transform.translation.x = cell_coord.x + offset.x;
@@ -273,18 +307,16 @@ To construct premium and highly responsive layouts:
 
 To avoid blocking the main server or client threads, MDP solver sweeps execute off-thread using Bevy's `AsyncComputeTaskPool`. 
 
-### A. Bounded State Epochs & Task Spawning
-Validation states are bounded using `heapless::Vec` to comply with the zero-heap allocation guideline:
-
-```rust
 use bevy::prelude::*;
 use bevy::tasks::{AsyncComputeTaskPool, Task};
 use heapless::Vec as HVec;
 use crates::messages::MAX_PLAYERS;
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct StructuralEpoch {
-    pub player_positions: HVec<u32, MAX_PLAYERS>,
+    pub player_positions: HVec<u16, MAX_PLAYERS>, // Standard integers for discrete coordinate tracking
     pub epoch_id: u32,
 }
 
@@ -323,11 +355,22 @@ To avoid a $O(|\mathcal{S}|^2)$ static transition matrix allocation (which requi
 ```rust
 use fixed::types::I32F32;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct MdpState {
     pub cell_index: u16,
     pub direction: MovementDirection,
     pub origin_cell: u16,
+    pub triggered_wagers: heapless::Vec<u16, 4>, // Loop damper (max 4 triggered wagers per planning loop)
+}
+
+impl MdpState {
+    /// Bounded addition to prevent panic crashes.
+    pub fn record_triggered_wager(&mut self, cell: u16) {
+        if self.triggered_wagers.push(cell).is_err() {
+            // Log warning and drop additional triggers to avoid panics
+            warn!("Wager trigger limit reached (max 4). Dropping trigger execution.");
+        }
+    }
 }
 
 /// Computes local transition outcomes procedurally, maintaining O(1) memory overhead.
@@ -350,8 +393,8 @@ pub fn get_transitions(
 }
 ```
 
-### C. Non-Blocking Task Polling
-Tasks are checked inside the `PreUpdate` phase. The polling system uses a non-blocking check to retrieve policies only when completed, avoiding main thread stutter:
+### C. Non-Blocking Task Polling & Cancellation
+Tasks are checked inside the `PreUpdate` phase. The polling system cooperatively cancels/drops tasks if the structural epoch changes during computation:
 
 ```rust
 use futures_lite::future;
@@ -362,17 +405,20 @@ pub fn poll_ai_solver_system(
     current_epoch: Res<StructuralEpoch>,
 ) {
     for (entity, mut solver_task) in tasks.iter_mut() {
+        // Drop and cancel task immediately if epoch has mutated
+        if solver_task.structural_epoch.epoch_id != current_epoch.epoch_id {
+            commands.entity(entity).despawn();
+            info!("Stale AI solver task dropped due to epoch transition.");
+            trigger_greedy_fallback(entity);
+            continue;
+        }
+
         // Query task completion non-blockingly
         if let Some(result) = future::block_on(future::poll_once(&mut solver_task.task)) {
             commands.entity(entity).remove::<ActiveMdpSolverTask>();
             
-            if solver_task.structural_epoch == *current_epoch {
-                if let Some(policy) = result {
-                    apply_computed_policy(entity, policy);
-                }
-            } else {
-                info!("AI policy discarded: Structural state mutated mid-calculation.");
-                trigger_greedy_fallback(entity);
+            if let Some(policy) = result {
+                apply_computed_policy(entity, policy);
             }
         }
     }
@@ -402,10 +448,11 @@ crates/
 │       │   ├── mod.rs             # [<200 lines] Systems coordinating AI task spawning
 │       │   ├── mdp_state.rs       # [<150 lines] 1D cell discretization, state vectors
 │       │   └── mdp_solver/
-│       │       ├── mod.rs         # [<100 lines] Solver API definitions
-│       │       ├── transitions.rs # [<200 lines] Transition distribution models
-│       │       ├── iteration.rs   # [<200 lines] Dynamically gated Value Iteration sweeps
-│       │       └── rewards.rs     # [<200 lines] Wager-aware utility matrix mapping
+│       │       ├── mod.rs         # [<100 lines] Solver API definitions, component tasks
+│       │       ├── engine.rs      # [<200 lines] Thread loop running Bellman sweeps
+│       │       ├── transitions.rs # [<200 lines] Procedural transition models
+│       │       ├── iteration.rs   # [<200 lines] Gated convergence loops
+│       │       └── rewards.rs     # [<200 lines] Wager-aware utility matrix mapping & loop damping
 │       └── systems.rs             # [<250 lines] Authoritative server game loops
 └── client/
     └── src/
