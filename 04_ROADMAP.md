@@ -14,7 +14,7 @@ This document catalogs the active milestones, development backlog iterations, an
 
 ## 📦 Iterative Development Backlog
 
-### Iteration 1: Shared Protocol & Bounded Physics Loop
+### [x] Iteration 1: Shared Protocol & Bounded Physics Loop (Completed 2026-06-11)
 *   **Branch**: `feat/1-protocol-physics`
 *   **Objectives**:
     - Implement serialization types (`ClientAction`, `ServerUpdate`, `Scorecard`) in `crates/protocol/src/messages.rs`.

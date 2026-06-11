@@ -21,7 +21,18 @@ Sitemap(
       path: "crates/protocol/",
       purpose: "Shared Postcard network types and serialization schemas",
       files: [
-        File(path: "src/lib.rs", description: "Re-exports shared messages and actions"),
+        File(path: "src/lib.rs", description: "Re-exports shared messages, physics, terrain, and FSM validator modules"),
+        File(path: "src/messages.rs", description: "Bounded serialization schemas for client actions and server updates"),
+        File(path: "src/physics.rs", description: "Encapsulated SlideTracker cycle checker and SafeFixedMath trait"),
+        File(path: "src/terrain/mod.rs", description: "Exposes terrain types and strategy resolution modules"),
+        File(path: "src/terrain/types.rs", description: "Zero-heap representations of course tracks and cells"),
+        File(path: "src/terrain/resolution/mod.rs", description: "Exposes terrain-specific resolution functions"),
+        File(path: "src/terrain/resolution/bunker.rs", description: "Sand bunker escape odd/even checks"),
+        File(path: "src/terrain/resolution/green.rs", description: "Automatic putting stroke penalty calculation"),
+        File(path: "src/terrain/resolution/standard.rs", description: "Fairway, Rough, Water, and OB reset landing checks"),
+        File(path: "src/fsm/mod.rs", description: "Exposes the shared FSM validator modules"),
+        File(path: "src/fsm/transitions.rs", description: "Authoritative state transition resolution mapping"),
+        File(path: "src/fsm/rules.rs", description: "State-action gating and active player validator rules"),
       ]
     ),
     Crate(

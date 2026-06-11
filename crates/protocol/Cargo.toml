@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-serde = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 postcard = { workspace = true }
+fixed = { version = "1.23.0", features = ["serde"] }
+heapless = { version = "0.8.0", features = ["serde"] }
