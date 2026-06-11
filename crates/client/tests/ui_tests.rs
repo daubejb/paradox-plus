@@ -29,6 +29,7 @@ fn setup_headless_ui_app() -> App {
     app.add_plugins((
         MinimalPlugins,
         bevy::state::app::StatesPlugin,
+        bevy::input::InputPlugin,
         AssetPlugin::default(),
         client::network::ClientNetworkPlugin,
         client::replication::ClientReplicationPlugin,
@@ -36,6 +37,7 @@ fn setup_headless_ui_app() -> App {
     ));
 
     app.init_asset::<Image>();
+    app.add_event::<ReceivedCharacter>();
 
     // Spawn a dummy window to ensure layout computations and updates run
     app.world_mut().spawn(Window {
@@ -158,12 +160,22 @@ fn test_board_rebuild_on_hole_change() {
     // Run startup systems
     app.update();
 
-    // Transition state to Gameplay to run trigger_initial_state_sync
+    // Transition state to SoloSetup, then trigger PlayGameButton click
     {
         let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
-        next_state.set(ClientScreenState::Gameplay);
+        next_state.set(ClientScreenState::SoloSetup);
     }
-    // Update twice to process the state transition and run OnEnter(Gameplay)
+    app.update();
+    app.update();
+
+    // Trigger Play Game button click to start match
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<PlayGameButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Play Game button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+    // Update to process button click, dispatch StartPractice, and process transitions
+    app.update();
     app.update();
     app.update();
 
@@ -216,20 +228,56 @@ fn test_screen_state_transitions() {
         let landing_style = style_query.get_single(app.world()).expect("Landing screen node missing");
         assert_eq!(landing_style.display, Display::Flex);
 
-        let mut gameplay_query = app.world_mut().query_filtered::<&Style, With<GameplayScreenNode>>();
+        let mut setup_query = app.world_mut().query_filtered::<&Style, (With<SoloSetupScreenNode>, Without<LandingScreenNode>)>();
+        let setup_style = setup_query.get_single(app.world()).expect("Setup screen node missing");
+        assert_eq!(setup_style.display, Display::None);
+
+        let mut gameplay_query = app.world_mut().query_filtered::<&Style, (With<GameplayScreenNode>, Without<LandingScreenNode>, Without<SoloSetupScreenNode>)>();
         let gameplay_style = gameplay_query.get_single(app.world()).expect("Gameplay screen node missing");
         assert_eq!(gameplay_style.display, Display::None);
     }
 
-    // Simulate clicking the SoloPractice button to transition to Gameplay
+    // Simulate clicking the SoloPractice button to transition to SoloSetup
     {
         let mut button_query = app.world_mut().query_filtered::<Entity, With<SoloPracticeButtonNode>>();
         let button_entity = button_query.get_single(app.world()).expect("Solo practice button missing");
         app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
     }
 
-    // Run update twice: once to run the button handling system (which updates NextState)
-    // and once to apply the state transition.
+    // Run update twice to process the button click and apply state transition to SoloSetup
+    app.update();
+    app.update();
+
+    // Verify state transitioned to SoloSetup
+    {
+        let screen_state = app.world().resource::<State<ClientScreenState>>();
+        assert_eq!(*screen_state.get(), ClientScreenState::SoloSetup);
+    }
+
+    // Verify style visibility in SoloSetup state
+    {
+        let mut style_query = app.world_mut().query_filtered::<&Style, With<LandingScreenNode>>();
+        let landing_style = style_query.get_single(app.world()).expect("Landing screen node missing");
+        assert_eq!(landing_style.display, Display::None);
+
+        let mut setup_query = app.world_mut().query_filtered::<&Style, (With<SoloSetupScreenNode>, Without<LandingScreenNode>)>();
+        let setup_style = setup_query.get_single(app.world()).expect("Setup screen node missing");
+        assert_eq!(setup_style.display, Display::Flex);
+
+        let mut gameplay_query = app.world_mut().query_filtered::<&Style, (With<GameplayScreenNode>, Without<LandingScreenNode>, Without<SoloSetupScreenNode>)>();
+        let gameplay_style = gameplay_query.get_single(app.world()).expect("Gameplay screen node missing");
+        assert_eq!(gameplay_style.display, Display::None);
+    }
+
+    // Simulate clicking the Play Game button to transition to Gameplay
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<PlayGameButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Play Game button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+
+    // Run updates to process play button click, server sync, and transition to Gameplay
+    app.update();
     app.update();
     app.update();
 
@@ -239,16 +287,17 @@ fn test_screen_state_transitions() {
         assert_eq!(*screen_state.get(), ClientScreenState::Gameplay);
     }
 
-    // Run update to execute OnEnter(Gameplay) transitions
-    app.update();
-
     // Verify style visibility in Gameplay state
     {
         let mut style_query = app.world_mut().query_filtered::<&Style, With<LandingScreenNode>>();
         let landing_style = style_query.get_single(app.world()).expect("Landing screen node missing");
         assert_eq!(landing_style.display, Display::None);
 
-        let mut gameplay_query = app.world_mut().query_filtered::<&Style, With<GameplayScreenNode>>();
+        let mut setup_query = app.world_mut().query_filtered::<&Style, (With<SoloSetupScreenNode>, Without<LandingScreenNode>)>();
+        let setup_style = setup_query.get_single(app.world()).expect("Setup screen node missing");
+        assert_eq!(setup_style.display, Display::None);
+
+        let mut gameplay_query = app.world_mut().query_filtered::<&Style, (With<GameplayScreenNode>, Without<LandingScreenNode>, Without<SoloSetupScreenNode>)>();
         let gameplay_style = gameplay_query.get_single(app.world()).expect("Gameplay screen node missing");
         assert_eq!(gameplay_style.display, Display::Flex);
     }

@@ -19,6 +19,12 @@ pub enum ClientAction {
     },
     LeaveRoom,
     
+    StartPractice {
+        nickname: HString<MAX_PLAYER_NAME_LEN>,
+        course: HString<8>,
+        is_wager_mode: bool,
+    },
+    
     // Marker Placement Phase
     DraftCard { card_type: u8, cell_index: u32 },
     SkipPlacement,

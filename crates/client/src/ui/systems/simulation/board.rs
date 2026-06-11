@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::replication::Ball;
-use crate::ui::components::{BoardCellNode, PlayerTokenMarker, BoardContainerNode, CurrentHole};
+use crate::ui::components::{BoardCellNode, PlayerTokenMarker, BoardContainerNode, CurrentHole, GameSettings};
 
 pub fn update_board_cell_visuals(
     ball_query: Query<&Ball>,
@@ -30,6 +30,7 @@ pub fn update_board_cell_visuals(
 pub fn rebuild_board_on_hole_change_system(
     mut commands: Commands,
     current_hole: Res<CurrentHole>,
+    settings: Res<GameSettings>,
     board_container_query: Query<Entity, With<BoardContainerNode>>,
 ) {
     if !current_hole.is_changed() {
@@ -55,7 +56,7 @@ pub fn rebuild_board_on_hole_change_system(
                 },
                 ..default()
             }).with_children(|grid| {
-                if let Some(preset) = protocol::terrain::presets::get_course_preset("green", current_hole.0) {
+                if let Some(preset) = protocol::terrain::presets::get_course_preset(&settings.course, current_hole.0) {
                     for (idx, &cell_type) in preset.cells.iter().enumerate() {
                         let name = match cell_type {
                             protocol::terrain::TerrainType::TeeBox => "TEE".to_string(),

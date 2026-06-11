@@ -84,7 +84,7 @@ pub fn local_offline_server_system(
         Err(_) => return,
     };
 
-    let course = match get_course_preset("green", state.current_hole) {
+    let course = match get_course_preset(&state.course, state.current_hole) {
         Some(c) => c,
         None => return,
     };
@@ -97,6 +97,41 @@ pub fn local_offline_server_system(
         count += 1;
 
         if let Ok(action) = postcard::from_bytes::<ClientAction>(&raw_payload) {
+            if let ClientAction::StartPractice { nickname, course: course_name, is_wager_mode } = &action {
+                *state = OfflineServerState::default();
+                state.course = course_name.to_string();
+                state.is_wager_mode = *is_wager_mode;
+                state.player_name = nickname.to_string();
+                state.is_initialized = true;
+                
+                let mut player_positions = HVec::new();
+                player_positions.push(state.player_position).unwrap();
+                let mut player_scores = HVec::new();
+                player_scores.push(Scorecard {
+                    running_strokes: 0,
+                    total_strokes: 0,
+                    earned_cards: HVec::new(),
+                }).unwrap();
+
+                let update = ServerUpdate::StateSync {
+                    sequence: state.sequence,
+                    game_state: state.game_state,
+                    active_player_id: state.active_player_id,
+                    current_hole: state.current_hole,
+                    player_positions,
+                    player_scores,
+                    placed_wagers: HVec::new(),
+                };
+
+                send_buf.resize(65536, 0);
+                if let Ok(serialized) = postcard::to_slice(&update, &mut *send_buf) {
+                    let len = serialized.len();
+                    let bytes = send_buf[..len].to_vec();
+                    let _ = channels.update_tx.send(bytes);
+                }
+                continue;
+            }
+
             if action == ClientAction::LeaveRoom {
                 *state = OfflineServerState::default();
                 
@@ -138,41 +173,5 @@ pub fn local_offline_server_system(
                 }
             }
         }
-    }
-}
-
-pub fn trigger_initial_state_sync(
-    mut state: ResMut<OfflineServerState>,
-    channels: Res<LocalServerChannels>,
-) {
-    if state.is_initialized {
-        return;
-    }
-    state.is_initialized = true;
-
-    let mut player_positions = HVec::new();
-    player_positions.push(state.player_position).unwrap();
-    let mut player_scores = HVec::new();
-    player_scores.push(Scorecard {
-        running_strokes: 0,
-        total_strokes: 0,
-        earned_cards: HVec::new(),
-    }).unwrap();
-
-    let initial_update = ServerUpdate::StateSync {
-        sequence: state.sequence,
-        game_state: state.game_state,
-        active_player_id: state.active_player_id,
-        current_hole: state.current_hole,
-        player_positions,
-        player_scores,
-        placed_wagers: HVec::new(),
-    };
-
-    let mut buf = vec![0u8; 65536];
-    if let Ok(serialized) = postcard::to_slice(&initial_update, &mut buf) {
-        let len = serialized.len();
-        let bytes = buf[..len].to_vec();
-        let _ = channels.update_tx.send(bytes);
     }
 }

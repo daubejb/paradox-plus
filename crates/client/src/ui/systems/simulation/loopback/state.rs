@@ -13,6 +13,9 @@ pub struct OfflineServerState {
     pub sequence: u64,
     pub is_initialized: bool,
     pub hole_completed_timer_ms: Option<u32>,
+    pub course: String,
+    pub is_wager_mode: bool,
+    pub player_name: String,
 }
 
 impl Default for OfflineServerState {
@@ -27,6 +30,9 @@ impl Default for OfflineServerState {
             sequence: 0,
             is_initialized: false,
             hole_completed_timer_ms: None,
+            course: "green".to_string(),
+            is_wager_mode: false,
+            player_name: "David".to_string(),
         }
     }
 }

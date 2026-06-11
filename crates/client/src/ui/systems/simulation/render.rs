@@ -2,19 +2,24 @@ use bevy::prelude::*;
 use protocol::messages::{ServerUpdate, GameStateEnum};
 use protocol::terrain::presets::get_course_preset;
 use crate::network::ServerUpdateEvent;
-use crate::ui::components::{HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode};
+use crate::ui::components::{
+    HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode,
+    GameSettings, PlayerNameTextNode
+};
 
 pub fn update_ui_elements_system(
     mut update_events: EventReader<ServerUpdateEvent>,
-    mut title_query: Query<&mut Text, (With<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>)>,
-    mut stats_query: Query<&mut Text, (With<HoleStatsTextNode>, Without<HoleTitleTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>)>,
-    mut score_query: Query<&mut Text, (With<PlayerScoreTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<RollStatusTextNode>)>,
-    mut status_query: Query<&mut Text, (With<RollStatusTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>)>,
+    settings: Res<GameSettings>,
+    mut title_query: Query<&mut Text, (With<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>)>,
+    mut stats_query: Query<&mut Text, (With<HoleStatsTextNode>, Without<HoleTitleTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>)>,
+    mut score_query: Query<&mut Text, (With<PlayerScoreTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>)>,
+    mut status_query: Query<&mut Text, (With<RollStatusTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<PlayerNameTextNode>)>,
+    mut name_query: Query<&mut Text, (With<PlayerNameTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>)>,
 ) {
     for event in update_events.read() {
         match &event.0 {
             ServerUpdate::StateSync { current_hole, player_scores, game_state, .. } => {
-                if let Some(preset) = get_course_preset("green", *current_hole) {
+                if let Some(preset) = get_course_preset(&settings.course, *current_hole) {
                     if let Ok(mut text) = title_query.get_single_mut() {
                         text.sections[0].value = format!("HOLE {}", current_hole);
                     }
@@ -26,6 +31,10 @@ pub fn update_ui_elements_system(
                 if let Ok(mut text) = score_query.get_single_mut() {
                     let running_strokes = player_scores.first().map(|s| s.running_strokes).unwrap_or(0);
                     text.sections[0].value = format!("🏆 {} strokes", running_strokes);
+                }
+
+                if let Ok(mut text) = name_query.get_single_mut() {
+                    text.sections[0].value = settings.nickname.to_uppercase();
                 }
 
                 if *game_state == GameStateEnum::HoleCompleted {

@@ -65,6 +65,9 @@ pub fn fsm_tick_system(
                 ClientAction::AcknowledgeAlert => {
                     game_state.state = GameStateEnum::AwaitingTurn;
                 }
+                ClientAction::StartPractice { .. } => {
+                    // Handled locally in the client offline loopback server
+                }
             }
             game_state.sequence = game_state.sequence.saturating_add(1);
         }

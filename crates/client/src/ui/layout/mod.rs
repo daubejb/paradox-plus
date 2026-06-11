@@ -2,10 +2,12 @@ pub mod top_hud;
 pub mod board;
 pub mod bottom_bar;
 pub mod landing;
+pub mod setup;
 
 use bevy::prelude::*;
 use crate::ui::components::{RootUiNode, GameplayScreenNode};
 use landing::spawn_landing_screen;
+use setup::spawn_setup_screen;
 
 pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
@@ -27,6 +29,9 @@ pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     )).with_children(|parent| {
         // 1. Spawn Landing Page Screen (visible by default)
         spawn_landing_screen(parent, &asset_server);
+
+        // 2. Spawn Setup Screen (hidden by default)
+        spawn_setup_screen(parent, &asset_server);
 
         // 2. Spawn Gameplay Screen (hidden by default)
         parent.spawn((

@@ -20,6 +20,10 @@ Sitemap(
         File(path: "src/ui/components.rs", description: "UI marker components"),
         File(path: "src/ui/layout/mod.rs", description: "UI root layout and section routing"),
         File(path: "src/ui/layout/landing.rs", description: "UI landing page layout"),
+        File(path: "src/ui/layout/setup/mod.rs", description: "UI setup coordinator layout"),
+        File(path: "src/ui/layout/setup/nickname.rs", description: "UI setup nickname layout component"),
+        File(path: "src/ui/layout/setup/course.rs", description: "UI setup course selection layout component"),
+        File(path: "src/ui/layout/setup/mode.rs", description: "UI setup gameplay mode selection layout component"),
         File(path: "src/ui/layout/top_hud.rs", description: "UI top HUD layout"),
         File(path: "src/ui/layout/board.rs", description: "UI board container layout"),
         File(path: "src/ui/layout/bottom_bar.rs", description: "UI bottom bar controls layout"),
@@ -111,5 +115,6 @@ Sitemap(
     Doc(path: "doc/adr/0005-wasm-getrandom-backend.md", description: "ADR 0005: WASM build target getrandom backend configuration"),
     Doc(path: "doc/adr/0006-course-presets.md", description: "ADR 0006: Course Presets in Shared Protocol Crate"),
     Doc(path: "doc/adr/0007-client-offline-simulation.md", description: "ADR 0007: Client-Side Offline Loopback Server Simulation"),
+    Doc(path: "doc/adr/0008-solo-practice-setup-lifecycle.md", description: "ADR 0008: Solo Practice Setup Lifecycle"),
   ]
 )

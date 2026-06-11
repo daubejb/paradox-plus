@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use serde::{Serialize, Deserialize};
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RootUiNode;
@@ -68,7 +69,34 @@ impl Default for CurrentHole {
 pub enum ClientScreenState {
     #[default]
     Landing,
+    SoloSetup,
     Gameplay,
+}
+
+#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameMode {
+    Standard,
+    WagerCards,
+}
+
+#[derive(Resource, Debug, Clone, PartialEq, Eq)]
+pub struct GameSettings {
+    pub nickname: String,
+    pub course: String,
+    pub mode: GameMode,
+    pub is_input_focused: bool,
+}
+
+impl Default for GameSettings {
+    fn default() -> Self {
+        Self {
+            nickname: "David".to_string(),
+            course: "green".to_string(),
+            mode: GameMode::Standard,
+            is_input_focused: false,
+        }
+    }
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -97,4 +125,40 @@ pub struct SettingsButtonNode;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LandingStatusTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SoloSetupScreenNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NicknameInputContainerNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NicknameTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CourseGreenButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CourseBlueButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ModeStandardButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ModeWagerButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PlayGameButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CancelSetupButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RadioDotNode {
+    pub mode: GameMode,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PlayerNameTextNode;
+
 

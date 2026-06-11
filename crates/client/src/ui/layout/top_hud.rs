@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use crate::ui::components::{
     TopHudNode, HamburgerButtonNode, HoleInfoNode, PlayerInfoNode,
-    HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode
+    HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode,
+    PlayerNameTextNode
 };
 
 pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>) {
@@ -130,13 +131,16 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
                 },
                 ..default()
             }).with_children(|text_stack| {
-                text_stack.spawn(TextBundle::from_section(
-                    "DAVID",
-                    TextStyle {
-                        font_size: 14.0,
-                        color: Color::WHITE,
-                        ..default()
-                    },
+                text_stack.spawn((
+                    TextBundle::from_section(
+                        "DAVID",
+                        TextStyle {
+                            font_size: 14.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ),
+                    PlayerNameTextNode,
                 ));
                 text_stack.spawn((
                     TextBundle::from_section(
