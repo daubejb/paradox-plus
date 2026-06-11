@@ -84,7 +84,7 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_wager_card_selection_interaction` (verifying UI actions dispatch `ClientActionRequest` events).
 
 ### [x] Iteration 7: Game Selection Landing Page (Completed 2026-06-11)
-*   **Branch**: `feat/7-analytics-handicap`
+*   **Branch**: `feat/7-landing-page`
 *   **Objectives**:
     - Implement a responsive dark-green mobile-optimized landing screen spawner in `crates/client/src/ui/layout/landing.rs` loading branding assets.
     - Set up `ClientScreenState` managing state transition visibility to avoid per-frame Bevy/Taffy layout thrashing.
