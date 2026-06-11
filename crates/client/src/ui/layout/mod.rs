@@ -6,6 +6,8 @@ use bevy::prelude::*;
 use crate::ui::components::RootUiNode;
 
 pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.spawn(Camera2dBundle::default());
+
     commands.spawn((
         NodeBundle {
             style: Style {
