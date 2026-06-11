@@ -55,3 +55,12 @@ pub struct BoardCellNode {
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlayerTokenMarker;
 
+#[derive(Resource, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CurrentHole(pub u8);
+
+impl Default for CurrentHole {
+    fn default() -> Self {
+        Self(u8::MAX) // Sentinel value to guarantee first sync triggers change detection
+    }
+}
+

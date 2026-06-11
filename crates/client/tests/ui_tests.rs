@@ -28,12 +28,12 @@ fn setup_headless_ui_app() -> App {
 
     app.add_plugins((
         MinimalPlugins,
+        bevy::state::app::StatesPlugin,
         AssetPlugin::default(),
+        client::network::ClientNetworkPlugin,
+        client::replication::ClientReplicationPlugin,
         ClientUiPlugin,
     ));
-
-    app.add_event::<ClientActionRequest>();
-    app.add_event::<client::network::ServerUpdateEvent>();
 
     // Spawn a dummy window to ensure layout computations and updates run
     app.world_mut().spawn(Window {
@@ -141,4 +141,47 @@ fn test_loopback_payloads_serialization_compliance() {
     let serialized_update = to_slice(&update, &mut buf2).expect("Failed to serialize ServerUpdate");
     let deserialized_update: ServerUpdate = from_bytes(serialized_update).expect("Failed to deserialize ServerUpdate");
     assert_eq!(update, deserialized_update);
+}
+
+#[test]
+fn test_board_rebuild_on_hole_change() {
+    let mut app = setup_headless_ui_app();
+
+    // Verify CurrentHole default starts at u8::MAX sentinel
+    {
+        let current_hole = app.world().resource::<CurrentHole>();
+        assert_eq!(current_hole.0, u8::MAX);
+    }
+
+    // Run startup systems (trigger_initial_state_sync replicates current_hole: 1)
+    app.update();
+
+    // Verify CurrentHole is now 1
+    {
+        let current_hole = app.world().resource::<CurrentHole>();
+        assert_eq!(current_hole.0, 1);
+    }
+
+    // Verify Hole 1 has 27 cells spawned (TeeBox + 26 preset spaces)
+    {
+        let mut cell_query = app.world_mut().query::<&BoardCellNode>();
+        let cell_count = cell_query.iter(app.world()).count();
+        assert_eq!(cell_count, 27, "Expected 27 cells spawned for Hole 1");
+    }
+
+    // Manually change CurrentHole to 2 and trigger change detection
+    {
+        let mut current_hole = app.world_mut().resource_mut::<CurrentHole>();
+        current_hole.0 = 2;
+    }
+
+    // Run systems to trigger rebuilding
+    app.update();
+
+    // Verify Hole 2 has 14 cells spawned (TeeBox + 13 preset spaces)
+    {
+        let mut cell_query = app.world_mut().query::<&BoardCellNode>();
+        let cell_count = cell_query.iter(app.world()).count();
+        assert_eq!(cell_count, 14, "Expected 14 cells spawned for Hole 2");
+    }
 }

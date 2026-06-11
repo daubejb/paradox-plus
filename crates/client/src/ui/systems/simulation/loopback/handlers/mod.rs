@@ -18,11 +18,11 @@ pub fn handle_action(
         ClientAction::RollDice { dice_count } => {
             let dice_count = *dice_count;
             let current_pos = state.player_position;
-            let mut final_pos = current_pos;
-            let mut next_dir = state.direction;
-            let mut shot_strokes = 1;
-            let mut penalty_strokes = 0;
-            let mut completed_hole = false;
+            let mut final_pos;
+            let next_dir;
+            let shot_strokes;
+            let penalty_strokes;
+            let completed_hole;
 
             // 1. Bunker escape logic
             let current_terrain = course.cells.get(current_pos as usize).copied().unwrap_or(TerrainType::Fairway);

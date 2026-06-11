@@ -48,6 +48,7 @@ pub fn sync_state_from_server(
     mut commands: Commands,
     mut update_events: EventReader<ServerUpdateEvent>,
     mut next_state: ResMut<NextState<ClientGameState>>,
+    mut current_hole: ResMut<crate::ui::components::CurrentHole>,
     player_query: Query<Entity, With<Player>>,
 ) {
     for event in update_events.read() {
@@ -55,9 +56,15 @@ pub fn sync_state_from_server(
             game_state,
             active_player_id,
             player_positions,
+            current_hole: sync_hole,
             ..
         } = &event.0
         {
+            // Guard assignment to preserve Bevy's change detection
+            if current_hole.0 != *sync_hole {
+                current_hole.0 = *sync_hole;
+            }
+
             // Update ClientGameState
             let target_state = map_enum_to_bevy_state(*game_state);
             next_state.set(target_state);
@@ -90,6 +97,7 @@ pub struct ClientReplicationPlugin;
 impl Plugin for ClientReplicationPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<ClientGameState>()
+            .init_resource::<crate::ui::components::CurrentHole>()
             .add_systems(Update, sync_state_from_server);
     }
 }

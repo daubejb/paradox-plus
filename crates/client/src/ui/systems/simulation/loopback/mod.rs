@@ -19,7 +19,61 @@ pub struct LocalServerChannels {
 pub fn local_offline_server_system(
     channels: Res<LocalServerChannels>,
     mut state: ResMut<OfflineServerState>,
+    time: Res<Time>,
 ) {
+    if state.game_state == GameStateEnum::HoleCompleted {
+        let delta_ms = time.delta().as_millis() as u32;
+        let timer = state.hole_completed_timer_ms.get_or_insert(0);
+        *timer = timer.saturating_add(delta_ms);
+
+        if *timer >= 3000 {
+            state.hole_completed_timer_ms = None;
+            state.current_hole = state.current_hole.saturating_add(1);
+
+            if state.current_hole > 18 {
+                state.game_state = GameStateEnum::MatchCompleted;
+            } else {
+                state.player_position = 0;
+                state.strokes = 0;
+                state.direction = protocol::physics::MovementDirection::Forward;
+                state.game_state = GameStateEnum::AwaitingTurn;
+            }
+            state.sequence = state.sequence.saturating_add(1);
+
+            let mut player_positions = HVec::new();
+            player_positions.push(state.player_position).unwrap();
+            let mut player_scores = HVec::new();
+            player_scores.push(Scorecard {
+                running_strokes: state.strokes as u16,
+                total_strokes: state.strokes as u16,
+                earned_cards: HVec::new(),
+            }).unwrap();
+
+            let update = ServerUpdate::StateSync {
+                sequence: state.sequence,
+                game_state: state.game_state,
+                active_player_id: state.active_player_id,
+                current_hole: state.current_hole,
+                player_positions,
+                player_scores,
+                placed_wagers: HVec::new(),
+            };
+
+            let mut send_buf = match channels.send_buf.lock() {
+                Ok(guard) => guard,
+                Err(_) => return,
+            };
+            send_buf.resize(65536, 0);
+            if let Ok(serialized) = postcard::to_slice(&update, &mut *send_buf) {
+                let len = serialized.len();
+                let bytes = send_buf[..len].to_vec();
+                let _ = channels.update_tx.send(bytes);
+            }
+        }
+    } else {
+        state.hole_completed_timer_ms = None;
+    }
+
     let rx = match channels.action_rx.lock() {
         Ok(guard) => guard,
         Err(_) => return,

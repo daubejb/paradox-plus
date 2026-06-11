@@ -25,6 +25,9 @@ impl Plugin for ClientUiPlugin {
                     systems::handle_wager_card_buttons,
                     systems::simulation::update_board_cell_visuals,
                     systems::simulation::update_ui_elements_system,
+                    systems::simulation::rebuild_board_on_hole_change_system
+                        .run_if(resource_changed::<components::CurrentHole>)
+                        .after(crate::replication::sync_state_from_server),
                 ),
             );
     }

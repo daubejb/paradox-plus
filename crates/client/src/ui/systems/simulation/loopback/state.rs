@@ -12,6 +12,7 @@ pub struct OfflineServerState {
     pub active_player_id: u64,
     pub sequence: u64,
     pub is_initialized: bool,
+    pub hole_completed_timer_ms: Option<u32>,
 }
 
 impl Default for OfflineServerState {
@@ -25,6 +26,7 @@ impl Default for OfflineServerState {
             active_player_id: 1234,
             sequence: 0,
             is_initialized: false,
+            hole_completed_timer_ms: None,
         }
     }
 }

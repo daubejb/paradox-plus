@@ -30,7 +30,7 @@ pub fn update_ui_elements_system(
 
                 if *game_state == GameStateEnum::HoleCompleted {
                     if let Ok(mut text) = status_query.get_single_mut() {
-                        text.sections[0].value = "Completed Hole 1! Well played!".to_string();
+                        text.sections[0].value = format!("Completed Hole {}! Well played!", current_hole);
                     }
                 }
             }
