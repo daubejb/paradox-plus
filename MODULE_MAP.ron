@@ -20,6 +20,9 @@ Sitemap(
         File(path: "src/systems/validation.rs", description: "Pre-allocated serialization buffers and non-blocking action reader"),
         File(path: "src/systems/broadcast.rs", description: "Zero-allocation state serialization and packet broadcasting"),
         File(path: "src/ai/mod.rs", description: "Exposes AI modules and discrete states"),
+        File(path: "src/ai/components.rs", description: "AI components and resources (StructuralEpoch, CourseTrackResource, Bot, TurnTimer)"),
+        File(path: "src/ai/systems/solver.rs", description: "Off-thread AI solver trigger and non-blocking poll systems"),
+        File(path: "src/ai/systems/takeover.rs", description: "Turn timeout takeover monitoring and takeover systems"),
         File(path: "src/ai/mdp_state.rs", description: "Markov Decision Process state models and unique index encoders"),
         File(path: "src/ai/mdp_solver/mod.rs", description: "AI bot Value Iteration solver submodules"),
         File(path: "src/ai/mdp_solver/table.rs", description: "Stack-safe heap-allocated value iteration table"),
@@ -28,6 +31,7 @@ Sitemap(
         File(path: "src/ai/mdp_solver/landing.rs", description: "AI-specific landing and simple wager card resolvers"),
         File(path: "src/ai/mdp_solver/sweep.rs", description: "Gauss-Seidel value iteration sweeps with atomic cancellation"),
         File(path: "tests/ai_tests.rs", description: "AI bot decision solver and loop damper integration tests"),
+        File(path: "tests/ai_async_tests.rs", description: "Integration tests for off-thread AI solver scheduling and turn timeouts"),
       ]
     ),
     Crate(
@@ -68,5 +72,6 @@ Sitemap(
     Doc(path: "doc/adr/0001-server-dual-target.md", description: "ADR 0001: Server Dual Library-Binary Target Layout"),
     Doc(path: "doc/adr/0002-graceful-quic-stubbing.md", description: "ADR 0002: Graceful QUIC/TLS Configuration Stubbing"),
     Doc(path: "doc/adr/0003-mdp-state-index-simplification.md", description: "ADR 0003: MDP State Index Simplification"),
+    Doc(path: "doc/adr/0004-course-track-newtype-resource.md", description: "ADR 0004: Course Track Newtype Resource"),
   ]
 )

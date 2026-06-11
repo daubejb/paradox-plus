@@ -49,7 +49,7 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_solver_convergence` (verifying Bellman sweeps converge).
       - `test_solver_damper_prevention` (verifying bots do not get trapped in infinite score loops).
 
-### Iteration 4: Async AI Scheduling & Task Polling
+### [x] Iteration 4: Async AI Scheduling & Task Polling (Completed 2026-06-11)
 *   **Branch**: `feat/4-ai-async-polling`
 *   **Objectives**:
     - Implement off-thread AI solver task scheduler using Bevy's `AsyncComputeTaskPool` in `crates/server/src/ai/mod.rs`.
@@ -59,6 +59,7 @@ This document catalogs the active milestones, development backlog iterations, an
     - Integration tests in `crates/server/tests/ai_async_tests.rs`:
       - `test_non_blocking_polling_loop` (verifying main thread doesn't lock).
       - `test_stale_task_cancellation` (verifying tasks are immediately dropped if epoch changes).
+      - `test_turn_timeout_takeover` (verifying timeout takeover is triggered after 15 seconds).
 
 ### Iteration 5: Network Client Replication & Visual Presenter
 *   **Branch**: `feat/5-client-replication`
@@ -98,3 +99,4 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Remediation Phase:** Successfully critiqued and updated [PARADOX_GAME.md](file:///Users/jeff/Developer/paradox-plus/PARADOX_GAME.md) to address five core vulnerabilities (turn order asymmetry, physics sliding cycle deadlocks, non-Markovian MDP state spaces, terrain stroke ambiguities, and host migration race conditions). All architectural designs comply with Bevy native UI layouts, authoritative server validation, Postcard type-safe serialization, and the 300-line source file limit.
 - **Creator Onboarding:** Integrated the [CREATOR_SETUP_AND_PROCESS.md](file:///Users/jeff/Developer/paradox-plus/doc/CREATOR_SETUP_AND_PROCESS.md) guide, documenting the 12-step operational state machine, automated plan critique tool, testing targets, and core engine guardrails tailored for the Paradox Plus Bevy codebase.
 - **Systems Design Spec**: Drafted the [doc/06_SYSTEMS_DESIGN.md](file:///Users/jeff/Developer/paradox-plus/doc/06_SYSTEMS_DESIGN.md) document detailing discrete Bevy ECS coordinate representations, stack-allocated SlideTrackers, pre-allocated stack serialization, loops dampers, and cooperative async AI cancellation loops. Verified WASM target compatibility.
+- **Iteration 4 (Async AI & Polling):** Completed implementation of off-thread AI solver execution using Bevy's `AsyncComputeTaskPool` with zero-allocation inputs, non-blocking polling loops, turn timeout takeover, and cooperative cancellation. Addressed Rust orphan rules via `CourseTrackResource` wrapper, and successfully configured multithreading feature inside Bevy dependencies. All tests pass.
