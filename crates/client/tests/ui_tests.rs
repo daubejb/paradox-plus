@@ -35,6 +35,8 @@ fn setup_headless_ui_app() -> App {
         ClientUiPlugin,
     ));
 
+    app.init_asset::<Image>();
+
     // Spawn a dummy window to ensure layout computations and updates run
     app.world_mut().spawn(Window {
         resolution: WindowResolution::new(1920.0, 1080.0),
@@ -153,7 +155,16 @@ fn test_board_rebuild_on_hole_change() {
         assert_eq!(current_hole.0, u8::MAX);
     }
 
-    // Run startup systems (trigger_initial_state_sync replicates current_hole: 1)
+    // Run startup systems
+    app.update();
+
+    // Transition state to Gameplay to run trigger_initial_state_sync
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
+        next_state.set(ClientScreenState::Gameplay);
+    }
+    // Update twice to process the state transition and run OnEnter(Gameplay)
+    app.update();
     app.update();
 
     // Verify CurrentHole is now 1
@@ -185,3 +196,79 @@ fn test_board_rebuild_on_hole_change() {
         assert_eq!(cell_count, 14, "Expected 14 cells spawned for Hole 2");
     }
 }
+
+#[test]
+fn test_screen_state_transitions() {
+    let mut app = setup_headless_ui_app();
+
+    // Run startup systems
+    app.update();
+
+    // Verify initial state is Landing
+    {
+        let screen_state = app.world().resource::<State<ClientScreenState>>();
+        assert_eq!(*screen_state.get(), ClientScreenState::Landing);
+    }
+
+    // Verify style visibility in Landing state
+    {
+        let mut style_query = app.world_mut().query_filtered::<&Style, With<LandingScreenNode>>();
+        let landing_style = style_query.get_single(app.world()).expect("Landing screen node missing");
+        assert_eq!(landing_style.display, Display::Flex);
+
+        let mut gameplay_query = app.world_mut().query_filtered::<&Style, With<GameplayScreenNode>>();
+        let gameplay_style = gameplay_query.get_single(app.world()).expect("Gameplay screen node missing");
+        assert_eq!(gameplay_style.display, Display::None);
+    }
+
+    // Simulate clicking the SoloPractice button to transition to Gameplay
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<SoloPracticeButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Solo practice button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+
+    // Run update twice: once to run the button handling system (which updates NextState)
+    // and once to apply the state transition.
+    app.update();
+    app.update();
+
+    // Verify state transitioned to Gameplay
+    {
+        let screen_state = app.world().resource::<State<ClientScreenState>>();
+        assert_eq!(*screen_state.get(), ClientScreenState::Gameplay);
+    }
+
+    // Run update to execute OnEnter(Gameplay) transitions
+    app.update();
+
+    // Verify style visibility in Gameplay state
+    {
+        let mut style_query = app.world_mut().query_filtered::<&Style, With<LandingScreenNode>>();
+        let landing_style = style_query.get_single(app.world()).expect("Landing screen node missing");
+        assert_eq!(landing_style.display, Display::None);
+
+        let mut gameplay_query = app.world_mut().query_filtered::<&Style, With<GameplayScreenNode>>();
+        let gameplay_style = gameplay_query.get_single(app.world()).expect("Gameplay screen node missing");
+        assert_eq!(gameplay_style.display, Display::Flex);
+    }
+
+    // Simulate clicking the Hamburger button to return to Landing
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<HamburgerButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Hamburger button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+
+    // Run updates to process button clicks and state exit/enter transitions
+    app.update();
+    app.update();
+    app.update();
+
+    // Verify state transitioned back to Landing
+    {
+        let screen_state = app.world().resource::<State<ClientScreenState>>();
+        assert_eq!(*screen_state.get(), ClientScreenState::Landing);
+    }
+}
+

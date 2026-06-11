@@ -64,3 +64,37 @@ impl Default for CurrentHole {
     }
 }
 
+#[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum ClientScreenState {
+    #[default]
+    Landing,
+    Gameplay,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LandingScreenNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct GameplayScreenNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SoloPracticeButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct VsBotsButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OnlineMultiplayerButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StatsButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ViewRulesButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SettingsButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LandingStatusTextNode;
+

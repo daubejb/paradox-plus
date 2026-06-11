@@ -83,8 +83,18 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_ui_node_hierarchy` (verifying grid alignments).
       - `test_wager_card_selection_interaction` (verifying UI actions dispatch `ClientActionRequest` events).
 
-### Iteration 7: Telemetry Pipeline & Handicap Index Scorer
+### [x] Iteration 7: Game Selection Landing Page (Completed 2026-06-11)
 *   **Branch**: `feat/7-analytics-handicap`
+*   **Objectives**:
+    - Implement a responsive dark-green mobile-optimized landing screen spawner in `crates/client/src/ui/layout/landing.rs` loading branding assets.
+    - Set up `ClientScreenState` managing state transition visibility to avoid per-frame Bevy/Taffy layout thrashing.
+    - Implement gameplay-exit returning to landing page and authoritatively resetting loopback server state on `ClientAction::LeaveRoom`.
+*   **Verification**:
+    - Integration tests in `crates/client/tests/ui_tests.rs`:
+      - `test_screen_state_transitions` (verifying state machine visibility display properties and click events).
+      - `test_board_rebuild_on_hole_change` (verifying rebuilds function under new states).
+
+### Iteration 8: Telemetry Pipeline & Handicap Index Scorer
 *   **Objectives**:
     - Implement lock-free telemetry channel pipeline in `crates/server/src/db/profile.rs` using `crossbeam_channel`.
     - Implement DNF penalty scorer ($\text{Par}_h + 6$) to prevent rage-quit exploits.
@@ -103,4 +113,6 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Systems Design Spec**: Drafted the [doc/06_SYSTEMS_DESIGN.md](file:///Users/jeff/Developer/paradox-plus/doc/06_SYSTEMS_DESIGN.md) document detailing discrete Bevy ECS coordinate representations, stack-allocated SlideTrackers, pre-allocated stack serialization, loops dampers, and cooperative async AI cancellation loops. Verified WASM target compatibility.
 - **Iteration 4 (Async AI & Polling):** Completed implementation of off-thread AI solver execution using Bevy's `AsyncComputeTaskPool` with zero-allocation inputs, non-blocking polling loops, turn timeout takeover, and cooperative cancellation. Addressed Rust orphan rules via `CourseTrackResource` wrapper, and successfully configured multithreading feature inside Bevy dependencies. All tests pass.
 - **Iteration 5 (Client Replication & Presenter):** Implemented client-side network polling and FSM replication with zero-heap frame loops. Built `FixedToFloatPlugin` translating fixed-point discrete positions into native float coordinates inside Bevy's `PostUpdate` phase, preserving read-only properties of gameplay-authoritative state. Handled WASM target constraints (Mutex-wrapped receivers, boxed heapless Vec buffers, and getrandom configuration flags) to ensure full compilation compatibility for `wasm32-unknown-unknown`. All tests pass.
+- **Iteration 7 (Game Selection Landing Page):** Implemented responsive dark-green mobile-optimized landing screen. Managed layout transitions on entering respective states to prevent Taffy layout recalculation overhead on every update. Handled game exit safely by resetting authoritative offline server state and returning client view to landing. All tests pass.
+
 

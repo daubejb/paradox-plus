@@ -97,6 +97,37 @@ pub fn local_offline_server_system(
         count += 1;
 
         if let Ok(action) = postcard::from_bytes::<ClientAction>(&raw_payload) {
+            if action == ClientAction::LeaveRoom {
+                *state = OfflineServerState::default();
+                
+                let mut player_positions = HVec::new();
+                player_positions.push(state.player_position).unwrap();
+                let mut player_scores = HVec::new();
+                player_scores.push(Scorecard {
+                    running_strokes: 0,
+                    total_strokes: 0,
+                    earned_cards: HVec::new(),
+                }).unwrap();
+
+                let update = ServerUpdate::StateSync {
+                    sequence: state.sequence,
+                    game_state: state.game_state,
+                    active_player_id: state.active_player_id,
+                    current_hole: state.current_hole,
+                    player_positions,
+                    player_scores,
+                    placed_wagers: HVec::new(),
+                };
+
+                send_buf.resize(65536, 0);
+                if let Ok(serialized) = postcard::to_slice(&update, &mut *send_buf) {
+                    let len = serialized.len();
+                    let bytes = send_buf[..len].to_vec();
+                    let _ = channels.update_tx.send(bytes);
+                }
+                continue;
+            }
+
             let updates = handlers::handle_action(&mut state, &action, &course);
             for update in updates {
                 send_buf.resize(65536, 0);
