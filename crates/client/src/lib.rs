@@ -1,6 +1,8 @@
 pub mod network;
 pub mod replication;
 pub mod presenter;
+pub mod ui;
+
 
 pub fn init_client_environment() {
     #[cfg(target_arch = "wasm32")]

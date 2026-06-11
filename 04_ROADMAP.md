@@ -73,7 +73,7 @@ This document catalogs the active milestones, development backlog iterations, an
     - WASM target compilation verification:
       - `RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo check -p client --target wasm32-unknown-unknown` verifying WebAssembly compatibility.
 
-### Iteration 6: Responsive UI Layouts & Standings HUD
+### [x] Iteration 6: Responsive UI Layouts & Standings HUD (Completed 2026-06-11)
 *   **Branch**: `feat/6-client-ui-layouts`
 *   **Objectives**:
     - Build grid/flexbox screen spawner in `crates/client/src/ui/layout/mod.rs` using `bevy_ui` + Taffy.

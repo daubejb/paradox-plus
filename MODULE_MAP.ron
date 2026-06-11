@@ -16,7 +16,17 @@ Sitemap(
         File(path: "src/presenter/components.rs", description: "Visual ball slide offset components"),
         File(path: "src/presenter/helpers.rs", description: "Spatial projection helpers using checked fixed-point math"),
         File(path: "src/presenter/systems.rs", description: "Visual PostUpdate coordinate translation systems"),
+        File(path: "src/ui/mod.rs", description: "UI layout plugin definition"),
+        File(path: "src/ui/components.rs", description: "UI marker components"),
+        File(path: "src/ui/layout/mod.rs", description: "UI root layout and section routing"),
+        File(path: "src/ui/layout/top_hud.rs", description: "UI top HUD layout"),
+        File(path: "src/ui/layout/board.rs", description: "UI board container layout"),
+        File(path: "src/ui/layout/bottom_bar.rs", description: "UI bottom bar controls layout"),
+        File(path: "src/ui/systems/mod.rs", description: "UI systems re-exports"),
+        File(path: "src/ui/systems/hover.rs", description: "UI button hover scaling animations"),
+        File(path: "src/ui/systems/interactions.rs", description: "UI click interactions and network action triggers"),
         File(path: "tests/replication_tests.rs", description: "Integration tests for FSM replication and presenter interpolation"),
+        File(path: "tests/ui_tests.rs", description: "UI headless hierarchy and click validation tests"),
       ]
     ),
     Crate(
@@ -59,6 +69,9 @@ Sitemap(
         File(path: "src/terrain/resolution/bunker.rs", description: "Sand bunker escape odd/even checks"),
         File(path: "src/terrain/resolution/green.rs", description: "Automatic putting stroke penalty calculation"),
         File(path: "src/terrain/resolution/standard.rs", description: "Fairway, Rough, Water, and OB reset landing checks"),
+        File(path: "src/terrain/presets/mod.rs", description: "Presets module router"),
+        File(path: "src/terrain/presets/green.rs", description: "Green course 18 holes data presets"),
+        File(path: "src/terrain/presets/blue.rs", description: "Blue course 18 holes data presets"),
         File(path: "src/fsm/mod.rs", description: "Exposes the shared FSM validator modules"),
         File(path: "src/fsm/transitions.rs", description: "Authoritative state transition resolution mapping"),
         File(path: "src/fsm/rules.rs", description: "State-action gating and active player validator rules"),
@@ -85,5 +98,6 @@ Sitemap(
     Doc(path: "doc/adr/0003-mdp-state-index-simplification.md", description: "ADR 0003: MDP State Index Simplification"),
     Doc(path: "doc/adr/0004-course-track-newtype-resource.md", description: "ADR 0004: Course Track Newtype Resource"),
     Doc(path: "doc/adr/0005-wasm-getrandom-backend.md", description: "ADR 0005: WASM build target getrandom backend configuration"),
+    Doc(path: "doc/adr/0006-course-presets.md", description: "ADR 0006: Course Presets in Shared Protocol Crate"),
   ]
 )
