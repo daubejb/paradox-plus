@@ -39,5 +39,6 @@ Sitemap(
     Doc(path: "doc/PARADOX_GAME.md", description: "Game rules and AI bot specifications"),
     Doc(path: "doc/CREATOR_SETUP_AND_PROCESS.md", description: "Developer workspace processes"),
     Doc(path: "doc/testing_strategy.md", description: "Testing strategy for client, server, and protocol"),
+    Doc(path: "doc/06_SYSTEMS_DESIGN.md", description: "Bevy ECS data models, systems, events, and plugins layout"),
   ]
 )
