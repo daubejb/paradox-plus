@@ -317,103 +317,23 @@ To choose between rolling 1 or 2 dice, the engine queries the expected values $E
 
 ## 🌐 6. Multiplayer Synchronization & Match Length
 
-Multiplayer matches utilize a sequenced event replication model to prevent state conflicts and ensure deterministic state convergence.
+Paradox Plus supports two distinct runtime environments: **Offline Local Play** (single-player against local bots) and **Online Multiplayer** (server-authoritative match session over QUIC/UDP).
 
 ### Match Length & Sudden Death
 * **Match Length:** A standard match consists of exactly **18 holes**.
 * **Stroke Limit:** There is **no stroke limit** per hole; play continues until the green is reached.
 * **Tie-Breaker:** If multiple players finish the 18 holes with the same lowest total stroke score, they enter **Sudden Death**. Tied players play one extra hole to determine the winner. If still tied, subsequent extra holes are played until a single winner is determined.
 
-### Shared State Data Model
-The synchronized room session encapsulates the following properties:
-* **Session Attributes**: Room code, host player ID, current hole index, active player index, current status (Lobby, Playing, Completed).
-* **Sync Attributes**: Sequence number (incremented sequentially on state mutations to drop stale incoming network snapshots), indicators for draft phase/banana choice state.
-* **Match Inventory**: List of player objects tracking individual positions, directions, total stroke card tallies, connectivity status, and earned wager card inventories.
-* **Placed Tokens**: Location list mapping placed token cards on the track, including owner ID, card type, and player trigger history.
+### Offline Local Play (Client-Side Simulation)
+* **Single-Device Execution**: The entire game FSM, physics, and card rules are executed locally within the client app's main loop using the shared `paradox_core` logic.
+* **Local Bot Execution**: The client triggers the AI MDP solver off-thread using Bevy's `AsyncComputeTaskPool` and applies the computed action outputs directly to the local game state. No network sockets or serialization overhead are used.
 
-### Event Queue & Sequence Synchronization
-* **Sequence Ordering:** Incoming snapshots with sequence numbers less than or equal to the processed sequence are discarded. If a sequence gap is detected, a full state reconciliation is requested from the host.
-* **Write Lock Guard:** Updates require active turn authority:
-  * Only the active player is authorized to broadcast dice roll and movement outcomes.
-  * Only the designated player in the draft cycle is authorized to broadcast token placement updates.
-  * Out-of-turn write actions are rejected.
-* **AI Bot Host Ownership:** The host executes all AI bot turns and broadcasts the resulting state updates. If the host disconnects, the host status migrates to the next connected player with the lowest ID.
-
-### 🛡️ Authoritative Host Migration Protocol
-If the host disconnects during a transition window (e.g. after broadcasting a roll state but before resolving movement), the game coordinator suspends execution and triggers host migration.
-
-#### 1. Authoritative State Reconstruction
-* The newly promoted host (the active client with the lowest player ID) is the **sole authority** for state reconstruction. Peer-to-peer state negotiation is forbidden to prevent injection of forged game states.
-* **Client Input Buffering:** Clients continuously buffer their unacknowledged inputs for up to `120` frames (approx. 2 seconds at 60 FPS).
-* **Handshake Phase:** Upon promotion, the new host requests handshakes from all clients. Each client submits its `MigrationHandshake` containing its buffered inputs.
-* **Validation & Fast-Forward:** The new host executes a strict input validation check for every frame in the buffer (checking for duplicate sequence IDs, velocity range boundaries, and card ownership) and performs a fast-forward authoritative execution starting from the last verified server tick. Client-side computed state values are rejected.
-* **Input Lock on Timeout:** If migration exceeds 120 frames, the clients immediately lock user inputs and render a `MigrationOverlay` UI block until the handshake reconciles.
-
-#### 2. Type-Safe Serialization Schemas
-All migration payloads are serialized/deserialized using `Postcard` and compile-time verified structs in the shared `protocol` crate:
-
-```rust
-// Spec for protocol/src/migration.rs
-use serde::{Serialize, Deserialize};
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct ClientInputFrame {
-    pub tick: u32,
-    pub input_data: Vec<u8>, // Postcard-serialized player action payload
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct MigrationHandshake {
-    pub current_term: u64,
-    pub last_acknowledged_tick: u32,
-    pub buffered_inputs: Vec<ClientInputFrame>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
-pub struct MigrationStatePayload {
-    pub state_tick: u64,
-    pub serialized_world_state: Vec<u8>, // Postcard-serialized authoritative world state
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ValidationError {
-    DuplicateInput,
-    InvalidVelocity,
-    UnownedCardActivation,
-}
-```
-
-
----
-
-## 📂 7. Future Architectural File Layout
-
-To ensure absolute compliance with the **300-Line Limit** for Rust source files, the project's logic and UI layouts are distributed across the following modular file structure:
-
-### 1. `protocol` (Shared Crate)
-*   `src/lib.rs` (Crate boundary re-exports and shared enums)
-*   `src/migration.rs` (Host migration Postcard serialization structs and validation types)
-*   `src/physics.rs` (Stack-allocated `SlideTracker` cycle detection and clamping)
-
-### 2. `server` (Authoritative Game Server)
-*   `src/main.rs` (Socket bootstrapper and core loop orchestrator)
-*   `src/physics/validation.rs` (InputValidator and physics boundary checks)
-*   `src/ai/mdp_state.rs` (1D cell discretization and state vectors)
-
-*   `src/ai/mdp_solver/mod.rs` (AI computation scheduler and async pool manager)
-*   `src/ai/mdp_solver/transitions.rs` (Stochastic transition matrix modeling)
-*   `src/ai/mdp_solver/iteration.rs` (Pure mathematical Bellman update sweeps)
-*   `src/ai/mdp_solver/rewards.rs` (Wager-aware and terrain-specific utility matrices)
-*   `src/ai/systems.rs` (Bevy ECS game loop wrappers and event dispatchers)
-
-### 3. `client` (WASM Game Client)
-*   `src/main.rs` (Bevy UI plugin and canvas bootstrapper)
-*   `src/ui/mod.rs` (UI state controllers)
-*   `src/ui/layout/mod.rs` (Styling property constants and node spawners)
-*   `src/ui/layout/turn_order.rs` (Bevy native node structures for player order and AIO)
-*   `src/ui/layout/wager.rs` (Bevy native UI trees for card selection and drafting)
-
-
+### Online Multiplayer (Server-Authoritative Replication)
+* **Dedicated Server Authority**: A dedicated headless server hosts the match lobby. Clients make outbound QUIC connections to the server's room codes.
+* **Event Queue & Sequence Synchronization**:
+  * **Sequence Ordering**: Incoming snapshots with sequence numbers less than or equal to the processed sequence are discarded. If a sequence gap is detected, a full state reconciliation is requested.
+  * **Turn Gating**: Only the active player (determined by the server's FSM state) is authorized to request action execution (e.g. rolling dice or drafting card tokens). Out-of-turn actions are immediately rejected by the server.
+  * **AI Bot Server Ownership**: The server executes all AI bot turns using its own background task pools and broadcasts the updated world state to all connected clients.
 
 ---
 
