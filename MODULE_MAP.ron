@@ -14,11 +14,20 @@ Sitemap(
       purpose: "Authoritative Rust game server (Tokio + Quinn)",
       files: [
         File(path: "src/main.rs", description: "Boots Bevy headless app loop and spawns network listener task"),
-        File(path: "src/lib.rs", description: "Exposes systems of the server for binary and testing linking"),
+        File(path: "src/lib.rs", description: "Exposes systems and AI components of the server for linking"),
         File(path: "src/systems/mod.rs", description: "Re-exports FSM, validation, and broadcasting modules"),
         File(path: "src/systems/fsm.rs", description: "Authoritative server FSM Coordinator tick loop systems"),
         File(path: "src/systems/validation.rs", description: "Pre-allocated serialization buffers and non-blocking action reader"),
         File(path: "src/systems/broadcast.rs", description: "Zero-allocation state serialization and packet broadcasting"),
+        File(path: "src/ai/mod.rs", description: "Exposes AI modules and discrete states"),
+        File(path: "src/ai/mdp_state.rs", description: "Markov Decision Process state models and unique index encoders"),
+        File(path: "src/ai/mdp_solver/mod.rs", description: "AI bot Value Iteration solver submodules"),
+        File(path: "src/ai/mdp_solver/table.rs", description: "Stack-safe heap-allocated value iteration table"),
+        File(path: "src/ai/mdp_solver/transitions.rs", description: "Procedural transition probability generators"),
+        File(path: "src/ai/mdp_solver/physics.rs", description: "AI-specific procedural physics simulation step resolvers"),
+        File(path: "src/ai/mdp_solver/landing.rs", description: "AI-specific landing and simple wager card resolvers"),
+        File(path: "src/ai/mdp_solver/sweep.rs", description: "Gauss-Seidel value iteration sweeps with atomic cancellation"),
+        File(path: "tests/ai_tests.rs", description: "AI bot decision solver and loop damper integration tests"),
       ]
     ),
     Crate(
@@ -58,5 +67,6 @@ Sitemap(
     Doc(path: "doc/06_SYSTEMS_DESIGN.md", description: "Bevy ECS data models, systems, events, and plugins layout"),
     Doc(path: "doc/adr/0001-server-dual-target.md", description: "ADR 0001: Server Dual Library-Binary Target Layout"),
     Doc(path: "doc/adr/0002-graceful-quic-stubbing.md", description: "ADR 0002: Graceful QUIC/TLS Configuration Stubbing"),
+    Doc(path: "doc/adr/0003-mdp-state-index-simplification.md", description: "ADR 0003: MDP State Index Simplification"),
   ]
 )

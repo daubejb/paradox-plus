@@ -37,7 +37,7 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_packet_serialization_without_alloc` (verifying pre-allocated heap serialization).
       - `test_unauthorized_action_rejection` (verifying client actions sent out of turn are rejected).
 
-### Iteration 3: Procedural AI Bot Decision Solver
+### [x] Iteration 3: Procedural AI Bot Decision Solver (Completed 2026-06-11)
 *   **Branch**: `feat/3-ai-solver`
 *   **Objectives**:
     - Implement 1D discretized cell mapping in `crates/server/src/ai/mdp_state.rs`.

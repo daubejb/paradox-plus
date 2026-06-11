@@ -80,3 +80,9 @@ impl SlideTracker {
         Ok(())
     }
 }
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum MovementDirection {
+    Forward,
+    Reverse,
+}
