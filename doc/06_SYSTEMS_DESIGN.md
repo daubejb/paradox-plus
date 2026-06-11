@@ -58,13 +58,16 @@ use bevy::prelude::*;
 use heapless::Vec as HVec;
 use crate::messages::{MAX_PLAYERS, Scorecard};
 
+pub const MAX_HOLE_CELLS: usize = 256;
+
 /// Holds the configuration of the current active hole track.
+/// Utilizes heapless::Vec to ensure 100% zero-heap allocation inside physics loops.
 #[derive(Resource, Default, Clone, PartialEq, Eq)]
 pub struct ActiveCourseTrack {
     pub hole_index: u8,
     pub par: u8,
     pub total_cells: u32,
-    pub cells: Vec<TerrainType>, // Sized per-hole layout, loaded at transitions
+    pub cells: heapless::Vec<TerrainType, MAX_HOLE_CELLS>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -91,6 +94,58 @@ pub struct NetworkClientConnection {
     pub connection_id: u64,
     pub out_sender: tokio::sync::mpsc::Sender<Vec<u8>>,
 }
+
+### C. Stack-Allocated Physics Structures
+
+To avoid heap allocations and memory fragmentation within the hot physics tick, cell visits during slides are recorded on a stack-allocated tracker. To prevent out-of-bounds panics, fields are private, and coordinate changes use checked fixed-point arithmetic (`I32F32`).
+
+```rust
+use fixed::types::I32F32;
+use crates::protocol::physics::MAX_SLIDES;
+
+#[derive(Debug, Clone, Copy)]
+pub struct SlideTracker {
+    visited_cells: [Option<usize>; MAX_SLIDES],
+    slide_count: usize,
+}
+
+impl SlideTracker {
+    pub fn new() -> Self {
+        Self {
+            visited_cells: [None; MAX_SLIDES],
+            slide_count: 0,
+        }
+    }
+
+    pub fn slide_count(&self) -> usize {
+        self.slide_count
+    }
+
+    /// Safely records cell visits using bounded array access to prevent panic overflows.
+    pub fn record_and_check_cycle(&mut self, cell_index: usize) -> Result<(), SlideError> {
+        if self.slide_count >= MAX_SLIDES {
+            return Err(SlideError::LimitExceeded);
+        }
+        let limit = self.slide_count.min(MAX_SLIDES);
+        for i in 0..limit {
+            if let Some(visited) = self.visited_cells[i] {
+                if visited == cell_index {
+                    return Err(SlideError::CycleDetected);
+                }
+            }
+        }
+        self.visited_cells[self.slide_count] = Some(cell_index);
+        self.slide_count += 1;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SlideError {
+    CycleDetected,
+    LimitExceeded,
+}
+```
 ```
 
 ---
@@ -216,17 +271,27 @@ To construct premium and highly responsive layouts:
 
 ## 🤖 5. Off-Thread AI Solver Scheduling
 
-To avoid blocking the main server or client threads, MDP solver sweeps execute off-thread.
+To avoid blocking the main server or client threads, MDP solver sweeps execute off-thread using Bevy's `AsyncComputeTaskPool`. 
+
+### A. Bounded State Epochs & Task Spawning
+Validation states are bounded using `heapless::Vec` to comply with the zero-heap allocation guideline:
 
 ```rust
 use bevy::prelude::*;
 use bevy::tasks::{AsyncComputeTaskPool, Task};
-use crates::protocol::physics::StructuralEpoch;
+use heapless::Vec as HVec;
+use crates::messages::MAX_PLAYERS;
 
-/// Component holding the task handle.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct StructuralEpoch {
+    pub player_positions: HVec<u32, MAX_PLAYERS>,
+    pub epoch_id: u32,
+}
+
+/// Component holding the async policy task handle.
 #[derive(Component)]
 pub struct ActiveMdpSolverTask {
-    pub task: Task<Option<Vec<u8>>>,
+    pub task: Task<Option<HVec<u8, 1024>>>,
     pub structural_epoch: StructuralEpoch, // Epoch at solver trigger
 }
 
@@ -240,7 +305,6 @@ pub fn trigger_ai_solver_system(
     for bot_entity in active_bot_query.iter() {
         let epoch_snapshot = structural_epoch.clone();
         
-        // Schedule Bellman sweep sweeps asynchronously
         let task = thread_pool.spawn(async move {
             run_bellman_sweeps(epoch_snapshot)
         });
@@ -253,7 +317,67 @@ pub fn trigger_ai_solver_system(
 }
 ```
 
-* **Staleness verification**: A Bevy system checks active tasks for completion. If the task is finished, it compares `task.structural_epoch` with the current `StructuralEpoch`. If matched, the policy is unpacked and executed. If mismatched, the result is discarded and the greedy fallback is triggered.
+### B. Procedural Transition Matrix Modeling
+To avoid a $O(|\mathcal{S}|^2)$ static transition matrix allocation (which requires ~16 GB of memory for standard courses), transitions are evaluated **procedurally on-the-fly** during sweeps:
+
+```rust
+use fixed::types::I32F32;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MdpState {
+    pub cell_index: u16,
+    pub direction: MovementDirection,
+    pub origin_cell: u16,
+}
+
+/// Computes local transition outcomes procedurally, maintaining O(1) memory overhead.
+pub fn get_transitions(
+    state: MdpState,
+    dice_count: u8,
+    course: &ActiveCourseTrack,
+    out_transitions: &mut [(MdpState, I32F32); 12] // Max outcomes for 2D6
+) -> usize {
+    let mut count = 0;
+    let outcomes = if dice_count == 1 { 6 } else { 11 };
+    
+    for roll in 1..=outcomes {
+        let prob = calculate_dice_probability(roll, dice_count);
+        let target_state = resolve_physics_step(state, roll, course);
+        out_transitions[count] = (target_state, prob);
+        count += 1;
+    }
+    count
+}
+```
+
+### C. Non-Blocking Task Polling
+Tasks are checked inside the `PreUpdate` phase. The polling system uses a non-blocking check to retrieve policies only when completed, avoiding main thread stutter:
+
+```rust
+use futures_lite::future;
+
+pub fn poll_ai_solver_system(
+    mut commands: Commands,
+    mut tasks: Query<(Entity, &mut ActiveMdpSolverTask)>,
+    current_epoch: Res<StructuralEpoch>,
+) {
+    for (entity, mut solver_task) in tasks.iter_mut() {
+        // Query task completion non-blockingly
+        if let Some(result) = future::block_on(future::poll_once(&mut solver_task.task)) {
+            commands.entity(entity).remove::<ActiveMdpSolverTask>();
+            
+            if solver_task.structural_epoch == *current_epoch {
+                if let Some(policy) = result {
+                    apply_computed_policy(entity, policy);
+                }
+            } else {
+                info!("AI policy discarded: Structural state mutated mid-calculation.");
+                trigger_greedy_fallback(entity);
+            }
+        }
+    }
+}
+```
 
 ---
 
