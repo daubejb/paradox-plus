@@ -56,5 +56,7 @@ Sitemap(
     Doc(path: "doc/CREATOR_SETUP_AND_PROCESS.md", description: "Developer workspace processes"),
     Doc(path: "doc/testing_strategy.md", description: "Testing strategy for client, server, and protocol"),
     Doc(path: "doc/06_SYSTEMS_DESIGN.md", description: "Bevy ECS data models, systems, events, and plugins layout"),
+    Doc(path: "doc/adr/0001-server-dual-target.md", description: "ADR 0001: Server Dual Library-Binary Target Layout"),
+    Doc(path: "doc/adr/0002-graceful-quic-stubbing.md", description: "ADR 0002: Graceful QUIC/TLS Configuration Stubbing"),
   ]
 )
