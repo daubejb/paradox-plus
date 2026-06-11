@@ -26,7 +26,7 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_slide_tracker_cycle_detection` (verifying +2 penalty on loop).
       - `test_terrain_strategies` (verifying Bunker odd/even escape, OB resets, and Water hazard scoring).
 
-### Iteration 2: Authoritative Server & Event Tick Loop
+### [x] Iteration 2: Authoritative Server & Event Tick Loop (Completed 2026-06-11)
 *   **Branch**: `feat/2-server-coordinator`
 *   **Objectives**:
     - Boot Quinn UDP QUIC socket listener and WebTransport fallbacks in `crates/server/src/main.rs`.

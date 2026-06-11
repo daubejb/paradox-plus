@@ -13,7 +13,12 @@ Sitemap(
       path: "crates/server/",
       purpose: "Authoritative Rust game server (Tokio + Quinn)",
       files: [
-        File(path: "src/main.rs", description: "Boots QUIC socket and loops game FSM"),
+        File(path: "src/main.rs", description: "Boots Bevy headless app loop and spawns network listener task"),
+        File(path: "src/lib.rs", description: "Exposes systems of the server for binary and testing linking"),
+        File(path: "src/systems/mod.rs", description: "Re-exports FSM, validation, and broadcasting modules"),
+        File(path: "src/systems/fsm.rs", description: "Authoritative server FSM Coordinator tick loop systems"),
+        File(path: "src/systems/validation.rs", description: "Pre-allocated serialization buffers and non-blocking action reader"),
+        File(path: "src/systems/broadcast.rs", description: "Zero-allocation state serialization and packet broadcasting"),
       ]
     ),
     Crate(
