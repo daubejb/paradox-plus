@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bevy = { version = "0.14.0", default-features = false, features = ["bevy_state", "bevy_ui", "bevy_text", "bevy_asset"] }
+bevy = { version = "0.14.0", default-features = false, features = ["bevy_state", "bevy_ui", "bevy_text", "bevy_asset", "bevy_winit", "bevy_core_pipeline", "bevy_sprite"] }
 fixed = { version = "1.23.0", features = ["serde"] }
 heapless = { version = "0.8.0", features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
