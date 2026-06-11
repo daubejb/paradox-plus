@@ -22,15 +22,20 @@ fn main() {
         ..default()
     }));
 
-    // Setup dummy/mock network channels to prevent systems from panicking
-    let (_server_tx, client_rx) = std::sync::mpsc::channel::<Vec<u8>>();
-    let (client_tx, _server_rx) = std::sync::mpsc::channel::<Vec<u8>>();
+    // Setup loopback network channels for local offline mode
+    let (action_tx, action_rx) = std::sync::mpsc::channel::<Vec<u8>>();
+    let (update_tx, update_rx) = std::sync::mpsc::channel::<Vec<u8>>();
 
     app.insert_resource(ServerUpdateReceiver {
-        receiver: std::sync::Mutex::new(client_rx),
+        receiver: std::sync::Mutex::new(update_rx),
     });
     app.insert_resource(ClientActionSender {
-        sender: client_tx,
+        sender: action_tx,
+    });
+    app.insert_resource(client::ui::systems::simulation::LocalServerChannels {
+        action_rx: std::sync::Mutex::new(action_rx),
+        update_tx,
+        send_buf: std::sync::Mutex::new(Vec::with_capacity(65536)),
     });
 
     // Register our game plugins

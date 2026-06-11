@@ -12,4 +12,5 @@ postcard = { workspace = true }
 console_error_panic_hook = { version = "0.1.7" }
 getrandom = { version = "0.3", features = ["wasm_js"] }
 uuid = { version = "1.12", features = ["js"] }
+rand = "0.8.5"
 protocol = { path = "../protocol" }

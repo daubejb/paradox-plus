@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::ui::components::{TopHudNode, HamburgerButtonNode, HoleInfoNode, PlayerInfoNode};
+use crate::ui::components::{
+    TopHudNode, HamburgerButtonNode, HoleInfoNode, PlayerInfoNode,
+    HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode
+};
 
 pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>) {
     parent.spawn((
@@ -57,21 +60,38 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
             },
             HoleInfoNode,
         )).with_children(|info| {
-            info.spawn(TextBundle::from_section(
-                "HOLE 7",
-                TextStyle {
-                    font_size: 18.0,
-                    color: Color::WHITE,
-                    ..default()
-                },
+            info.spawn((
+                TextBundle::from_section(
+                    "HOLE 7",
+                    TextStyle {
+                        font_size: 18.0,
+                        color: Color::WHITE,
+                        ..default()
+                    },
+                ),
+                HoleTitleTextNode,
             ));
-            info.spawn(TextBundle::from_section(
-                "PAR 5 • 27 SPACES",
-                TextStyle {
-                    font_size: 12.0,
-                    color: Color::srgb(0.7, 0.9, 0.8),
-                    ..default()
-                },
+            info.spawn((
+                TextBundle::from_section(
+                    "PAR 5 • 27 SPACES",
+                    TextStyle {
+                        font_size: 12.0,
+                        color: Color::srgb(0.7, 0.9, 0.8),
+                        ..default()
+                    },
+                ),
+                HoleStatsTextNode,
+            ));
+            info.spawn((
+                TextBundle::from_section(
+                    "Press roll to start...",
+                    TextStyle {
+                        font_size: 10.0,
+                        color: Color::srgb(0.9, 0.8, 0.3),
+                        ..default()
+                    },
+                ),
+                RollStatusTextNode,
             ));
         });
 
@@ -118,13 +138,16 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
                         ..default()
                     },
                 ));
-                text_stack.spawn(TextBundle::from_section(
-                    "🏆 -2",
-                    TextStyle {
-                        font_size: 12.0,
-                        color: Color::srgb(0.9, 0.8, 0.2),
-                        ..default()
-                    },
+                text_stack.spawn((
+                    TextBundle::from_section(
+                        "🏆 0 strokes",
+                        TextStyle {
+                            font_size: 12.0,
+                            color: Color::srgb(0.9, 0.8, 0.2),
+                            ..default()
+                        },
+                    ),
+                    PlayerScoreTextNode,
                 ));
             });
         });

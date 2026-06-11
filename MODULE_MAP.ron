@@ -25,6 +25,15 @@ Sitemap(
         File(path: "src/ui/systems/mod.rs", description: "UI systems re-exports"),
         File(path: "src/ui/systems/hover.rs", description: "UI button hover scaling animations"),
         File(path: "src/ui/systems/interactions.rs", description: "UI click interactions and network action triggers"),
+        File(path: "src/ui/systems/simulation/mod.rs", description: "UI offline simulation system router"),
+        File(path: "src/ui/systems/simulation/loopback/mod.rs", description: "Offline simulation loopback system"),
+        File(path: "src/ui/systems/simulation/loopback/state.rs", description: "Offline simulation server state"),
+        File(path: "src/ui/systems/simulation/loopback/handlers/mod.rs", description: "Offline simulation action router"),
+        File(path: "src/ui/systems/simulation/loopback/handlers/dice.rs", description: "Offline simulation dice and putting logic"),
+        File(path: "src/ui/systems/simulation/loopback/handlers/terrain.rs", description: "Offline simulation bunker/terrain resolutions"),
+        File(path: "src/ui/systems/simulation/loopback/handlers/movement.rs", description: "Offline simulation overshoot/undershoot movement"),
+        File(path: "src/ui/systems/simulation/board.rs", description: "Offline simulation visual active cell highlight"),
+        File(path: "src/ui/systems/simulation/render.rs", description: "Offline simulation HUD text updates"),
         File(path: "tests/replication_tests.rs", description: "Integration tests for FSM replication and presenter interpolation"),
         File(path: "tests/ui_tests.rs", description: "UI headless hierarchy and click validation tests"),
       ]
@@ -99,5 +108,6 @@ Sitemap(
     Doc(path: "doc/adr/0004-course-track-newtype-resource.md", description: "ADR 0004: Course Track Newtype Resource"),
     Doc(path: "doc/adr/0005-wasm-getrandom-backend.md", description: "ADR 0005: WASM build target getrandom backend configuration"),
     Doc(path: "doc/adr/0006-course-presets.md", description: "ADR 0006: Course Presets in Shared Protocol Crate"),
+    Doc(path: "doc/adr/0007-client-offline-simulation.md", description: "ADR 0007: Client-Side Offline Loopback Server Simulation"),
   ]
 )

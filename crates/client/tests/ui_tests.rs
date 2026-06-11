@@ -9,6 +9,23 @@ use protocol::messages::ClientAction;
 
 fn setup_headless_ui_app() -> App {
     let mut app = App::new();
+
+    // Setup loopback mock channels for tests to prevent panics
+    let (action_tx, action_rx) = std::sync::mpsc::channel::<Vec<u8>>();
+    let (update_tx, update_rx) = std::sync::mpsc::channel::<Vec<u8>>();
+
+    app.insert_resource(client::network::ServerUpdateReceiver {
+        receiver: std::sync::Mutex::new(update_rx),
+    });
+    app.insert_resource(client::network::ClientActionSender {
+        sender: action_tx,
+    });
+    app.insert_resource(client::ui::systems::simulation::LocalServerChannels {
+        action_rx: std::sync::Mutex::new(action_rx),
+        update_tx,
+        send_buf: std::sync::Mutex::new(Vec::with_capacity(65536)),
+    });
+
     app.add_plugins((
         MinimalPlugins,
         AssetPlugin::default(),
@@ -16,6 +33,7 @@ fn setup_headless_ui_app() -> App {
     ));
 
     app.add_event::<ClientActionRequest>();
+    app.add_event::<client::network::ServerUpdateEvent>();
 
     // Spawn a dummy window to ensure layout computations and updates run
     app.world_mut().spawn(Window {
@@ -84,4 +102,43 @@ fn test_wager_card_selection_interaction() {
     } else {
         panic!("Sent event was not a ClientAction::DraftCard variant");
     }
+}
+
+#[test]
+fn test_loopback_payloads_serialization_compliance() {
+    use postcard::{to_slice, from_bytes};
+    use protocol::messages::{ClientAction, ServerUpdate, GameStateEnum, Scorecard};
+    use heapless::Vec as HVec;
+
+    // Test ClientAction
+    let action = ClientAction::RollDice { dice_count: 2 };
+    let mut buf1 = [0u8; 1024];
+    let serialized_action = to_slice(&action, &mut buf1).expect("Failed to serialize ClientAction");
+    let deserialized_action: ClientAction = from_bytes(serialized_action).expect("Failed to deserialize ClientAction");
+    assert_eq!(action, deserialized_action);
+
+    // Test ServerUpdate
+    let mut player_positions = HVec::new();
+    player_positions.push(10).unwrap();
+    let mut player_scores = HVec::new();
+    player_scores.push(Scorecard {
+        running_strokes: 3,
+        total_strokes: 3,
+        earned_cards: HVec::new(),
+    }).unwrap();
+
+    let update = ServerUpdate::StateSync {
+        sequence: 123,
+        game_state: GameStateEnum::AwaitingTurn,
+        active_player_id: 999,
+        current_hole: 1,
+        player_positions,
+        player_scores,
+        placed_wagers: HVec::new(),
+    };
+
+    let mut buf2 = [0u8; 1024];
+    let serialized_update = to_slice(&update, &mut buf2).expect("Failed to serialize ServerUpdate");
+    let deserialized_update: ServerUpdate = from_bytes(serialized_update).expect("Failed to deserialize ServerUpdate");
+    assert_eq!(update, deserialized_update);
 }

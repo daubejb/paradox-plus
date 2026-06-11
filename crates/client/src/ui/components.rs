@@ -34,3 +34,24 @@ pub struct WagerPanelNode;
 pub struct WagerCardButtonNode {
     pub card_type: u8,
 }
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct HoleTitleTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct HoleStatsTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PlayerScoreTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RollStatusTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BoardCellNode {
+    pub index: u32,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PlayerTokenMarker;
+
