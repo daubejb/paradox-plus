@@ -6,6 +6,17 @@ Sitemap(
       purpose: "Bevy application client (Metal/Vulkan/WASM)",
       files: [
         File(path: "src/main.rs", description: "Client entrypoint launching Bevy app"),
+        File(path: "src/lib.rs", description: "Client library interface and WASM hooks"),
+        File(path: "src/network/mod.rs", description: "Re-exports network events, resources, and plugins"),
+        File(path: "src/network/events.rs", description: "Client replication network events (ServerUpdateEvent, ClientActionRequest)"),
+        File(path: "src/network/resources.rs", description: "Heap-allocated serialization buffer and std::sync::mpsc channel resources"),
+        File(path: "src/network/systems.rs", description: "Zero-panic update pollers and stack-safe action transmitters"),
+        File(path: "src/replication.rs", description: "Client-side game state enum and replication sync systems"),
+        File(path: "src/presenter/mod.rs", description: "Visual coordinate translation FixedToFloatPlugin"),
+        File(path: "src/presenter/components.rs", description: "Visual ball slide offset components"),
+        File(path: "src/presenter/helpers.rs", description: "Spatial projection helpers using checked fixed-point math"),
+        File(path: "src/presenter/systems.rs", description: "Visual PostUpdate coordinate translation systems"),
+        File(path: "tests/replication_tests.rs", description: "Integration tests for FSM replication and presenter interpolation"),
       ]
     ),
     Crate(
@@ -73,5 +84,6 @@ Sitemap(
     Doc(path: "doc/adr/0002-graceful-quic-stubbing.md", description: "ADR 0002: Graceful QUIC/TLS Configuration Stubbing"),
     Doc(path: "doc/adr/0003-mdp-state-index-simplification.md", description: "ADR 0003: MDP State Index Simplification"),
     Doc(path: "doc/adr/0004-course-track-newtype-resource.md", description: "ADR 0004: Course Track Newtype Resource"),
+    Doc(path: "doc/adr/0005-wasm-getrandom-backend.md", description: "ADR 0005: WASM build target getrandom backend configuration"),
   ]
 )

@@ -61,7 +61,7 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_stale_task_cancellation` (verifying tasks are immediately dropped if epoch changes).
       - `test_turn_timeout_takeover` (verifying timeout takeover is triggered after 15 seconds).
 
-### Iteration 5: Network Client Replication & Visual Presenter
+### [x] Iteration 5: Network Client Replication & Visual Presenter (Completed 2026-06-11)
 *   **Branch**: `feat/5-client-replication`
 *   **Objectives**:
     - Boot client network poller thread and translate inbound packets to Bevy FSM state transitions.
@@ -70,6 +70,8 @@ This document catalogs the active milestones, development backlog iterations, an
     - Mock tests in `crates/client/tests/replication_tests.rs`:
       - `test_client_replication_sync` (verifying FSM replicates server).
       - `test_fixed_to_float_interpolation` (verifying smooth transform movements).
+    - WASM target compilation verification:
+      - `RUSTFLAGS='--cfg getrandom_backend="wasm_js"' cargo check -p client --target wasm32-unknown-unknown` verifying WebAssembly compatibility.
 
 ### Iteration 6: Responsive UI Layouts & Standings HUD
 *   **Branch**: `feat/6-client-ui-layouts`
@@ -100,3 +102,5 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Creator Onboarding:** Integrated the [CREATOR_SETUP_AND_PROCESS.md](file:///Users/jeff/Developer/paradox-plus/doc/CREATOR_SETUP_AND_PROCESS.md) guide, documenting the 12-step operational state machine, automated plan critique tool, testing targets, and core engine guardrails tailored for the Paradox Plus Bevy codebase.
 - **Systems Design Spec**: Drafted the [doc/06_SYSTEMS_DESIGN.md](file:///Users/jeff/Developer/paradox-plus/doc/06_SYSTEMS_DESIGN.md) document detailing discrete Bevy ECS coordinate representations, stack-allocated SlideTrackers, pre-allocated stack serialization, loops dampers, and cooperative async AI cancellation loops. Verified WASM target compatibility.
 - **Iteration 4 (Async AI & Polling):** Completed implementation of off-thread AI solver execution using Bevy's `AsyncComputeTaskPool` with zero-allocation inputs, non-blocking polling loops, turn timeout takeover, and cooperative cancellation. Addressed Rust orphan rules via `CourseTrackResource` wrapper, and successfully configured multithreading feature inside Bevy dependencies. All tests pass.
+- **Iteration 5 (Client Replication & Presenter):** Implemented client-side network polling and FSM replication with zero-heap frame loops. Built `FixedToFloatPlugin` translating fixed-point discrete positions into native float coordinates inside Bevy's `PostUpdate` phase, preserving read-only properties of gameplay-authoritative state. Handled WASM target constraints (Mutex-wrapped receivers, boxed heapless Vec buffers, and getrandom configuration flags) to ensure full compilation compatibility for `wasm32-unknown-unknown`. All tests pass.
+
