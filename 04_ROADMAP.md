@@ -14,4 +14,5 @@
 
 ## Retrospective Log
 - **Remediation Phase:** Successfully critiqued and updated [PARADOX_GAME.md](file:///Users/jeff/Developer/paradox-plus/PARADOX_GAME.md) to address five core vulnerabilities (turn order asymmetry, physics sliding cycle deadlocks, non-Markovian MDP state spaces, terrain stroke ambiguities, and host migration race conditions). All architectural designs comply with Bevy native UI layouts, authoritative server validation, Postcard type-safe serialization, and the 300-line source file limit.
+- **Creator Onboarding:** Integrated the [CREATOR_SETUP_AND_PROCESS.md](file:///Users/jeff/Developer/paradox-plus/CREATOR_SETUP_AND_PROCESS.md) guide, documenting the 12-step operational state machine, automated plan critique tool, testing targets, and core engine guardrails tailored for the Paradox Plus Bevy codebase.
 

@@ -36,7 +36,7 @@ You must strictly execute all development tasks according to the following 12-st
 
 ## The Iteration Protocol
 1. **Discover:** Read `/04_ROADMAP.md` at the root to check active milestone tasks.
-2. **Select:** Inspect `/MODULE_MAP.md` to verify where target crates, helper modules, and structs reside (to prevent re-implementing existing structures).
+2. **Select:** Inspect `/MODULE_MAP.ron` to verify where target crates, helper modules, and structs reside (to prevent re-implementing existing structures).
 3. **Map:** Verify which subsystem (`client`, `server`, `protocol`) is impacted by the change.
 4. **Audit Tasks:** Read the subsystem's specific `TASK.md` (or the brain's `task.md`) for outstanding checklists.
 5. **Plan:** Write a formal "Implementation Plan" as a markdown artifact containing discrete checkbox tasks.
@@ -45,7 +45,7 @@ You must strictly execute all development tasks according to the following 12-st
 8. **Verify:** Run `cargo test` and verify compile targets (`wasm32` and native).
 9. **Post-Audit:** Verify code changes against Section 2 Core Hygiene Guardrails.
 10. **Record:** If any system-level design pivots occurred, write an Architecture Decision Record under `/doc/adr/`.
-11. **Sync Logs & Sitemap:** Check off completed items in `/04_ROADMAP.md` and the subsystem checklists. Update `/MODULE_MAP.md` to document added, modified, or deleted files. Log a brief retrospective.
+11. **Sync Logs & Sitemap:** Check off completed items in `/04_ROADMAP.md` and the subsystem checklists. Update `/MODULE_MAP.ron` to document added, modified, or deleted files. Log a brief retrospective.
 12. **Ship:** Execute Git commit with descriptive messages, push upstream, and exit.
 
 ## Section 2: Core Hygiene Guardrails
@@ -55,34 +55,42 @@ You must strictly execute all development tasks according to the following 12-st
 * **Type-Safe Serialization:** All network payloads must be serialized/deserialized using `Postcard` and compile-time verified structs/enums shared in the `protocol` crate.
 EOF
 
-# 6. Populate MODULE_MAP.md
-cat << 'EOF' > MODULE_MAP.md
-# Paradox Plus Workspace Sitemap
-
-This sitemap registers the files, modules, and boundaries in the repository. To prevent code duplication and domain leakage, all agents must inspect this sitemap during **Step 2 (Select)** and update it during **Step 11 (Sync)**.
-
----
-
-## 🗺️ Crate Topology
-
-| Crate | Directory | Purpose | Detail Level |
-| :--- | :--- | :--- | :--- |
-| `client` | `crates/client/` | Bevy application client, input listeners, UI panels, Metal/Vulkan blitter. | High |
-| `server` | `crates/server/` | Authoritative Rust game server, room-code matching, state validation. | High |
-| `protocol` | `crates/protocol/` | Shared serialization structs, enums, network payload packages (Postcard). | High |
-
----
-
-## 📦 Module Indices
-
-### 1. `protocol` (Shared Network Types)
-* `src/lib.rs`: Exports shared messages, actions, and structs.
-
-### 2. `client` (Bevy Game Interface)
-* `src/main.rs`: Entry point. Launches Bevy App, setups Winit and event loops.
-
-### 3. `server` (Authoritative Game Server)
-* `src/main.rs`: Entry point. Boots Quinn QUIC socket listener.
+# 6. Populate MODULE_MAP.ron
+cat << 'EOF' > MODULE_MAP.ron
+Sitemap(
+  crates: [
+    Crate(
+      name: "client",
+      path: "crates/client/",
+      purpose: "Bevy application client (Metal/Vulkan/WASM)",
+      files: [
+        File(path: "src/main.rs", description: "Client entrypoint launching Bevy app"),
+      ]
+    ),
+    Crate(
+      name: "server",
+      path: "crates/server/",
+      purpose: "Authoritative Rust game server (Tokio + Quinn)",
+      files: [
+        File(path: "src/main.rs", description: "Boots QUIC socket and loops game FSM"),
+      ]
+    ),
+    Crate(
+      name: "protocol",
+      path: "crates/protocol/",
+      purpose: "Shared Postcard network types and serialization schemas",
+      files: [
+        File(path: "src/lib.rs", description: "Re-exports shared messages and actions"),
+      ]
+    )
+  ],
+  documentation: [
+    Doc(path: "README.md", description: "Repository quickstart guide"),
+    Doc(path: "doc/05_SYSTEMS_ARCHITECTURE.md", description: "Core systems designs and protocols"),
+    Doc(path: "doc/PARADOX_GAME.md", description: "Game rules and AI bot specifications"),
+    Doc(path: "doc/CREATOR_SETUP_AND_PROCESS.md", description: "Developer workspace processes"),
+  ]
+)
 EOF
 
 # 7. Create skeleton process files

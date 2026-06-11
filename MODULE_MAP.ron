@@ -1,0 +1,43 @@
+Sitemap(
+  crates: [
+    Crate(
+      name: "client",
+      path: "crates/client/",
+      purpose: "Bevy application client (Metal/Vulkan/WASM)",
+      files: [
+        File(path: "src/main.rs", description: "Client entrypoint launching Bevy app"),
+      ]
+    ),
+    Crate(
+      name: "server",
+      path: "crates/server/",
+      purpose: "Authoritative Rust game server (Tokio + Quinn)",
+      files: [
+        File(path: "src/main.rs", description: "Boots QUIC socket and loops game FSM"),
+      ]
+    ),
+    Crate(
+      name: "protocol",
+      path: "crates/protocol/",
+      purpose: "Shared Postcard network types and serialization schemas",
+      files: [
+        File(path: "src/lib.rs", description: "Re-exports shared messages and actions"),
+      ]
+    ),
+    Crate(
+      name: "critique",
+      path: "tools/critique/",
+      purpose: "Standalone CLI tool to review and critique implementation plans against codebase rules",
+      files: [
+        File(path: "src/main.rs", description: "Boots critique orchestrator CLI"),
+      ]
+    )
+  ],
+  documentation: [
+    Doc(path: "README.md", description: "Repository quickstart guide"),
+    Doc(path: "doc/05_SYSTEMS_ARCHITECTURE.md", description: "Core systems designs and protocols"),
+    Doc(path: "doc/PARADOX_GAME.md", description: "Game rules and AI bot specifications"),
+    Doc(path: "doc/CREATOR_SETUP_AND_PROCESS.md", description: "Developer workspace processes"),
+    Doc(path: "doc/testing_strategy.md", description: "Testing strategy for client, server, and protocol"),
+  ]
+)
