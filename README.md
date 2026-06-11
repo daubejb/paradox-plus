@@ -47,8 +47,10 @@ cargo test
 
 ## 📖 Key Documentation Links
 
-*   [PARADOX_GAME.md](file:///Users/jeff/Developer/paradox-plus/PARADOX_GAME.md) - The core system specs, math models, and physics algorithms.
-*   [testing_strategy.md](file:///Users/jeff/Developer/paradox-plus/doc/testing_strategy.md) - The multi-layered test specs (unit, AI, integration, and Bevy UI).
+*   [doc/PARADOX_GAME.md](file:///Users/jeff/Developer/paradox-plus/doc/PARADOX_GAME.md) - The core system specs, math models, and physics algorithms.
+*   [doc/05_SYSTEMS_ARCHITECTURE.md](file:///Users/jeff/Developer/paradox-plus/doc/05_SYSTEMS_ARCHITECTURE.md) - Core system design, data serialization schemas, and network topologies.
+*   [doc/CREATOR_SETUP_AND_PROCESS.md](file:///Users/jeff/Developer/paradox-plus/doc/CREATOR_SETUP_AND_PROCESS.md) - Creator onboarding setup, operational state machine, and core guardrails.
+*   [doc/testing_strategy.md](file:///Users/jeff/Developer/paradox-plus/doc/testing_strategy.md) - The multi-layered test specs (unit, AI, integration, and Bevy UI).
 *   [04_ROADMAP.md](file:///Users/jeff/Developer/paradox-plus/04_ROADMAP.md) - Active milestones, milestones progress, and retrospects.
 *   [MODULE_MAP.md](file:///Users/jeff/Developer/paradox-plus/MODULE_MAP.md) - Site sitemap registering file boundaries to prevent domain leakage.
 *   [AGENTS.md](file:///Users/jeff/Developer/paradox-plus/AGENTS.md) - Repository development rules and core hygiene guardrails.

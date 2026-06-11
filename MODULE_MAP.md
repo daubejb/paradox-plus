@@ -31,6 +31,9 @@ This sitemap registers the files, modules, and boundaries in the repository. To 
 
 ### 5. `doc` (Architectural Documentation)
 * `doc/testing_strategy.md`: Multi-layered testing strategy (unit, regression, integration, headless Bevy UI).
+* `doc/CREATOR_SETUP_AND_PROCESS.md`: Creator onboarding setup, operational state machine, and core guardrails.
+* `doc/05_SYSTEMS_ARCHITECTURE.md`: Core system design, data serialization schemas, and network topologies.
+* `doc/PARADOX_GAME.md`: The core gameplay specs, FSM states, terrain strategies, and AI solver.
 * `README.md`: Entry-point repository overview, setup, and key documentation index.
 
 
