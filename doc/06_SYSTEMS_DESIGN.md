@@ -44,7 +44,7 @@ pub enum MovementDirection {
 pub struct WagerToken {
     pub card_type: u8,            // 0: Guardian Shield, 1: Banana Slip, 2: Golden Die
     pub owner_id: u64,
-    pub cell_index: u32,
+    pub cell_index: u16,          // Aligned with Ball::cell_index (u16)
 }
 ```
 
@@ -307,6 +307,7 @@ To construct premium and highly responsive layouts:
 
 To avoid blocking the main server or client threads, MDP solver sweeps execute off-thread using Bevy's `AsyncComputeTaskPool`. 
 
+```rust
 use bevy::prelude::*;
 use bevy::tasks::{AsyncComputeTaskPool, Task};
 use heapless::Vec as HVec;
@@ -364,12 +365,9 @@ pub struct MdpState {
 }
 
 impl MdpState {
-    /// Bounded addition to prevent panic crashes.
+    /// Bounded addition to prevent loop calculation overflow.
     pub fn record_triggered_wager(&mut self, cell: u16) {
-        if self.triggered_wagers.push(cell).is_err() {
-            // Log warning and drop additional triggers to avoid panics
-            warn!("Wager trigger limit reached (max 4). Dropping trigger execution.");
-        }
+        let _ = self.triggered_wagers.push(cell); // Bypasses logging to prevent console flooding during sweeps
     }
 }
 
