@@ -13,30 +13,43 @@ pub fn handle_roll_dice(
     let current_pos = state.player_position;
     let current_terrain = course.cells.get(current_pos as usize).copied().unwrap_or(TerrainType::Fairway);
 
-    // Enforce 1-die limit in Rough (without own active Shield) or Bunker
+    // Enforce 1-die limit in Rough (without own active Shield)
     let has_own_shield = state.placed_wagers.iter().any(|w| {
         w.cell_index == current_pos
             && w.card_type == CardType::Shield
             && w.owner_id == state.active_player_id
     });
-    if current_terrain == TerrainType::Bunker || (current_terrain == TerrainType::Rough && !has_own_shield) {
+    if current_terrain == TerrainType::Rough && !has_own_shield {
         dice_count = 1;
     }
 
     // 1. Bunker escape logic
     let roll_sum = if current_terrain == TerrainType::Bunker {
-        // Odd rolls fail escape, even rolls escape
-        let r = dice::roll_single_die();
-        updates.push(ServerUpdate::DiceRollOutcome {
-            roll_values: {
-                let mut v = HVec::new();
-                v.push(r).unwrap();
-                v
-            }
-        });
+        let sum = if dice_count == 2 {
+            let (d1, d2) = dice::roll_two_dice();
+            updates.push(ServerUpdate::DiceRollOutcome {
+                roll_values: {
+                    let mut v = HVec::new();
+                    v.push(d1).unwrap();
+                    v.push(d2).unwrap();
+                    v
+                }
+            });
+            d1 + d2
+        } else {
+            let r = dice::roll_single_die();
+            updates.push(ServerUpdate::DiceRollOutcome {
+                roll_values: {
+                    let mut v = HVec::new();
+                    v.push(r).unwrap();
+                    v
+                }
+            });
+            r
+        };
         
-        let _res = terrain::resolve_bunker(current_pos as u16, current_pos as u16, r);
-        if r % 2 != 0 {
+        let _res = terrain::resolve_bunker(current_pos as u16, current_pos as u16, sum);
+        if sum % 2 != 0 {
             // Escape failed
             updates.push(ServerUpdate::AlertTriggered {
                 alert_message: heapless::String::try_from("Bunker escape failed! Odd roll.").unwrap(),
@@ -64,7 +77,7 @@ pub fn handle_roll_dice(
             });
             return updates;
         }
-        r
+        sum
     } else {
         // Normal rolling
         let roll_sum = if dice_count == 2 {

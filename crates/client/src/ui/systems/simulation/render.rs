@@ -78,7 +78,7 @@ pub fn update_ui_elements_system(
                                 && w.card_type == CardType::Shield
                                 && w.owner_id == *active_player_id
                         });
-                        if terrain == TerrainType::Bunker || (terrain == TerrainType::Rough && !has_own_shield) {
+                        if terrain == TerrainType::Rough && !has_own_shield {
                             roll_two_display = Display::None;
                         }
                     }

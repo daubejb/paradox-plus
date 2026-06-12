@@ -162,6 +162,8 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Track Proportions and Width Expansion:** Expanded overall track width horizontally by increasing the portrait aspect ratio target to `0.85` and flattened the top and bottom straight walls by decreasing the corner radius coefficient to `0.22`. Increased track lane cell width (tile thickness) to `96.0`. Enforced safe minimum bounds to guarantee positive inner corner radius and prevent layout coordinate underflow. All tests passed.
 - **Track Corner Radius Optimization:** Increased `RADIUS_COEFFICIENT` to `0.28` in `geometry.rs`, making the corner caps noticeably rounder and increasing the minimum inner corner radius to a smooth `27.6` units. Documented constant scopes for client-side rendering boundaries to clarify authoritative validation separation. All tests passed.
 - **Curved Racetrack Corners:** Subdivided the outer/inner cell boundary coords and cell tile backgrounds into 8 subdivisions. Consolidated border curves into unified ribbon meshes (one outer, one inner) to reduce Bevy entity overhead from 640 down to 2. Extracted geometry calculations to `borders.rs` to maintain compliance with the 300-line budget limit. All tests pass.
+- **Bunker Dice Choice Correction:** Fixed the Sand Bunker escape check to allow rolling 1 or 2 dice (per PARADOX_GAME.md rules). If 2 dice are chosen, the sum of the dice is checked (even sum escapes, odd fails). Rough terrain remains clamped to 1-die limit unless shielded. Added integration tests to verify both choices and limits. All tests pass.
+
 
 
 

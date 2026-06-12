@@ -807,4 +807,62 @@ fn test_loopback_rough_dice_limit() {
     }
 }
 
+#[test]
+fn test_loopback_bunker_dice_choices() {
+    use protocol::terrain::{TerrainType, presets::get_course_preset};
+    use client::ui::systems::simulation::loopback::handlers::handle_action;
+
+    let course = get_course_preset("green", 2).unwrap(); // Hole 2 has a Sand Bunker at index 12
+    assert_eq!(course.cells[12], TerrainType::Bunker);
+
+    // 1. Roll 2 dice in Sand Bunker
+    {
+        let mut state = OfflineServerState::default();
+        state.player_position = 12; // Start in Bunker
+        state.active_player_id = 1234;
+        state.is_initialized = true;
+
+        let updates = handle_action(
+            &mut state,
+            &ClientAction::RollDice { dice_count: 2 },
+            &course,
+        );
+
+        // Verify that 2 dice were rolled
+        let mut found_outcome = false;
+        for update in &updates {
+            if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                assert_eq!(roll_values.len(), 2, "Bunker must support rolling 2 dice");
+                found_outcome = true;
+            }
+        }
+        assert!(found_outcome, "Expected a DiceRollOutcome update");
+    }
+
+    // 2. Roll 1 die in Sand Bunker
+    {
+        let mut state = OfflineServerState::default();
+        state.player_position = 12; // Start in Bunker
+        state.active_player_id = 1234;
+        state.is_initialized = true;
+
+        let updates = handle_action(
+            &mut state,
+            &ClientAction::RollDice { dice_count: 1 },
+            &course,
+        );
+
+        // Verify that exactly 1 die was rolled
+        let mut found_outcome = false;
+        for update in &updates {
+            if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                assert_eq!(roll_values.len(), 1, "Bunker must support rolling 1 die");
+                found_outcome = true;
+            }
+        }
+        assert!(found_outcome, "Expected a DiceRollOutcome update");
+    }
+}
+
+
 
