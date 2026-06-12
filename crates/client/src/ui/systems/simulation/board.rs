@@ -76,22 +76,25 @@ pub fn rebuild_board_on_hole_change_system(
 
         // Rebuild new board cells matching current_hole.0 config
         commands.entity(container_entity).with_children(|board| {
+            // 1. Spawn Outer Stadium Track Container
             board.spawn(NodeBundle {
                 style: Style {
-                    width: Val::Px(450.0),
-                    height: Val::Px(580.0),
+                    width: Val::Px(460.0),
+                    height: Val::Px(590.0),
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Auto),
+                    border: UiRect::all(Val::Px(1.5)),
                     ..default()
                 },
+                background_color: Color::srgb(0.04, 0.08, 0.06).into(), // Dark green track background
+                border_color: Color::srgb(0.2, 0.5, 0.35).into(), // Light green outer line
+                border_radius: BorderRadius::all(Val::Px(230.0)),
                 ..default()
-            }).with_children(|relative_board| {
+            }).with_children(|outer_board| {
                 if let Some(preset) = protocol::terrain::presets::get_course_preset(&settings.course, current_hole.0) {
+                    // 2. Spawn the cells first (they will render under the inner mask)
                     for (idx, &cell_type) in preset.cells.iter().enumerate() {
-                        if idx >= crate::ui::layout::board::BOARD_TILE_POSITIONS.len() {
-                            break;
-                        }
-                        let (left_pct, top_pct) = crate::ui::layout::board::BOARD_TILE_POSITIONS[idx];
+                        let (left_pct, top_pct, angle_rad) = crate::ui::layout::board::get_stadium_tile_transform(idx);
 
                         let name = match cell_type {
                             protocol::terrain::TerrainType::TeeBox => "TEE".to_string(),
@@ -113,25 +116,27 @@ pub fn rebuild_board_on_hole_change_system(
                             protocol::terrain::TerrainType::Green(_) => Color::srgb(0.1, 0.5, 0.2),
                         };
 
-                        relative_board.spawn((
+                        outer_board.spawn((
                             ButtonBundle {
                                 style: Style {
-                                    width: Val::Px(crate::ui::layout::board::TILE_SIZE),
-                                    height: Val::Px(crate::ui::layout::board::TILE_SIZE),
+                                    width: Val::Px(crate::ui::layout::board::TILE_WIDTH),
+                                    height: Val::Px(crate::ui::layout::board::TILE_HEIGHT),
                                     position_type: PositionType::Absolute,
-                                    left: Val::Percent(left_pct - crate::ui::layout::board::TILE_OFFSET_X),
-                                    top: Val::Percent(top_pct - crate::ui::layout::board::TILE_OFFSET_Y),
+                                    left: Val::Percent(left_pct - crate::ui::layout::board::TILE_HALF_WIDTH_PCT),
+                                    top: Val::Percent(top_pct - crate::ui::layout::board::TILE_HALF_HEIGHT_PCT),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
-                                    border: UiRect::all(Val::Px(1.0)),
+                                    border: UiRect::right(Val::Px(1.5)),
                                     ..default()
                                 },
                                 background_color: color.into(),
-                                border_color: Color::srgb(0.05, 0.15, 0.10).into(),
+                                border_color: Color::srgba(0.04, 0.08, 0.06, 0.4).into(), // Separator line
+                                transform: Transform::from_rotation(Quat::from_rotation_z(angle_rad)),
                                 ..default()
                             },
                             BoardCellNode { index: idx as u32 },
                         )).with_children(|cell| {
+                            // Centered cell name text
                             cell.spawn(TextBundle::from_section(
                                 name,
                                 TextStyle {
@@ -192,6 +197,23 @@ pub fn rebuild_board_on_hole_change_system(
                         });
                     }
                 }
+
+                // 3. Spawn the Inner Stadium Mask Node (on top of the cells)
+                outer_board.spawn(NodeBundle {
+                    style: Style {
+                        width: Val::Px(340.0),
+                        height: Val::Px(470.0),
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(58.5), // Center it: (460 - 340)/2 - border = 60 - 1.5 = 58.5px
+                        top: Val::Px(58.5),
+                        border: UiRect::all(Val::Px(1.5)),
+                        ..default()
+                    },
+                    background_color: Color::srgb(0.08, 0.22, 0.14).into(), // Rich forest green theme to mask inner cell corners
+                    border_color: Color::srgb(0.2, 0.5, 0.35).into(), // Inner border line
+                    border_radius: BorderRadius::all(Val::Px(170.0)),
+                    ..default()
+                });
             });
         });
     }
