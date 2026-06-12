@@ -39,6 +39,20 @@ pub fn rebuild_board_on_hole_change_system(
     // Spawn cell tiles along capsule track trajectory
     if let Some(preset) = get_course_preset(&settings.course, current_hole.0) {
         let total_cells = preset.cells.len();
+
+        let is_portrait = size.y > size.x;
+        let (w, h) = if is_portrait {
+            (size.y, size.x)
+        } else {
+            (size.x, size.y)
+        };
+        let r = (h * 0.33).min(w * 0.20).max(40.0);
+        let l = (w * 0.50).max(60.0);
+        let perimeter = 2.0 * l + 2.0 * std::f32::consts::PI * r;
+        let spacing = perimeter / total_cells as f32;
+        let tile_length = spacing * 1.35;
+        let tile_thickness = 72.0;
+
         commands.entity(root_entity).with_children(|board| {
             for (idx, &cell_type) in preset.cells.iter().enumerate() {
                 let layout = calculate_capsule_layout(idx, total_cells, size);
@@ -67,7 +81,7 @@ pub fn rebuild_board_on_hole_change_system(
                     SpriteBundle {
                         sprite: Sprite {
                             color,
-                            custom_size: Some(Vec2::splat(42.0)),
+                            custom_size: Some(Vec2::new(tile_thickness, tile_length)),
                             ..default()
                         },
                         transform: Transform::from_translation(layout.position.extend(0.0))
@@ -99,7 +113,7 @@ pub fn rebuild_board_on_hole_change_system(
                                 custom_size: Some(Vec2::splat(8.0)),
                                 ..default()
                             },
-                            transform: Transform::from_translation(Vec3::new(10.0, -10.0, 2.0)),
+                            transform: Transform::from_translation(Vec3::new(20.0, -10.0, 2.0)),
                             visibility: Visibility::Hidden,
                             ..default()
                         },
@@ -114,7 +128,7 @@ pub fn rebuild_board_on_hole_change_system(
                                 custom_size: Some(Vec2::splat(12.0)),
                                 ..default()
                             },
-                            transform: Transform::from_translation(Vec3::new(-10.0, 10.0, 2.0)),
+                            transform: Transform::from_translation(Vec3::new(-20.0, 10.0, 2.0)),
                             visibility: Visibility::Hidden,
                             ..default()
                         },
