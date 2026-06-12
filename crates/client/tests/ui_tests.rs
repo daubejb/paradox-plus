@@ -39,6 +39,8 @@ fn setup_headless_ui_app() -> App {
     ));
 
     app.init_asset::<Image>();
+    app.init_asset::<Mesh>();
+    app.init_asset::<ColorMaterial>();
     app.add_event::<ReceivedCharacter>();
 
 

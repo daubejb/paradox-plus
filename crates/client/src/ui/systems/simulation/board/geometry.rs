@@ -79,3 +79,61 @@ pub fn calculate_capsule_layout(
         rotation_angle,
     }
 }
+
+use bevy::render::mesh::{Indices, PrimitiveTopology};
+use bevy::render::render_asset::RenderAssetUsages;
+
+pub fn generate_quad_tile_mesh(
+    c_out_start: Vec2,
+    c_out_end: Vec2,
+    c_in_end: Vec2,
+    c_in_start: Vec2,
+) -> Mesh {
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::default());
+
+    // Standard Bevy CCW winding order:
+    // 0: Bottom-Left (Outer Start)
+    // 1: Bottom-Right (Outer End)
+    // 2: Top-Right (Inner End)
+    // 3: Top-Left (Inner Start)
+    let positions = vec![
+        [c_out_start.x, c_out_start.y, 0.0],
+        [c_out_end.x, c_out_end.y, 0.0],
+        [c_in_end.x, c_in_end.y, 0.0],
+        [c_in_start.x, c_in_start.y, 0.0],
+    ];
+
+    let normals = vec![[0.0, 0.0, 1.0]; 4];
+    let uvs = vec![[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]];
+
+    // Triangles: 0->1->2 and 0->2->3
+    let indices = Indices::U32(vec![0, 1, 2, 0, 2, 3]);
+
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    mesh.insert_indices(indices);
+    mesh
+}
+
+pub fn calculate_line_segment_transform_and_size(
+    start: Vec2,
+    end: Vec2,
+    thickness: f32,
+    z_order: f32,
+) -> (Transform, Vec2) {
+    let dir = end - start;
+    let length = dir.length();
+    let angle = dir.y.atan2(dir.x);
+    let midpoint = (start + end) / 2.0;
+
+    let transform = Transform {
+        translation: midpoint.extend(z_order),
+        rotation: Quat::from_rotation_z(angle),
+        ..Default::default()
+    };
+
+    let size = Vec2::new(length, thickness);
+    (transform, size)
+}
+
