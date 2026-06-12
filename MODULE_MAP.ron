@@ -45,6 +45,7 @@ Sitemap(
         File(path: "src/ui/systems/simulation/board/geometry.rs", description: "Parametric capsule layout track math calculations"),
         File(path: "src/ui/systems/simulation/board/camera.rs", description: "2D viewport camera setup and sync systems"),
         File(path: "src/ui/systems/simulation/board/spawning.rs", description: "Game board cell tile sprites spawner system"),
+        File(path: "src/ui/systems/simulation/board/borders.rs", description: "Procedural geometry generation for curved cell tiles and outer/inner border ribbon meshes"),
         File(path: "src/ui/systems/simulation/board/style.rs", description: "Game board cell terrain colors and text contrast style rules"),
         File(path: "src/ui/systems/simulation/board/tokens.rs", description: "Player and wager cell token visual synchronization"),
         File(path: "src/ui/systems/simulation/board/interaction.rs", description: "Screen-to-world raycasted cursor click drafting input system"),

@@ -161,6 +161,8 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Track Proportions Optimization:** Optimized track geometry dimensions to occupy the maximum width and height of the board viewport while maintaining a strict `0.68` portrait aspect ratio stadium layout. Encapsulated bounds calculations in a structured `TrackGeometry` model, scaling the corner radius by width and adding defensive clamping to prevent divide-by-zeros or negative segment parameters. Ensured Tee Box (index 0) remains fixed on the left vertical segment under all viewport scales. All tests passed.
 - **Track Proportions and Width Expansion:** Expanded overall track width horizontally by increasing the portrait aspect ratio target to `0.85` and flattened the top and bottom straight walls by decreasing the corner radius coefficient to `0.22`. Increased track lane cell width (tile thickness) to `96.0`. Enforced safe minimum bounds to guarantee positive inner corner radius and prevent layout coordinate underflow. All tests passed.
 - **Track Corner Radius Optimization:** Increased `RADIUS_COEFFICIENT` to `0.28` in `geometry.rs`, making the corner caps noticeably rounder and increasing the minimum inner corner radius to a smooth `27.6` units. Documented constant scopes for client-side rendering boundaries to clarify authoritative validation separation. All tests passed.
+- **Curved Racetrack Corners:** Subdivided the outer/inner cell boundary coords and cell tile backgrounds into 8 subdivisions. Consolidated border curves into unified ribbon meshes (one outer, one inner) to reduce Bevy entity overhead from 640 down to 2. Extracted geometry calculations to `borders.rs` to maintain compliance with the 300-line budget limit. All tests pass.
+
 
 
 
