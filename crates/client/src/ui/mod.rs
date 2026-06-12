@@ -12,6 +12,7 @@ impl Plugin for ClientUiPlugin {
         app.init_resource::<systems::simulation::OfflineServerState>()
             .init_resource::<components::GameSettings>()
             .init_resource::<components::SelectedWagerCard>()
+            .init_resource::<components::LeaderboardCompletedHolesScore>()
             .init_state::<ClientScreenState>()
             .add_systems(Startup, layout::spawn_ui_layout)
             .add_systems(

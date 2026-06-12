@@ -444,6 +444,7 @@ fn test_wager_card_qty_hud_rendering() {
 fn test_leaderboard_ticker_hierarchy_and_updates() {
     use protocol::messages::{ServerUpdate, GameStateEnum, Scorecard};
     use client::network::ServerUpdateEvent;
+    use client::ui::components::LeaderboardCompletedHolesScore;
 
     let mut app = setup_headless_ui_app();
     app.update();
@@ -455,16 +456,16 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
     let mut track_query = app.world_mut().query_filtered::<Entity, With<LeaderboardTickerTrackNode>>();
     assert!(track_query.get_single(app.world()).is_ok(), "Leaderboard Ticker Track not spawned");
 
-    // Send a mock StateSync to trigger update system
-    let sync_update = ServerUpdate::StateSync {
+    // 1. Send Hole 1 AwaitingTurn: Ticker should reset to Even Par "E" (relative score 0) for both players.
+    let sync_update_h1 = ServerUpdate::StateSync {
         sequence: 1,
         game_state: GameStateEnum::AwaitingTurn,
         active_player_id: 1234,
         current_hole: 1,
         player_positions: {
             let mut v = heapless::Vec::new();
-            v.push(10).unwrap();
-            v.push(8).unwrap();
+            v.push(0).unwrap();
+            v.push(0).unwrap();
             v
         },
         player_scores: {
@@ -484,8 +485,88 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
         placed_wagers: heapless::Vec::new(),
     };
 
-    app.world_mut().send_event(ServerUpdateEvent(sync_update));
+    app.world_mut().send_event(ServerUpdateEvent(sync_update_h1));
     app.update();
+
+    {
+        let completed_scores = app.world().resource::<LeaderboardCompletedHolesScore>();
+        assert_eq!(completed_scores.player_par_scores, vec![0, 0], "Hole 1 running strokes should not affect par scores yet");
+    }
+
+    // 2. Send Hole 1 Completed: Ticker should update par scores relative to Hole 1's par (par is 6).
+    let sync_update_h1_completed = ServerUpdate::StateSync {
+        sequence: 2,
+        game_state: GameStateEnum::HoleCompleted,
+        active_player_id: 1234,
+        current_hole: 1,
+        player_positions: {
+            let mut v = heapless::Vec::new();
+            v.push(26).unwrap();
+            v.push(26).unwrap();
+            v
+        },
+        player_scores: {
+            let mut v = heapless::Vec::new();
+            v.push(Scorecard {
+                running_strokes: 7, // 7 strokes: +1 over par
+                total_strokes: 7,
+                earned_cards: heapless::Vec::new(),
+            }).unwrap();
+            v.push(Scorecard {
+                running_strokes: 5, // 5 strokes: -1 under par
+                total_strokes: 5,
+                earned_cards: heapless::Vec::new(),
+            }).unwrap();
+            v
+        },
+        placed_wagers: heapless::Vec::new(),
+    };
+
+    app.world_mut().send_event(ServerUpdateEvent(sync_update_h1_completed));
+    app.update();
+
+    {
+        let completed_scores = app.world().resource::<LeaderboardCompletedHolesScore>();
+        assert_eq!(completed_scores.player_par_scores, vec![1, -1], "Completed Hole 1 should update par scores to +1 and -1");
+        assert_eq!(completed_scores.last_completed_hole, 1);
+    }
+
+    // 3. Transition to Hole 2 AwaitingTurn with new running strokes: ticker should keep the completed Hole 1 scores.
+    let sync_update_h2 = ServerUpdate::StateSync {
+        sequence: 3,
+        game_state: GameStateEnum::AwaitingTurn,
+        active_player_id: 1234,
+        current_hole: 2,
+        player_positions: {
+            let mut v = heapless::Vec::new();
+            v.push(0).unwrap();
+            v.push(0).unwrap();
+            v
+        },
+        player_scores: {
+            let mut v = heapless::Vec::new();
+            v.push(Scorecard {
+                running_strokes: 2, // 2 strokes on Hole 2 (should not affect completed score)
+                total_strokes: 9,
+                earned_cards: heapless::Vec::new(),
+            }).unwrap();
+            v.push(Scorecard {
+                running_strokes: 1, // 1 stroke on Hole 2 (should not affect completed score)
+                total_strokes: 6,
+                earned_cards: heapless::Vec::new(),
+            }).unwrap();
+            v
+        },
+        placed_wagers: heapless::Vec::new(),
+    };
+
+    app.world_mut().send_event(ServerUpdateEvent(sync_update_h2));
+    app.update();
+
+    {
+        let completed_scores = app.world().resource::<LeaderboardCompletedHolesScore>();
+        assert_eq!(completed_scores.player_par_scores, vec![1, -1], "Hole 2 running strokes should not modify the leaderboard yet");
+    }
 
     // Check that children were spawned inside the track node
     let track_entity = track_query.get_single(app.world()).unwrap();

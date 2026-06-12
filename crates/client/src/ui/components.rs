@@ -189,5 +189,11 @@ pub struct LeaderboardTickerTrackNode {
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ViewFullLeaderboardButtonNode;
 
+#[derive(Resource, Default, Debug, Clone)]
+pub struct LeaderboardCompletedHolesScore {
+    pub player_par_scores: Vec<i32>,
+    pub last_completed_hole: u8,
+}
+
 
 

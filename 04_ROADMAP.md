@@ -107,26 +107,23 @@ This document catalogs the active milestones, development backlog iterations, an
 ### [x] Iteration 9: Scrolling Ticker style Leaderboard (Completed 2026-06-12)
 *   **Objectives**:
     - Implement a scrolling ticker style leaderboard below the top menu/HUD.
-    - Display player ranks (with circle badges), names, and relative scores to par.
+    - Display player ranks (with circle badges), names, and scores relative to par updated only when a hole is completed (even par "E" before any completed holes).
     - Highlight active player with green pill background and outline.
     - Add horizontal auto-scrolling ticker behavior when track overflows container width.
     - Add a "View Full" button at the right.
 *   **Verification**:
     - Headless Bevy UI test in `crates/client/tests/ui_tests.rs`:
-      - `test_leaderboard_ticker_hierarchy_and_updates` (verifying container spawning, player entries sorting, and event-driven updates).
+      - `test_leaderboard_ticker_hierarchy_and_updates` (verifying container spawning, player entries sorting, par-relative completion score updates, and persistent scores during active play).
     - WASM target verification.
 
 ---
 
 ## 📈 Retrospective Log
 
-- **Remediation Phase:** Successfully critiqued and updated [PARADOX_GAME.md](file:///Users/jeff/Developer/paradox-plus/PARADOX_GAME.md) to address five core vulnerabilities (turn order asymmetry, physics sliding cycle deadlocks, non-Markovian MDP state spaces, terrain stroke ambiguities, and host migration race conditions). All architectural designs comply with Bevy native UI layouts, authoritative server validation, Postcard type-safe serialization, and the 300-line source file limit.
+- **Remediation Phase:** Successfully critiqued and updated [PARADOX_GAME.md](file:///Users/jeff/Developer/paradox-plus/doc/PARADOX_GAME.md) to address five core vulnerabilities (turn order asymmetry, physics sliding cycle deadlocks, non-Markovian MDP state spaces, terrain stroke ambiguities, and host migration race conditions). All architectural designs comply with Bevy native UI layouts, authoritative server validation, Postcard type-safe serialization, and the 300-line source file limit.
 - **Creator Onboarding:** Integrated the [CREATOR_SETUP_AND_PROCESS.md](file:///Users/jeff/Developer/paradox-plus/doc/CREATOR_SETUP_AND_PROCESS.md) guide, documenting the 12-step operational state machine, automated plan critique tool, testing targets, and core engine guardrails tailored for the Paradox Plus Bevy codebase.
 - **Systems Design Spec**: Drafted the [doc/06_SYSTEMS_DESIGN.md](file:///Users/jeff/Developer/paradox-plus/doc/06_SYSTEMS_DESIGN.md) document detailing discrete Bevy ECS coordinate representations, stack-allocated SlideTrackers, pre-allocated stack serialization, loops dampers, and cooperative async AI cancellation loops. Verified WASM target compatibility.
 - **Iteration 4 (Async AI & Polling):** Completed implementation of off-thread AI solver execution using Bevy's `AsyncComputeTaskPool` with zero-allocation inputs, non-blocking polling loops, turn timeout takeover, and cooperative cancellation. Addressed Rust orphan rules via `CourseTrackResource` wrapper, and successfully configured multithreading feature inside Bevy dependencies. All tests pass.
 - **Iteration 5 (Client Replication & Presenter):** Implemented client-side network polling and FSM replication with zero-heap frame loops. Built `FixedToFloatPlugin` translating fixed-point discrete positions into native float coordinates inside Bevy's `PostUpdate` phase, preserving read-only properties of gameplay-authoritative state. Handled WASM target constraints (Mutex-wrapped receivers, boxed heapless Vec buffers, and getrandom configuration flags) to ensure full compilation compatibility for `wasm32-unknown-unknown`. All tests pass.
 - **Iteration 7 (Game Selection Landing Page):** Implemented responsive dark-green mobile-optimized landing screen. Managed layout transitions on entering respective states to prevent Taffy layout recalculation overhead on every update. Handled game exit safely by resetting authoritative offline server state and returning client view to landing. All tests pass.
-- **Iteration 9 (Scrolling Ticker style Leaderboard):** Implemented a responsive scrolling ticker leaderboard showing player rank badges, names, and par relative scores. Highlighted the active player, and implemented a Bevy UI autoscroll track when content exceeds container width. All tests pass.
-
-
-
+- **Iteration 9 (Scrolling Ticker style Leaderboard):** Implemented a responsive scrolling ticker leaderboard showing player rank badges, names, and par relative scores updated only when holes are completed (Even Par "E" initially). Highlighted the active player, and implemented a Bevy UI autoscroll track when content exceeds container width. Extracted systems to `leaderboard.rs` to maintain strict compliance with the 300-line budget limit. All tests pass.
