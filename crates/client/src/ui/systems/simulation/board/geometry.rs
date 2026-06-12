@@ -12,9 +12,15 @@ pub fn calculate_capsule_layout(
     total_cells: usize,
     viewport_size: Vec2,
 ) -> CellLayout {
-    // Determine bounds and aspect ratio locks
-    let w = viewport_size.x;
-    let h = viewport_size.y;
+    // Check if orientation is portrait
+    let is_portrait = viewport_size.y > viewport_size.x;
+
+    // Swap width and height for calculations if in portrait mode
+    let (w, h) = if is_portrait {
+        (viewport_size.y, viewport_size.x)
+    } else {
+        (viewport_size.x, viewport_size.y)
+    };
 
     // Define racetrack dimensions: straight length l, semicircle radius r
     let r = (h * 0.33).min(w * 0.20).max(40.0);
@@ -58,7 +64,13 @@ pub fn calculate_capsule_layout(
 
     // Perpendicular outwards rotation
     let tangent_angle = tangent.y.atan2(tangent.x);
-    let rotation_angle = tangent_angle - std::f32::consts::FRAC_PI_2;
+    let mut rotation_angle = tangent_angle - std::f32::consts::FRAC_PI_2;
+
+    if is_portrait {
+        // Rotate positions and tile angles by 90 degrees counter-clockwise
+        pos = Vec2::new(-pos.y, pos.x);
+        rotation_angle += std::f32::consts::FRAC_PI_2;
+    }
 
     CellLayout {
         position: pos,

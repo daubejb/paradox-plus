@@ -11,7 +11,7 @@ use landing::spawn_landing_screen;
 use setup::spawn_setup_screen;
 
 pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(Camera2dBundle::default());
+    let ui_camera = commands.spawn(Camera2dBundle::default()).id();
 
     commands.spawn((
         NodeBundle {
@@ -27,6 +27,7 @@ pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         RootUiNode,
+        TargetCamera(ui_camera),
     )).with_children(|parent| {
         // 1. Spawn Landing Page Screen (visible by default)
         spawn_landing_screen(parent, &asset_server);
