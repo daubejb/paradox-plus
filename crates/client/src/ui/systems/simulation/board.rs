@@ -111,94 +111,82 @@ pub fn rebuild_board_on_hole_change_system(
                             protocol::terrain::TerrainType::Green(_) => Color::srgb(0.1, 0.5, 0.2),
                         };
 
-                        // Spawn absolute zero-size centering anchor node
-                        relative_board.spawn(NodeBundle {
-                            style: Style {
-                                position_type: PositionType::Absolute,
-                                left: Val::Percent(layout.left_pct),
-                                top: Val::Percent(layout.top_pct),
-                                width: Val::Px(0.0),
-                                height: Val::Px(0.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                ..default()
-                            },
-                            ..default()
-                        }).with_children(|anchor| {
-                            anchor.spawn((
-                                ButtonBundle {
-                                    style: Style {
-                                        width: Val::Px(crate::ui::layout::board::TILE_SIZE),
-                                        height: Val::Px(crate::ui::layout::board::TILE_SIZE),
-                                        justify_content: JustifyContent::Center,
-                                        align_items: AlignItems::Center,
-                                        border: UiRect::all(Val::Px(1.0)),
-                                        ..default()
-                                    },
-                                    background_color: color.into(),
-                                    border_color: Color::srgb(0.05, 0.15, 0.10).into(),
-                                    transform: Transform::from_rotation(Quat::from_rotation_z(layout.rotation_angle)),
+                        relative_board.spawn((
+                            ButtonBundle {
+                                style: Style {
+                                    width: Val::Px(crate::ui::layout::board::TILE_SIZE),
+                                    height: Val::Px(crate::ui::layout::board::TILE_SIZE),
+                                    position_type: PositionType::Absolute,
+                                    left: Val::Percent(layout.left_pct - 6.0),
+                                    top: Val::Percent(layout.top_pct - 4.6551724),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    border: UiRect::all(Val::Px(1.0)),
                                     ..default()
                                 },
-                                BoardCellNode { index: idx as u32 },
-                            )).with_children(|cell| {
-                                cell.spawn(TextBundle::from_section(
-                                    name,
+                                background_color: color.into(),
+                                border_color: Color::srgb(0.05, 0.15, 0.10).into(),
+                                transform: Transform::from_rotation(Quat::from_rotation_z(layout.rotation_angle)),
+                                ..default()
+                            },
+                            BoardCellNode { index: idx as u32 },
+                        )).with_children(|cell| {
+                            cell.spawn(TextBundle::from_section(
+                                name,
+                                TextStyle {
+                                    font_size: 9.0,
+                                    color: Color::WHITE,
+                                    ..default()
+                                },
+                            ));
+
+                            // Ball location indicator (bottom right)
+                            cell.spawn((
+                                NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(8.0),
+                                        height: Val::Px(8.0),
+                                        display: Display::None,
+                                        position_type: PositionType::Absolute,
+                                        bottom: Val::Px(2.0),
+                                        right: Val::Px(2.0),
+                                        ..default()
+                                    },
+                                    background_color: Color::srgb(0.95, 0.85, 0.1).into(),
+                                    border_radius: BorderRadius::all(Val::Px(4.0)),
+                                    ..default()
+                                },
+                                PlayerTokenMarker,
+                            ));
+
+                            // Wager token indicator (top left)
+                            cell.spawn((
+                                NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(12.0),
+                                        height: Val::Px(12.0),
+                                        display: Display::None,
+                                        position_type: PositionType::Absolute,
+                                        top: Val::Px(2.0),
+                                        left: Val::Px(2.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    background_color: Color::NONE.into(),
+                                    border_radius: BorderRadius::all(Val::Px(3.0)),
+                                    ..default()
+                                },
+                                WagerTokenMarker,
+                            )).with_children(|wager_indicator| {
+                                wager_indicator.spawn(TextBundle::from_section(
+                                    "",
                                     TextStyle {
-                                        font_size: 9.0,
+                                        font_size: 8.0,
                                         color: Color::WHITE,
                                         ..default()
                                     },
                                 ));
-
-                                // Ball location indicator (bottom right)
-                                cell.spawn((
-                                    NodeBundle {
-                                        style: Style {
-                                            width: Val::Px(8.0),
-                                            height: Val::Px(8.0),
-                                            display: Display::None,
-                                            position_type: PositionType::Absolute,
-                                            bottom: Val::Px(2.0),
-                                            right: Val::Px(2.0),
-                                            ..default()
-                                        },
-                                        background_color: Color::srgb(0.95, 0.85, 0.1).into(),
-                                        border_radius: BorderRadius::all(Val::Px(4.0)),
-                                        ..default()
-                                    },
-                                    PlayerTokenMarker,
-                                ));
-
-                                // Wager token indicator (top left)
-                                cell.spawn((
-                                    NodeBundle {
-                                        style: Style {
-                                            width: Val::Px(12.0),
-                                            height: Val::Px(12.0),
-                                            display: Display::None,
-                                            position_type: PositionType::Absolute,
-                                            top: Val::Px(2.0),
-                                            left: Val::Px(2.0),
-                                            justify_content: JustifyContent::Center,
-                                            align_items: AlignItems::Center,
-                                            ..default()
-                                        },
-                                        background_color: Color::NONE.into(),
-                                        border_radius: BorderRadius::all(Val::Px(3.0)),
-                                        ..default()
-                                    },
-                                    WagerTokenMarker,
-                                )).with_children(|wager_indicator| {
-                                    wager_indicator.spawn(TextBundle::from_section(
-                                        "",
-                                        TextStyle {
-                                            font_size: 8.0,
-                                            color: Color::WHITE,
-                                            ..default()
-                                        },
-                                    ));
-                                });
                             });
                         });
                     }
