@@ -47,17 +47,23 @@ pub fn handle_board_clicks_system(
         };
 
         if let Some(world_position) = world_position {
+            let mut closest_cell = None;
+            let mut min_dist = f32::MAX;
             for (global_transform, cell) in cell_query.iter() {
                 let cell_pos = global_transform.translation().xy();
-                
-                // Each cell sprite is 72.0 wide. Radial distance check <= 32.0 is extremely robust and rotation-independent.
-                if world_position.distance(cell_pos) <= 32.0 {
+                let dist = world_position.distance(cell_pos);
+                if dist < min_dist {
+                    min_dist = dist;
+                    closest_cell = Some(cell.index);
+                }
+            }
+            if let Some(cell_index) = closest_cell {
+                if min_dist <= 32.0 {
                     events.send(ClientActionRequest(ClientAction::DraftCard {
                         card_type,
-                        cell_index: cell.index,
+                        cell_index,
                     }));
                     selected_card.0 = None; // Clear selection after drafting
-                    break;
                 }
             }
         }

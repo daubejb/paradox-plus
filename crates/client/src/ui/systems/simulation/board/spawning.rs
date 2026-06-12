@@ -4,7 +4,6 @@ use protocol::terrain::presets::get_course_preset;
 use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, PlayerTokenMarker, WagerTokenMarker};
 use crate::ui::systems::simulation::board::geometry::{
     calculate_capsule_layout, generate_quad_tile_mesh, calculate_line_segment_transform_and_size,
-    calculate_outer_point,
 };
 
 #[derive(Component)]
@@ -82,15 +81,6 @@ pub fn rebuild_board_on_hole_change_system(
         let tile_thickness = 72.0;
         let d = tile_thickness / 2.0;
 
-        let is_portrait = size.y > size.x;
-        let (w, h) = if is_portrait {
-            (size.y, size.x)
-        } else {
-            (size.x, size.y)
-        };
-        let r = (h * 0.45).min(w * 0.30).max(40.0);
-        let l = (w * 0.35).max(60.0);
-
         commands.entity(root_entity).with_children(|board| {
             for idx in 0..layout_capacity {
                 let layout = calculate_capsule_layout(idx as f32, layout_capacity, size);
@@ -102,10 +92,10 @@ pub fn rebuild_board_on_hole_change_system(
                 let perp_start = Vec2::new(layout_start.rotation_angle.cos(), layout_start.rotation_angle.sin());
                 let perp_end = Vec2::new(layout_end.rotation_angle.cos(), layout_end.rotation_angle.sin());
 
+                let c_in_start = layout_start.position - perp_start * d;
                 let c_out_start = layout_start.position + perp_start * d;
-                let c_in_start = calculate_outer_point(layout_start.position, -perp_start, r, l, d, is_portrait);
-                let c_in_end = calculate_outer_point(layout_end.position, -perp_end, r, l, d, is_portrait);
                 let c_out_end = layout_end.position + perp_end * d;
+                let c_in_end = layout_end.position - perp_end * d;
 
                 // Create mesh using standard Bevy CCW winding
                 let mesh = generate_quad_tile_mesh(c_out_start, c_out_end, c_in_end, c_in_start);
