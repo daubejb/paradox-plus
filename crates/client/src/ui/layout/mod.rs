@@ -3,6 +3,7 @@ pub mod board;
 pub mod bottom_bar;
 pub mod landing;
 pub mod setup;
+pub mod leaderboard;
 
 use bevy::prelude::*;
 use crate::ui::components::{RootUiNode, GameplayScreenNode};
@@ -50,6 +51,7 @@ pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
             GameplayScreenNode,
         )).with_children(|gameplay_container| {
             top_hud::spawn_top_hud(gameplay_container, &asset_server);
+            leaderboard::spawn_leaderboard_ticker(gameplay_container, &asset_server);
             board::spawn_central_board(gameplay_container, &asset_server);
             bottom_bar::spawn_bottom_controls(gameplay_container, &asset_server);
         });

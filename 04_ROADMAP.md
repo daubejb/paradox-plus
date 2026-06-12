@@ -104,6 +104,18 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_handicap_scorer_with_dnf_penalty` (verifying DNF raises handicap).
       - `test_non_blocking_telemetry_drain` (verifying zero impact on tick rate).
 
+### [x] Iteration 9: Scrolling Ticker style Leaderboard (Completed 2026-06-12)
+*   **Objectives**:
+    - Implement a scrolling ticker style leaderboard below the top menu/HUD.
+    - Display player ranks (with circle badges), names, and relative scores to par.
+    - Highlight active player with green pill background and outline.
+    - Add horizontal auto-scrolling ticker behavior when track overflows container width.
+    - Add a "View Full" button at the right.
+*   **Verification**:
+    - Headless Bevy UI test in `crates/client/tests/ui_tests.rs`:
+      - `test_leaderboard_ticker_hierarchy_and_updates` (verifying container spawning, player entries sorting, and event-driven updates).
+    - WASM target verification.
+
 ---
 
 ## 📈 Retrospective Log
@@ -114,5 +126,7 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Iteration 4 (Async AI & Polling):** Completed implementation of off-thread AI solver execution using Bevy's `AsyncComputeTaskPool` with zero-allocation inputs, non-blocking polling loops, turn timeout takeover, and cooperative cancellation. Addressed Rust orphan rules via `CourseTrackResource` wrapper, and successfully configured multithreading feature inside Bevy dependencies. All tests pass.
 - **Iteration 5 (Client Replication & Presenter):** Implemented client-side network polling and FSM replication with zero-heap frame loops. Built `FixedToFloatPlugin` translating fixed-point discrete positions into native float coordinates inside Bevy's `PostUpdate` phase, preserving read-only properties of gameplay-authoritative state. Handled WASM target constraints (Mutex-wrapped receivers, boxed heapless Vec buffers, and getrandom configuration flags) to ensure full compilation compatibility for `wasm32-unknown-unknown`. All tests pass.
 - **Iteration 7 (Game Selection Landing Page):** Implemented responsive dark-green mobile-optimized landing screen. Managed layout transitions on entering respective states to prevent Taffy layout recalculation overhead on every update. Handled game exit safely by resetting authoritative offline server state and returning client view to landing. All tests pass.
+- **Iteration 9 (Scrolling Ticker style Leaderboard):** Implemented a responsive scrolling ticker leaderboard showing player rank badges, names, and par relative scores. Highlighted the active player, and implemented a Bevy UI autoscroll track when content exceeds container width. All tests pass.
+
 
 

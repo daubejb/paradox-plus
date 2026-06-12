@@ -20,6 +20,7 @@ Sitemap(
         File(path: "src/ui/components.rs", description: "UI marker components"),
         File(path: "src/ui/layout/mod.rs", description: "UI root layout and section routing"),
         File(path: "src/ui/layout/landing.rs", description: "UI landing page layout"),
+        File(path: "src/ui/layout/leaderboard.rs", description: "UI scrolling ticker leaderboard layout"),
         File(path: "src/ui/layout/setup/mod.rs", description: "UI setup coordinator layout"),
         File(path: "src/ui/layout/setup/nickname.rs", description: "UI setup nickname layout component"),
         File(path: "src/ui/layout/setup/course.rs", description: "UI setup course selection layout component"),

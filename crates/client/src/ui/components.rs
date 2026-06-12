@@ -178,5 +178,16 @@ pub struct RadioDotNode {
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlayerNameTextNode;
 
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LeaderboardTickerContainerNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq)]
+pub struct LeaderboardTickerTrackNode {
+    pub scroll_offset: f32,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ViewFullLeaderboardButtonNode;
+
 
 

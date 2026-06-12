@@ -440,3 +440,56 @@ fn test_wager_card_qty_hud_rendering() {
     assert!(found_golden);
 }
 
+#[test]
+fn test_leaderboard_ticker_hierarchy_and_updates() {
+    use protocol::messages::{ServerUpdate, GameStateEnum, Scorecard};
+    use client::network::ServerUpdateEvent;
+
+    let mut app = setup_headless_ui_app();
+    app.update();
+
+    // Verify presence of Ticker Container and Ticker Track
+    let mut container_query = app.world_mut().query_filtered::<Entity, With<LeaderboardTickerContainerNode>>();
+    assert!(container_query.get_single(app.world()).is_ok(), "Leaderboard Ticker Container not spawned");
+
+    let mut track_query = app.world_mut().query_filtered::<Entity, With<LeaderboardTickerTrackNode>>();
+    assert!(track_query.get_single(app.world()).is_ok(), "Leaderboard Ticker Track not spawned");
+
+    // Send a mock StateSync to trigger update system
+    let sync_update = ServerUpdate::StateSync {
+        sequence: 1,
+        game_state: GameStateEnum::AwaitingTurn,
+        active_player_id: 1234,
+        current_hole: 1,
+        player_positions: {
+            let mut v = heapless::Vec::new();
+            v.push(10).unwrap();
+            v.push(8).unwrap();
+            v
+        },
+        player_scores: {
+            let mut v = heapless::Vec::new();
+            v.push(Scorecard {
+                running_strokes: 3,
+                total_strokes: 3,
+                earned_cards: heapless::Vec::new(),
+            }).unwrap();
+            v.push(Scorecard {
+                running_strokes: 5,
+                total_strokes: 5,
+                earned_cards: heapless::Vec::new(),
+            }).unwrap();
+            v
+        },
+        placed_wagers: heapless::Vec::new(),
+    };
+
+    app.world_mut().send_event(ServerUpdateEvent(sync_update));
+    app.update();
+
+    // Check that children were spawned inside the track node
+    let track_entity = track_query.get_single(app.world()).unwrap();
+    let children = app.world().get::<Children>(track_entity).expect("Track should have spawned children");
+    assert_eq!(children.len(), 2, "Expected 2 player pill items in track");
+}
+
