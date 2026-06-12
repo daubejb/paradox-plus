@@ -74,7 +74,7 @@ pub fn rebuild_board_on_hole_change_system(
     // Spawn cell tiles along capsule track trajectory
     if let Some(preset) = get_course_preset(&settings.course, current_hole.0) {
         let total_cells = preset.cells.len();
-        let layout_capacity = total_cells.max(27);
+        let layout_capacity = 28;
 
         commands.entity(root_entity).with_children(|board| {
             // Generate and spawn unified outer border ribbon mesh
