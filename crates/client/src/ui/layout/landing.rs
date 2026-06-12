@@ -23,7 +23,7 @@ pub fn spawn_landing_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetS
         screen.spawn(ImageBundle {
             style: Style {
                 width: Val::Px(280.0),
-                height: Val::Px(140.0),
+                height: Val::Px(58.0),
                 margin: UiRect::top(Val::Px(40.0)),
                 ..default()
             },
