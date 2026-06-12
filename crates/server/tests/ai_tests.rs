@@ -4,7 +4,7 @@ use server::ai::mdp_solver::{
 };
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
 use protocol::physics::MovementDirection;
-use protocol::messages::WagerToken;
+use protocol::messages::{WagerToken, CardType};
 use std::sync::atomic::AtomicBool;
 use fixed::types::I32F32;
 
@@ -63,12 +63,12 @@ fn test_solver_damper_prevention() {
 
     let wagers = vec![
         WagerToken {
-            card_type: 1, // Trickster Banana
+            card_type: CardType::Banana, // Trickster Banana
             owner_id: 2, // Opponent owned
             cell_index: 5,
         },
         WagerToken {
-            card_type: 1, // Trickster Banana
+            card_type: CardType::Banana, // Trickster Banana
             owner_id: 2, // Opponent owned
             cell_index: 1,
         },

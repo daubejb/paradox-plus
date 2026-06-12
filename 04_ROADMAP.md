@@ -129,6 +129,18 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_board_rebuild_on_hole_change` (verifying spawning and rebuilding cells).
       - `test_wager_card_selection_interaction` (verifying 2D click-raycast drafts).
 
+### [x] Iteration 11: 1-Die Limit in the Rough & Sand Bunker (Completed 2026-06-12)
+*   **Objectives**:
+    - Restrict dice rolls to exactly 1 die when the player is in the Rough (unless overridden by their own active Guardian Shield) or in a Sand Bunker.
+    - Hide the "Roll 2" button in the UI under these conditions.
+    - Authoritatively clamp the dice count to 1 inside the offline loopback simulator.
+    - Introduce type-safe `CardType` enum to replace magic `u8` numbers in both client and server crates.
+*   **Verification**:
+    - Integration tests in `crates/client/tests/loopback_tests.rs`:
+      - `test_loopback_rough_dice_limit` (verifying dice clamp on Rough, and override when own Guardian Shield is active).
+    - Verified all unit and integration tests compile and pass.
+    - Verified WASM target compatibility check.
+
 ---
 
 ## 📈 Retrospective Log
@@ -142,4 +154,6 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Iteration 9 (Scrolling Ticker style Leaderboard):** Implemented a responsive scrolling ticker leaderboard showing player rank badges, names, and par relative scores updated only when holes are completed (Even Par "E" initially). Highlighted the active player, and implemented a Bevy UI autoscroll track when content exceeds container width. Extracted systems to `leaderboard.rs` to maintain strict compliance with the 300-line budget limit. All tests pass.
 - **Iteration 10 (2D World Space Board Rendering):** Refactored the gameplay viewport to a 2D world space paradigm using sprite tiles on a parametric capsule track layout. Standardized screen-to-world raycasting distance checks for click drafting, and added headless testing fallback logic. Clean recursive despawning avoids WASM leaks. All tests pass.
 - **Visual Refinement (Racetrack Tiles & Dividers):** Adjusted racetrack rendering logic so that green tile colors are precisely constrained within the radial divider boundaries, preventing corner bleeding. Removed boundary dot child sprites to clean up the track design and match the visual inspiration layout. All tests pass.
+- **Iteration 11 (1-Die Limit in the Rough & Sand Bunker):** Successfully enforced the 1-die roll restriction on Rough and Bunker terrain. Extracted the simulated roll handler into a new submodule `roll.rs` to respect the 300-line budget limit. Replaced magic card numbers with a type-safe `CardType` enum across all crates, ensuring bounded and type-safe serialization. All tests pass.
+
 

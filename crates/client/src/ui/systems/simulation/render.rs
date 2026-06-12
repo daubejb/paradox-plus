@@ -1,6 +1,7 @@
 use bevy::prelude::*;
-use protocol::messages::{ServerUpdate, GameStateEnum};
+use protocol::messages::{ServerUpdate, GameStateEnum, CardType};
 use protocol::terrain::presets::get_course_preset;
+use protocol::terrain::TerrainType;
 use crate::network::ServerUpdateEvent;
 use crate::ui::components::{
     HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode,
@@ -23,7 +24,7 @@ pub fn update_ui_elements_system(
 ) {
     for event in update_events.read() {
         match &event.0 {
-            ServerUpdate::StateSync { current_hole, player_scores, game_state, .. } => {
+            ServerUpdate::StateSync { current_hole, player_scores, game_state, active_player_id, player_positions, placed_wagers, .. } => {
                 if let Some(preset) = get_course_preset(&settings.course, *current_hole) {
                     if let Ok(mut text) = title_query.get_single_mut() {
                         text.sections[0].value = format!("HOLE {}", current_hole);
@@ -49,14 +50,14 @@ pub fn update_ui_elements_system(
 
                 for (mut text, node) in qty_query.iter_mut() {
                     let count = match node.card_type {
-                        0 => shield_count,
-                        1 => banana_count,
-                        _ => die_count,
+                        CardType::Shield => shield_count,
+                        CardType::Banana => banana_count,
+                        CardType::GoldenDie => die_count,
                     };
                     let label = match node.card_type {
-                        0 => "SHIELD",
-                        1 => "BANANA",
-                        _ => "GOLDEN",
+                        CardType::Shield => "SHIELD",
+                        CardType::Banana => "BANANA",
+                        CardType::GoldenDie => "GOLDEN",
                     };
                     text.sections[0].value = format!("{} ({})", label, count);
                 }
@@ -67,11 +68,27 @@ pub fn update_ui_elements_system(
                     _ => (Display::None, Display::None),
                 };
 
+                let mut roll_two_display = roll_display;
+                if roll_display == Display::Flex {
+                    if let Some(preset) = get_course_preset(&settings.course, *current_hole) {
+                        let active_pos = player_positions.first().copied().unwrap_or(0);
+                        let terrain = preset.cells.get(active_pos as usize).copied().unwrap_or(TerrainType::Fairway);
+                        let has_own_shield = placed_wagers.iter().any(|w| {
+                            w.cell_index == active_pos
+                                && w.card_type == CardType::Shield
+                                && w.owner_id == *active_player_id
+                        });
+                        if terrain == TerrainType::Bunker || (terrain == TerrainType::Rough && !has_own_shield) {
+                            roll_two_display = Display::None;
+                        }
+                    }
+                }
+
                 if let Ok(mut style) = roll_one_query.get_single_mut() {
                     style.display = roll_display;
                 }
                 if let Ok(mut style) = roll_two_query.get_single_mut() {
-                    style.display = roll_display;
+                    style.display = roll_two_display;
                 }
                 if let Ok(mut style) = skip_query.get_single_mut() {
                     style.display = skip_display;

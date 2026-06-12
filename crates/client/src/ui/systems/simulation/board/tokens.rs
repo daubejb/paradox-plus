@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use protocol::messages::CardType;
 use crate::replication::Ball;
 use crate::ui::components::{BoardCellNode, PlayerTokenMarker, WagerTokenMarker, ClientWagers};
 
@@ -41,16 +42,16 @@ pub fn update_wagers_on_board(
                 if let Some(wager) = wagers.0.iter().find(|w| w.cell_index == cell_node.index) {
                     *visibility = Visibility::Visible;
                     sprite.color = match wager.card_type {
-                        0 => Color::srgb(0.2, 0.4, 0.8),   // Shield (Blue)
-                        1 => Color::srgb(0.9, 0.8, 0.1),   // Banana (Yellow)
-                        _ => Color::srgb(0.8, 0.1, 0.1),   // Golden Die (Red)
+                        CardType::Shield => Color::srgb(0.2, 0.4, 0.8),   // Shield (Blue)
+                        CardType::Banana => Color::srgb(0.9, 0.8, 0.1),   // Banana (Yellow)
+                        CardType::GoldenDie => Color::srgb(0.8, 0.1, 0.1),   // Golden Die (Red)
                     };
                     if let Some(&text_child) = children.first() {
                         if let Ok(mut text) = text_query.get_mut(text_child) {
                             text.sections[0].value = match wager.card_type {
-                                0 => "S".to_string(),
-                                1 => "B".to_string(),
-                                _ => "G".to_string(),
+                                CardType::Shield => "S".to_string(),
+                                CardType::Banana => "B".to_string(),
+                                CardType::GoldenDie => "G".to_string(),
                             };
                         }
                     }

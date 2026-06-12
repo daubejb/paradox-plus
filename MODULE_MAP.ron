@@ -40,6 +40,7 @@ Sitemap(
         File(path: "src/ui/systems/simulation/loopback/handlers/terrain.rs", description: "Offline simulation bunker/terrain resolutions"),
         File(path: "src/ui/systems/simulation/loopback/handlers/movement.rs", description: "Offline simulation overshoot/undershoot movement"),
         File(path: "src/ui/systems/simulation/loopback/handlers/banana.rs", description: "Offline simulation choose banana slide handler"),
+        File(path: "src/ui/systems/simulation/loopback/handlers/roll.rs", description: "Offline simulation dice roll and penalty clamping handler"),
         File(path: "src/ui/systems/simulation/board/mod.rs", description: "Simulation 2D board module re-exports"),
         File(path: "src/ui/systems/simulation/board/geometry.rs", description: "Parametric capsule layout track math calculations"),
         File(path: "src/ui/systems/simulation/board/camera.rs", description: "2D viewport camera setup and sync systems"),

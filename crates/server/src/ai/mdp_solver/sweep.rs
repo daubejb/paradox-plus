@@ -2,6 +2,7 @@ use crate::ai::mdp_state::MdpState;
 use crate::ai::mdp_solver::table::MdpSolverTable;
 use crate::ai::mdp_solver::transitions::{get_transitions, TransitionOutcome};
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
+use protocol::messages::CardType;
 use fixed::types::I32F32;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -107,7 +108,7 @@ pub fn value_iteration_sweep(
             // Determine if 2 dice are allowed
             let on_rough = terrain == TerrainType::Rough;
             let has_own_shield = placed_wagers.iter().any(|w| {
-                w.cell_index == cell as u32 && w.card_type == 0 && w.owner_id == active_player_id
+                w.cell_index == cell as u32 && w.card_type == CardType::Shield && w.owner_id == active_player_id
             });
             let can_roll_2_dice = !on_rough || has_own_shield;
 

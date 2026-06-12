@@ -1,5 +1,5 @@
 use super::super::state::OfflineServerState;
-use protocol::messages::{ServerUpdate, GameStateEnum, Scorecard};
+use protocol::messages::{ServerUpdate, GameStateEnum, Scorecard, CardType};
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
 use heapless::Vec as HVec;
 
@@ -37,7 +37,7 @@ fn send_state_sync(state: &mut OfflineServerState, mut updates: Vec<ServerUpdate
 
 pub fn handle_draft_card(
     state: &mut OfflineServerState,
-    card_type: u8,
+    card_type: CardType,
     cell_index: u32,
     course: &ActiveCourseTrack,
 ) -> Vec<ServerUpdate> {
@@ -69,8 +69,8 @@ pub fn handle_draft_card(
         return send_state_sync(state, updates);
     }
 
-    // Rule 3: Guardian Shield (0) can only be placed on a Hazard cell (Rough, Bunker, Water, OutOfBounds)
-    if card_type == 0 {
+    // Rule 3: Guardian Shield can only be placed on a Hazard cell (Rough, Bunker, Water, OutOfBounds)
+    if card_type == CardType::Shield {
         let is_hazard = match cell_terrain {
             Some(TerrainType::Rough) | Some(TerrainType::Bunker) | Some(TerrainType::Water) | Some(TerrainType::OutOfBounds) => true,
             _ => false,
@@ -83,14 +83,14 @@ pub fn handle_draft_card(
         }
     }
 
-    // Rule 4: Trickster (1) and Golden Die (2) can only be placed on non-hazard track tiles (Fairway)
-    if card_type == 1 || card_type == 2 {
+    // Rule 4: Trickster and Golden Die can only be placed on non-hazard track tiles (Fairway)
+    if card_type == CardType::Banana || card_type == CardType::GoldenDie {
         let is_fairway = match cell_terrain {
             Some(TerrainType::Fairway) => true,
             _ => false,
         };
         if !is_fairway {
-            let card_name = if card_type == 1 { "Trickster Banana" } else { "Golden Die" };
+            let card_name = if card_type == CardType::Banana { "Trickster Banana" } else { "Golden Die" };
             updates.push(ServerUpdate::AlertTriggered {
                 alert_message: heapless::String::try_from(format!("{} must be placed on Fairway!", card_name).as_str()).unwrap(),
             });
@@ -98,8 +98,8 @@ pub fn handle_draft_card(
         }
     }
 
-    // Rule 5: Trickster Banana (1) cannot be placed 4 spaces ahead of an Out-of-Bounds (OB) cell
-    if card_type == 1 {
+    // Rule 5: Trickster Banana cannot be placed 4 spaces ahead of an Out-of-Bounds (OB) cell
+    if card_type == CardType::Banana {
         let ahead_idx = cell_index + 4;
         if let Some(TerrainType::OutOfBounds) = course.cells.get(ahead_idx as usize) {
             updates.push(ServerUpdate::AlertTriggered {
@@ -110,7 +110,7 @@ pub fn handle_draft_card(
     }
 
     // 2. Execution
-    if let Some(pos) = state.inventory.iter().position(|&c| c == card_type) {
+    if let Some(pos) = state.inventory.iter().position(|&c| c == card_type as u8) {
         state.inventory.remove(pos);
         state.placed_wagers.push(protocol::messages::WagerToken {
             card_type,
@@ -124,9 +124,9 @@ pub fn handle_draft_card(
         }
 
         let card_name = match card_type {
-            0 => "Guardian Shield",
-            1 => "Trickster Banana",
-            _ => "Golden Die",
+            CardType::Shield => "Guardian Shield",
+            CardType::Banana => "Trickster Banana",
+            CardType::GoldenDie => "Golden Die",
         };
         updates.push(ServerUpdate::AlertTriggered {
             alert_message: heapless::String::try_from(format!("Placed {} wager!", card_name).as_str()).unwrap(),

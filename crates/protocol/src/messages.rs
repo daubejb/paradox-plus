@@ -26,7 +26,7 @@ pub enum ClientAction {
     },
     
     // Marker Placement Phase
-    DraftCard { card_type: u8, cell_index: u32 },
+    DraftCard { card_type: CardType, cell_index: u32 },
     SkipPlacement,
     
     // Normal Play Phase
@@ -78,9 +78,29 @@ pub struct Scorecard {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct WagerToken {
-    pub card_type: u8,
+    pub card_type: CardType,
     pub owner_id: u64,
     pub cell_index: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
+pub enum CardType {
+    Shield = 0,
+    Banana = 1,
+    GoldenDie = 2,
+}
+
+impl TryFrom<u8> for CardType {
+    type Error = ();
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Shield),
+            1 => Ok(Self::Banana),
+            2 => Ok(Self::GoldenDie),
+            _ => Err(()),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash)]

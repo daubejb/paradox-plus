@@ -4,7 +4,7 @@ use client::ui::{
     ClientUiPlugin,
 };
 use client::network::events::ClientActionRequest;
-use protocol::messages::{ClientAction, ServerUpdate};
+use protocol::messages::{ClientAction, ServerUpdate, CardType};
 
 fn setup_headless_ui_app() -> App {
     let mut app = App::new();
@@ -98,11 +98,11 @@ fn test_wager_card_selection_interaction() {
     app.update();
     app.update();
 
-    // Query for a WagerCardButtonNode with card_type = 1 (Banana)
+    // Query for a WagerCardButtonNode with card_type = CardType::Banana
     let mut banana_query = app.world_mut().query_filtered::<(Entity, &WagerCardButtonNode), With<Button>>();
     let (banana_entity, _) = banana_query
         .iter(app.world())
-        .find(|(_, node)| node.card_type == 1)
+        .find(|(_, node)| node.card_type == CardType::Banana)
         .expect("Banana wager card button not found");
 
     // Simulate clicking the Banana button
@@ -111,10 +111,10 @@ fn test_wager_card_selection_interaction() {
     // Update to trigger interaction systems
     app.update();
 
-    // Verify that the SelectedWagerCard resource has been updated to Some(1)
+    // Verify that the SelectedWagerCard resource has been updated to Some(CardType::Banana)
     {
         let selected_card = app.world().resource::<SelectedWagerCard>();
-        assert_eq!(selected_card.0, Some(1), "Expected SelectedWagerCard to be Some(1)");
+        assert_eq!(selected_card.0, Some(CardType::Banana), "Expected SelectedWagerCard to be Some(CardType::Banana)");
     }
 
     // Query for a BoardCellNode with index = 10 and get its position
@@ -155,7 +155,7 @@ fn test_wager_card_selection_interaction() {
     let draft_card_event = sent_events.iter().find(|event| matches!(event.0, ClientAction::DraftCard { .. }));
     assert!(draft_card_event.is_some(), "Expected a ClientAction::DraftCard event to be sent");
     if let Some(ClientActionRequest(ClientAction::DraftCard { card_type, cell_index })) = draft_card_event {
-        assert_eq!(*card_type, 1, "Expected card_type to be 1 (Banana)");
+        assert_eq!(*card_type, CardType::Banana, "Expected card_type to be CardType::Banana");
         assert_eq!(*cell_index, 10, "Expected cell_index to match drafted spot (10)");
     } else {
         panic!("Sent event was not a ClientAction::DraftCard variant");
@@ -430,19 +430,18 @@ fn test_wager_card_qty_hud_rendering() {
     for (text, node) in text_query.iter(app.world()) {
         let val = &text.sections[0].value;
         match node.card_type {
-            0 => {
+            CardType::Shield => {
                 assert_eq!(val, "SHIELD (1)");
                 found_shield = true;
             }
-            1 => {
+            CardType::Banana => {
                 assert_eq!(val, "BANANA (0)");
                 found_banana = true;
             }
-            2 => {
+            CardType::GoldenDie => {
                 assert_eq!(val, "GOLDEN (2)");
                 found_golden = true;
             }
-            _ => {}
         }
     }
 
