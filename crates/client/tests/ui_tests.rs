@@ -586,31 +586,43 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
 
 #[test]
 fn test_capsule_geometry_calculations() {
-    use client::ui::systems::simulation::board::geometry::calculate_capsule_layout;
+    use client::ui::systems::simulation::board::geometry::{calculate_capsule_layout, TrackGeometry};
 
     let viewport = Vec2::new(400.0, 300.0);
-    let total_cells = 27;
+    let total_cells = 28;
 
     // Test TeeBox (first cell, idx 0.0)
     let layout_tee = calculate_capsule_layout(0.0, total_cells, viewport);
-    // Tee should be on the bottom segment
-    assert!(layout_tee.position.y < 0.0, "Tee should be on bottom straight segment");
-    assert!((layout_tee.rotation_angle + std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards");
+    // Tee should be on the left vertical segment, at the bottom
+    assert!(layout_tee.position.x < 0.0, "Tee should be on the left segment");
+    assert!(layout_tee.position.y < 0.0, "Tee should be at the bottom of the left segment");
+    assert!((layout_tee.rotation_angle - std::f32::consts::PI).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards (left)");
 
-    // Test a cell on the top segment (e.g. index 15.0)
-    let top_idx = 15.0;
-    let layout_top = calculate_capsule_layout(top_idx, total_cells, viewport);
-    // Top cell should be on the top segment (going right to left)
+    // Test a cell on the top segment (e.g. index 8.0)
+    let layout_top = calculate_capsule_layout(8.0, total_cells, viewport);
+    // Top cell should be on the top segment (going left to right)
     assert!(layout_top.position.y > 0.0, "Top cell should be on top segment");
-    assert!((layout_top.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Top segment rotation should face perpendicular outwards");
+    assert!((layout_top.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Top segment rotation should face perpendicular outwards (up)");
 
-    // Test portrait viewport transposition (e.g. 300x400)
+    // Test portrait viewport (e.g. 300x400)
     let viewport_portrait = Vec2::new(300.0, 400.0);
     let layout_tee_portrait = calculate_capsule_layout(0.0, total_cells, viewport_portrait);
-    // Since it's transposed, Tee should be on the left vertical segment and at the bottom
-    assert!(layout_tee_portrait.position.x < 0.0, "Portrait Tee should be on the left vertical segment");
-    assert!(layout_tee_portrait.position.y < 0.0, "Portrait Tee should be at the bottom of the segment");
-    assert!((layout_tee_portrait.rotation_angle.abs() - std::f32::consts::PI).abs() < 1e-5, "Portrait Tee rotation should face perpendicular outwards");
+    // Tee should still be on the left vertical segment, at the bottom
+    assert!(layout_tee_portrait.position.x < 0.0, "Portrait Tee should be on the left segment");
+    assert!(layout_tee_portrait.position.y < 0.0, "Portrait Tee should be at the bottom of the left segment");
+    assert!((layout_tee_portrait.rotation_angle - std::f32::consts::PI).abs() < 1e-5, "Portrait Tee rotation should face perpendicular outwards (left)");
+
+    // Test extreme viewports and aspect ratio compliance
+    let viewports = vec![
+        Vec2::new(10.0, 10.0),
+        Vec2::new(100.0, 800.0),
+        Vec2::new(1920.0, 400.0),
+    ];
+    for vp in viewports {
+        let geom = TrackGeometry::calculate(vp);
+        let ratio = geom.outer_width / geom.outer_height;
+        assert!((ratio - 1.38).abs() < 1e-4, "Expected aspect ratio of 1.38 for viewport {:?}", vp);
+    }
 }
 
 

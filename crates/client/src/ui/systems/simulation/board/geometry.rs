@@ -6,29 +6,72 @@ pub struct CellLayout {
     pub rotation_angle: f32,
 }
 
+const TARGET_ASPECT_RATIO: f32 = 1.38;
+const VIEWPORT_PADDING: f32 = 24.0;
+
+const MIN_OUTER_WIDTH: f32 = 124.2;
+const MIN_OUTER_HEIGHT: f32 = 90.0;
+
+const MIDLINE_PADDING: f32 = 72.0;
+const MIN_MIDLINE_WIDTH: f32 = 48.0;
+const MIN_MIDLINE_HEIGHT: f32 = 36.0;
+
+const RADIUS_COEFFICIENT: f32 = 0.35;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TrackGeometry {
+    pub r: f32,
+    pub l_h: f32,
+    pub l_v: f32,
+    pub outer_width: f32,
+    pub outer_height: f32,
+}
+
+impl TrackGeometry {
+    pub fn calculate(viewport_size: Vec2) -> Self {
+        // Clamp minimum viewport size to prevent zero or negative dimensions
+        let width = viewport_size.x.max(MIN_OUTER_WIDTH + VIEWPORT_PADDING);
+        let height = viewport_size.y.max(MIN_OUTER_HEIGHT + VIEWPORT_PADDING);
+        
+        let available_width = width - VIEWPORT_PADDING;
+        let available_height = height - VIEWPORT_PADDING;
+        
+        let (outer_width, outer_height) = if available_width / available_height > TARGET_ASPECT_RATIO {
+            // Viewport is wider than target aspect ratio (bounded by height)
+            (available_height * TARGET_ASPECT_RATIO, available_height)
+        } else {
+            // Viewport is taller than target aspect ratio (bounded by width)
+            (available_width, available_width / TARGET_ASPECT_RATIO)
+        };
+
+        let midline_width = (outer_width - MIDLINE_PADDING).max(MIN_MIDLINE_WIDTH);
+        let midline_height = (outer_height - MIDLINE_PADDING).max(MIN_MIDLINE_HEIGHT);
+
+        let r = midline_height * RADIUS_COEFFICIENT;
+        let l_v = midline_height - 2.0 * r;
+        let l_h = midline_width - 2.0 * r;
+
+        debug_assert!(l_v >= 0.0, "Vertical segment length must be non-negative");
+        debug_assert!(l_h >= 0.0, "Horizontal segment length must be non-negative");
+
+        Self {
+            r,
+            l_h,
+            l_v,
+            outer_width,
+            outer_height,
+        }
+    }
+}
+
 /// Computes the 2D position and rotation of a cell along a parametric capsule track.
 pub fn calculate_capsule_layout(
     idx: f32,
     total_cells: usize,
     viewport_size: Vec2,
 ) -> CellLayout {
-    let is_portrait = viewport_size.y > viewport_size.x;
-
-    let (w, h) = if is_portrait {
-        (viewport_size.y, viewport_size.x)
-    } else {
-        (viewport_size.x, viewport_size.y)
-    };
-
-    // Define racetrack dimensions:
-    // r_val: corner radius
-    // l_h: horizontal straight length
-    // l_v: vertical straight length
-    let r_val = (h * 0.22).max(30.0);
-    let l_h = (h * 0.28).max(40.0);
-    let l_v = (w * 0.48 - 2.0 * r_val).max(40.0);
-
-    let (r, l_h, l_v) = (r_val, l_h, l_v);
+    let geom = TrackGeometry::calculate(viewport_size);
+    let (r, l_h, l_v) = (geom.r, geom.l_h, geom.l_v);
 
     let arc = std::f32::consts::FRAC_PI_2 * r;
     let perimeter = 2.0 * l_h + 2.0 * l_v + 4.0 * arc;
@@ -94,24 +137,11 @@ pub fn calculate_capsule_layout(
         tangent = Vec2::new(theta.sin(), -theta.cos());
     }
 
-    let mut final_pos = pos;
-    let mut final_tangent = tangent;
-
-    if !is_portrait {
-        // Transpose if landscape to rotate 90 degrees
-        final_pos = Vec2::new(pos.y, pos.x);
-        final_tangent = Vec2::new(tangent.y, tangent.x);
-    }
-
-    let tangent_angle = final_tangent.y.atan2(final_tangent.x);
-    let rotation_angle = if is_portrait {
-        tangent_angle + std::f32::consts::FRAC_PI_2
-    } else {
-        tangent_angle - std::f32::consts::FRAC_PI_2
-    };
+    let tangent_angle = tangent.y.atan2(tangent.x);
+    let rotation_angle = tangent_angle + std::f32::consts::FRAC_PI_2;
 
     CellLayout {
-        position: final_pos,
+        position: pos,
         rotation_angle,
     }
 }
