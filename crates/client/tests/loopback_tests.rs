@@ -543,4 +543,205 @@ fn test_loopback_wager_placement_validations() {
     }
 }
 
+#[test]
+fn test_loopback_landing_on_shield_prophecy() {
+    use protocol::terrain::presets::get_course_preset;
+    use client::ui::systems::simulation::loopback::handlers::handle_action;
+
+    // Test A: Shield on Rough
+    {
+        let course = get_course_preset("green", 1).unwrap();
+        let mut state = OfflineServerState::default();
+        state.is_wager_mode = true;
+        state.current_hole = 1;
+        state.player_position = 0;
+        state.strokes = 0;
+        state.inventory = vec![0]; // Guardian Shield
+        state.is_initialized = true;
+
+        // Draft Shield on cell index 5 (Rough)
+        let _ = handle_action(
+            &mut state,
+            &ClientAction::DraftCard {
+                card_type: 0,
+                cell_index: 5,
+            },
+            &course,
+        );
+        assert_eq!(state.placed_wagers.len(), 1);
+
+        // Roll 5 to land on index 5
+        let mut attempts = 0;
+        loop {
+            attempts += 1;
+            if attempts > 1000 {
+                panic!("Failed to roll a 5 in 1000 attempts");
+            }
+            let mut test_state = state.clone();
+            let updates = handle_action(
+                &mut test_state,
+                &ClientAction::RollDice { dice_count: 1 },
+                &course,
+            );
+
+            let mut rolled_5 = false;
+            for update in &updates {
+                if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                    if roll_values.iter().sum::<u8>() == 5 {
+                        rolled_5 = true;
+                    }
+                }
+            }
+
+            if rolled_5 {
+                assert_eq!(test_state.player_position, 5);
+                assert_eq!(test_state.strokes, 1, "Strokes should be exactly 1 (0 penalty)");
+                assert_eq!(test_state.inventory.len(), 1, "Should have drawn a card");
+                assert!(updates.iter().any(|u| {
+                    if let protocol::messages::ServerUpdate::AlertTriggered { alert_message } = u {
+                        alert_message.contains("Shield triggered")
+                    } else {
+                        false
+                    }
+                }));
+                break;
+            }
+        }
+    }
+
+    // Test B: Shield on Out-of-Bounds (Lost Ball)
+    {
+        let blue_course = get_course_preset("blue", 1).unwrap();
+        let mut state = OfflineServerState::default();
+        state.is_wager_mode = true;
+        state.current_hole = 1;
+        state.player_position = 1; // Start on cell 1 (Rough)
+        state.strokes = 0;
+        state.inventory = vec![0]; // Guardian Shield
+        state.is_initialized = true;
+
+        // Draft Shield on cell index 7 (OB / Lost Ball)
+        let _ = handle_action(
+            &mut state,
+            &ClientAction::DraftCard {
+                card_type: 0,
+                cell_index: 7,
+            },
+            &blue_course,
+        );
+        assert_eq!(state.placed_wagers.len(), 1);
+
+        // Roll 6 to land on index 7 (from index 1, 1 + 6 = 7)
+        let mut attempts = 0;
+        loop {
+            attempts += 1;
+            if attempts > 1000 {
+                panic!("Failed to roll a 6 in 1000 attempts");
+            }
+            let mut test_state = state.clone();
+            let updates = handle_action(
+                &mut test_state,
+                &ClientAction::RollDice { dice_count: 1 },
+                &blue_course,
+            );
+
+            let mut rolled_6 = false;
+            for update in &updates {
+                if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                    if roll_values.iter().sum::<u8>() == 6 {
+                        rolled_6 = true;
+                    }
+                }
+            }
+
+            if rolled_6 {
+                // Should stay on cell 7 (neutralized hazard) and NOT reset to origin cell 1
+                assert_eq!(test_state.player_position, 7, "Player should stay on cell 7");
+                assert_eq!(test_state.strokes, 1, "Strokes should be exactly 1 (0 penalty, no OB reset)");
+                assert_eq!(test_state.inventory.len(), 1, "Should have drawn a card");
+                break;
+            }
+        }
+    }
+}
+
+#[test]
+fn test_loopback_landing_on_banana_prophecy() {
+    use protocol::terrain::presets::get_course_preset;
+    use client::ui::systems::simulation::loopback::handlers::handle_action;
+
+    let course = get_course_preset("green", 1).unwrap();
+    let mut state = OfflineServerState::default();
+    state.is_wager_mode = true;
+    state.current_hole = 1;
+    state.player_position = 0;
+    state.strokes = 0;
+    state.inventory = vec![1]; // Trickster Banana
+    state.is_initialized = true;
+
+    // 1. Draft Banana on cell index 6 (Fairway)
+    let _ = handle_action(
+        &mut state,
+        &ClientAction::DraftCard {
+            card_type: 1,
+            cell_index: 6,
+        },
+        &course,
+    );
+    assert_eq!(state.placed_wagers.len(), 1);
+
+    // 2. Roll 6 to land on index 6
+    let mut attempts = 0;
+    loop {
+        attempts += 1;
+        if attempts > 1000 {
+            panic!("Failed to roll a 6 in 1000 attempts");
+        }
+        let mut test_state = state.clone();
+        let updates = handle_action(
+            &mut test_state,
+            &ClientAction::RollDice { dice_count: 1 },
+            &course,
+        );
+
+        let mut rolled_6 = false;
+        for update in &updates {
+            if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                if roll_values.iter().sum::<u8>() == 6 {
+                    rolled_6 = true;
+                }
+            }
+        }
+
+        if rolled_6 {
+            assert_eq!(test_state.player_position, 6);
+            assert_eq!(test_state.game_state, GameStateEnum::BananaChoice, "Game state must transition to BananaChoice");
+            assert_eq!(test_state.inventory.len(), 1, "Should have drawn a card on landing");
+            assert_eq!(test_state.strokes, 1, "Strokes should be 1 for the initial RollDice");
+
+            // 3. Send ChooseBananaSlide to slide 3 spaces forward
+            let slide_updates = handle_action(
+                &mut test_state,
+                &ClientAction::ChooseBananaSlide { step_count: 3 },
+                &course,
+            );
+
+            // Verify movement to index 9 (6 + 3 = 9)
+            assert_eq!(test_state.player_position, 9);
+            // Verify game state transitions back to AwaitingTurn
+            assert_eq!(test_state.game_state, GameStateEnum::AwaitingTurn);
+            // Verify stroke count did not increase (stays at 1 stroke)
+            assert_eq!(test_state.strokes, 1, "Slide movement should cost 0 strokes");
+            assert!(slide_updates.iter().any(|u| {
+                if let protocol::messages::ServerUpdate::StateSync { game_state, .. } = u {
+                    *game_state == GameStateEnum::AwaitingTurn
+                } else {
+                    false
+                }
+            }));
+            break;
+        }
+    }
+}
+
 

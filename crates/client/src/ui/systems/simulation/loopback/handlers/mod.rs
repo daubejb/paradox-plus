@@ -2,6 +2,7 @@ pub mod dice;
 pub mod terrain;
 pub mod movement;
 pub mod wager;
+pub mod banana;
 
 use super::state::OfflineServerState;
 use protocol::messages::{ClientAction, ServerUpdate, GameStateEnum, Scorecard};
@@ -135,20 +136,6 @@ pub fn handle_action(
             let penalty_strokes = landing_res.penalty_strokes;
             let completed_hole = landing_res.completed_hole;
 
-            if trigger_banana {
-                // Slide forward 2 spaces
-                let push_target = final_pos + 2;
-                let total_cells = course.cells.len() as u32;
-                final_pos = if push_target >= total_cells {
-                    total_cells - 1
-                } else {
-                    push_target
-                };
-                updates.push(ServerUpdate::AlertTriggered {
-                    alert_message: heapless::String::try_from("Triggered Trickster Banana! Slid forward 2 spaces.").unwrap(),
-                });
-            }
-
             // Update local state
             state.player_position = final_pos;
             state.direction = next_dir;
@@ -156,9 +143,41 @@ pub fn handle_action(
 
             if trigger_golden_die {
                 state.strokes = state.strokes.saturating_sub(2);
-                state.inventory.push(2); // Earn Golden Die card
+                if state.inventory.len() < 16 {
+                    state.inventory.push(2);
+                }
                 updates.push(ServerUpdate::AlertTriggered {
                     alert_message: heapless::String::try_from("Triggered Golden Die! -2 Strokes, earned Golden Die card.").unwrap(),
+                });
+            }
+
+            if has_shield {
+                use rand::Rng;
+                let mut rng = rand::thread_rng();
+                let draw = rng.gen_range(0..3); // 0, 1, 2
+                if state.inventory.len() < 16 {
+                    state.inventory.push(draw);
+                }
+                let card_name = match draw {
+                    0 => "Shield",
+                    1 => "Banana",
+                    _ => "Golden Die",
+                };
+                updates.push(ServerUpdate::AlertTriggered {
+                    alert_message: heapless::String::try_from(format!("Shield triggered! Drew {}.", card_name).as_str()).unwrap(),
+                });
+            }
+
+            if trigger_banana {
+                use rand::Rng;
+                let mut rng = rand::thread_rng();
+                let draw = rng.gen_range(1..=2); // 1 or 2 (Banana or Golden Die)
+                if state.inventory.len() < 16 {
+                    state.inventory.push(draw);
+                }
+                let card_name = if draw == 1 { "Banana" } else { "Golden Die" };
+                updates.push(ServerUpdate::AlertTriggered {
+                    alert_message: heapless::String::try_from(format!("Banana triggered! Drew {}, slide 0-4.", card_name).as_str()).unwrap(),
                 });
             }
 
@@ -185,12 +204,16 @@ pub fn handle_action(
                 
                 // Store cards in persistent state inventory for next hole placement
                 for &card in &earned_cards {
-                    state.inventory.push(card);
+                    if state.inventory.len() < 16 {
+                        state.inventory.push(card);
+                    }
                 }
             }
 
             if completed_hole {
                 state.game_state = GameStateEnum::HoleCompleted;
+            } else if trigger_banana {
+                state.game_state = GameStateEnum::BananaChoice;
             } else {
                 state.game_state = GameStateEnum::AwaitingTurn;
             }
@@ -231,6 +254,9 @@ pub fn handle_action(
         }
         ClientAction::SkipPlacement => {
             updates.extend(wager::handle_skip_placement(state));
+        }
+        ClientAction::ChooseBananaSlide { step_count } => {
+            updates.extend(banana::handle_choose_banana_slide(state, *step_count, course));
         }
         _ => {}
     }

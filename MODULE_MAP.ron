@@ -38,6 +38,7 @@ Sitemap(
         File(path: "src/ui/systems/simulation/loopback/handlers/dice.rs", description: "Offline simulation dice and putting logic"),
         File(path: "src/ui/systems/simulation/loopback/handlers/terrain.rs", description: "Offline simulation bunker/terrain resolutions"),
         File(path: "src/ui/systems/simulation/loopback/handlers/movement.rs", description: "Offline simulation overshoot/undershoot movement"),
+        File(path: "src/ui/systems/simulation/loopback/handlers/banana.rs", description: "Offline simulation choose banana slide handler"),
         File(path: "src/ui/systems/simulation/board.rs", description: "Offline simulation visual active cell highlight"),
         File(path: "src/ui/systems/simulation/render.rs", description: "Offline simulation HUD text updates"),
         File(path: "tests/replication_tests.rs", description: "Integration tests for FSM replication and presenter interpolation"),
