@@ -598,8 +598,8 @@ fn test_capsule_geometry_calculations() {
     assert!(layout_tee.position.y < 0.0, "Tee should be at the bottom of the left segment");
     assert!((layout_tee.rotation_angle - std::f32::consts::PI).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards (left)");
 
-    // Test a cell on the top segment (e.g. index 8.0)
-    let layout_top = calculate_capsule_layout(8.0, total_cells, viewport);
+    // Test a cell on the top segment (e.g. index 10.0)
+    let layout_top = calculate_capsule_layout(10.0, total_cells, viewport);
     // Top cell should be on the top segment (going left to right)
     assert!(layout_top.position.y > 0.0, "Top cell should be on top segment");
     assert!((layout_top.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Top segment rotation should face perpendicular outwards (up)");
@@ -621,7 +621,7 @@ fn test_capsule_geometry_calculations() {
     for vp in viewports {
         let geom = TrackGeometry::calculate(vp);
         let ratio = geom.outer_width / geom.outer_height;
-        assert!((ratio - 1.38).abs() < 1e-4, "Expected aspect ratio of 1.38 for viewport {:?}", vp);
+        assert!((ratio - 0.68).abs() < 1e-4, "Expected aspect ratio of 0.68 for viewport {:?}", vp);
     }
 }
 

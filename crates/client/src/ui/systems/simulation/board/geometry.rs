@@ -6,15 +6,15 @@ pub struct CellLayout {
     pub rotation_angle: f32,
 }
 
-const TARGET_ASPECT_RATIO: f32 = 1.38;
+const TARGET_ASPECT_RATIO: f32 = 0.68;
 const VIEWPORT_PADDING: f32 = 24.0;
 
-const MIN_OUTER_WIDTH: f32 = 124.2;
-const MIN_OUTER_HEIGHT: f32 = 90.0;
+const MIN_OUTER_WIDTH: f32 = 90.0;
+const MIN_OUTER_HEIGHT: f32 = 124.2;
 
 const MIDLINE_PADDING: f32 = 72.0;
-const MIN_MIDLINE_WIDTH: f32 = 48.0;
-const MIN_MIDLINE_HEIGHT: f32 = 36.0;
+const MIN_MIDLINE_WIDTH: f32 = 36.0;
+const MIN_MIDLINE_HEIGHT: f32 = 48.0;
 
 const RADIUS_COEFFICIENT: f32 = 0.35;
 
@@ -47,9 +47,12 @@ impl TrackGeometry {
         let midline_width = (outer_width - MIDLINE_PADDING).max(MIN_MIDLINE_WIDTH);
         let midline_height = (outer_height - MIDLINE_PADDING).max(MIN_MIDLINE_HEIGHT);
 
-        let r = midline_height * RADIUS_COEFFICIENT;
-        let l_v = midline_height - 2.0 * r;
-        let l_h = midline_width - 2.0 * r;
+        // Scale corner radius relative to the width (smaller dimension) and clamp to prevent segment underflow
+        let r = (midline_width * RADIUS_COEFFICIENT)
+            .min(midline_width * 0.5)
+            .min(midline_height * 0.5);
+        let l_h = (midline_width - 2.0 * r).max(0.0);
+        let l_v = (midline_height - 2.0 * r).max(0.0);
 
         debug_assert!(l_v >= 0.0, "Vertical segment length must be non-negative");
         debug_assert!(l_h >= 0.0, "Horizontal segment length must be non-negative");
