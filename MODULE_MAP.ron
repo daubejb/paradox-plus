@@ -42,6 +42,7 @@ Sitemap(
         File(path: "src/ui/systems/simulation/render.rs", description: "Offline simulation HUD text updates"),
         File(path: "tests/replication_tests.rs", description: "Integration tests for FSM replication and presenter interpolation"),
         File(path: "tests/ui_tests.rs", description: "UI headless hierarchy and click validation tests"),
+        File(path: "tests/loopback_tests.rs", description: "Integration tests for single-player loopback server transitions and wager cards"),
       ]
     ),
     Crate(

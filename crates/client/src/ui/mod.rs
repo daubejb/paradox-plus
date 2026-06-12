@@ -11,6 +11,7 @@ impl Plugin for ClientUiPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<systems::simulation::OfflineServerState>()
             .init_resource::<components::GameSettings>()
+            .init_resource::<components::SelectedWagerCard>()
             .init_state::<ClientScreenState>()
             .add_systems(Startup, layout::spawn_ui_layout)
             .add_systems(
@@ -36,12 +37,14 @@ impl Plugin for ClientUiPlugin {
                     systems::handle_roll_buttons,
                     systems::handle_wager_card_buttons,
                     systems::handle_skip_placement_button,
+                    systems::handle_board_cell_clicks,
                     systems::handle_landing_button_clicks,
                     systems::handle_gameplay_exit,
                     systems::handle_setup_button_clicks,
                     systems::handle_nickname_keyboard_input,
                     systems::update_setup_screen_ui,
                     systems::simulation::update_board_cell_visuals,
+                    systems::simulation::update_wagers_on_board,
                     systems::simulation::update_ui_elements_system,
                     systems::simulation::rebuild_board_on_hole_change_system
                         .run_if(resource_changed::<components::CurrentHole>)

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::ui::components::{RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode};
+use crate::ui::components::{RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode, SelectedWagerCard, BoardCellNode};
 use crate::network::events::ClientActionRequest;
 use protocol::messages::ClientAction;
 
@@ -23,15 +23,34 @@ pub fn handle_roll_buttons(
 
 /// System to handle wager card buttons clicks.
 pub fn handle_wager_card_buttons(
-    mut events: EventWriter<ClientActionRequest>,
+    mut selected_card: ResMut<SelectedWagerCard>,
     card_query: Query<(&Interaction, &WagerCardButtonNode), Changed<Interaction>>,
 ) {
     for (interaction, card) in card_query.iter() {
         if *interaction == Interaction::Pressed {
+            selected_card.0 = Some(card.card_type);
+        }
+    }
+}
+
+/// System to handle board cell clicks to draft/place the selected card.
+pub fn handle_board_cell_clicks(
+    mut selected_card: ResMut<SelectedWagerCard>,
+    mut events: EventWriter<ClientActionRequest>,
+    cell_query: Query<(&Interaction, &BoardCellNode), Changed<Interaction>>,
+) {
+    let card_type = match selected_card.0 {
+        Some(c) => c,
+        None => return,
+    };
+
+    for (interaction, cell) in cell_query.iter() {
+        if *interaction == Interaction::Pressed {
             events.send(ClientActionRequest(ClientAction::DraftCard {
-                card_type: card.card_type,
-                cell_index: 10, // Mock cell index for draft placement validation
+                card_type,
+                cell_index: cell.index,
             }));
+            selected_card.0 = None; // Clear selection after drafting
         }
     }
 }

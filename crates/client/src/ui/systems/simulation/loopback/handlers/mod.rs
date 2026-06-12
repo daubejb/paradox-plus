@@ -1,6 +1,7 @@
 pub mod dice;
 pub mod terrain;
 pub mod movement;
+pub mod wager;
 
 use super::state::OfflineServerState;
 use protocol::messages::{ClientAction, ServerUpdate, GameStateEnum, Scorecard};
@@ -18,11 +19,6 @@ pub fn handle_action(
         ClientAction::RollDice { dice_count } => {
             let dice_count = *dice_count;
             let current_pos = state.player_position;
-            let mut final_pos;
-            let next_dir;
-            let shot_strokes;
-            let penalty_strokes;
-            let completed_hole;
 
             // 1. Bunker escape logic
             let current_terrain = course.cells.get(current_pos as usize).copied().unwrap_or(TerrainType::Fairway);
@@ -101,22 +97,75 @@ pub fn handle_action(
                 state.direction,
                 course,
             );
-            final_pos = target_pos;
-            next_dir = dir;
+            let mut final_pos = target_pos;
+            let next_dir = dir;
+
+            // Check if there is a wager token on target cell before resolving terrain
+            let mut has_shield = false;
+            let mut trigger_golden_die = false;
+            let mut trigger_banana = false;
+
+            if let Some(wager) = state.placed_wagers.iter().find(|w| w.cell_index == final_pos) {
+                match wager.card_type {
+                    0 => { // Guardian Shield
+                        has_shield = true;
+                    }
+                    1 => { // Trickster Banana
+                        trigger_banana = true;
+                    }
+                    2 => { // Golden Die
+                        trigger_golden_die = true;
+                    }
+                    _ => {}
+                }
+            }
 
             // 3. Resolve landing terrain rules
-            let target_terrain = course.cells.get(final_pos as usize).copied().unwrap_or(TerrainType::Fairway);
+            let actual_terrain = course.cells.get(final_pos as usize).copied().unwrap_or(TerrainType::Fairway);
+            let target_terrain = if has_shield {
+                TerrainType::Fairway
+            } else {
+                actual_terrain
+            };
+
             let landing_res = terrain::resolve_landing(final_pos as u16, current_pos as u16, target_terrain);
             
             final_pos = landing_res.final_cell as u32;
-            shot_strokes = landing_res.shot_strokes;
-            penalty_strokes = landing_res.penalty_strokes;
-            completed_hole = landing_res.completed_hole;
+            let shot_strokes = landing_res.shot_strokes;
+            let penalty_strokes = landing_res.penalty_strokes;
+            let completed_hole = landing_res.completed_hole;
+
+            if trigger_banana {
+                // Slide forward 2 spaces
+                let push_target = final_pos + 2;
+                let total_cells = course.cells.len() as u32;
+                final_pos = if push_target >= total_cells {
+                    total_cells - 1
+                } else {
+                    push_target
+                };
+                updates.push(ServerUpdate::AlertTriggered {
+                    alert_message: heapless::String::try_from("Triggered Trickster Banana! Slid forward 2 spaces.").unwrap(),
+                });
+            }
 
             // Update local state
             state.player_position = final_pos;
             state.direction = next_dir;
             state.strokes += (shot_strokes + penalty_strokes) as u32;
+
+            if trigger_golden_die {
+                state.strokes = state.strokes.saturating_sub(2);
+                state.inventory.push(2); // Earn Golden Die card
+                updates.push(ServerUpdate::AlertTriggered {
+                    alert_message: heapless::String::try_from("Triggered Golden Die! -2 Strokes, earned Golden Die card.").unwrap(),
+                });
+            }
+
+            if completed_hole && state.strokes == 0 {
+                state.strokes = 1;
+            }
+
             state.sequence += 1;
 
             let mut earned_cards: HVec<u8, 4> = HVec::new();
@@ -178,95 +227,10 @@ pub fn handle_action(
             });
         }
         ClientAction::DraftCard { card_type, cell_index } => {
-            let card_type = *card_type;
-            let cell_index = *cell_index;
-
-            if let Some(pos) = state.inventory.iter().position(|&c| c == card_type) {
-                state.inventory.remove(pos);
-                state.placed_wagers.push(protocol::messages::WagerToken {
-                    card_type,
-                    owner_id: state.active_player_id,
-                    cell_index,
-                });
-                state.sequence += 1;
-
-                if state.inventory.is_empty() {
-                    state.game_state = GameStateEnum::AwaitingTurn;
-                }
-
-                let card_name = match card_type {
-                    0 => "Guardian Shield",
-                    1 => "Trickster Banana",
-                    _ => "Golden Die",
-                };
-                updates.push(ServerUpdate::AlertTriggered {
-                    alert_message: heapless::String::try_from(format!("Placed {} wager!", card_name).as_str()).unwrap(),
-                });
-            } else {
-                updates.push(ServerUpdate::AlertTriggered {
-                    alert_message: heapless::String::try_from("No card of that type in hand!").unwrap(),
-                });
-            }
-
-            let mut player_positions = HVec::new();
-            player_positions.push(state.player_position).unwrap();
-            let mut player_scores = HVec::new();
-            let mut hand = HVec::new();
-            for &c in &state.inventory {
-                let _ = hand.push(c);
-            }
-            player_scores.push(Scorecard {
-                running_strokes: state.strokes as u16,
-                total_strokes: state.strokes as u16,
-                earned_cards: hand,
-            }).unwrap();
-
-            let mut wagers = HVec::new();
-            for w in &state.placed_wagers {
-                let _ = wagers.push(w.clone());
-            }
-
-            updates.push(ServerUpdate::StateSync {
-                sequence: state.sequence,
-                game_state: state.game_state,
-                active_player_id: state.active_player_id,
-                current_hole: state.current_hole,
-                player_positions,
-                player_scores,
-                placed_wagers: wagers,
-            });
+            updates.extend(wager::handle_draft_card(state, *card_type, *cell_index, course));
         }
         ClientAction::SkipPlacement => {
-            state.game_state = GameStateEnum::AwaitingTurn;
-            state.sequence += 1;
-
-            let mut player_positions = HVec::new();
-            player_positions.push(state.player_position).unwrap();
-            let mut player_scores = HVec::new();
-            let mut hand = HVec::new();
-            for &c in &state.inventory {
-                let _ = hand.push(c);
-            }
-            player_scores.push(Scorecard {
-                running_strokes: state.strokes as u16,
-                total_strokes: state.strokes as u16,
-                earned_cards: hand,
-            }).unwrap();
-
-            let mut wagers = HVec::new();
-            for w in &state.placed_wagers {
-                let _ = wagers.push(w.clone());
-            }
-
-            updates.push(ServerUpdate::StateSync {
-                sequence: state.sequence,
-                game_state: state.game_state,
-                active_player_id: state.active_player_id,
-                current_hole: state.current_hole,
-                player_positions,
-                player_scores,
-                placed_wagers: wagers,
-            });
+            updates.extend(wager::handle_skip_placement(state));
         }
         _ => {}
     }

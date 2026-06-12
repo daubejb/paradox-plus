@@ -162,6 +162,15 @@ pub struct WagerCardQtyTextNode {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WagerTokenMarker;
+
+#[derive(Resource, Default, Debug, Clone)]
+pub struct ClientWagers(pub Vec<protocol::messages::WagerToken>);
+
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SelectedWagerCard(pub Option<u8>);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RadioDotNode {
     pub mode: GameMode,
 }

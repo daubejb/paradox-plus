@@ -73,7 +73,7 @@ pub struct PlayerInfo {
 pub struct Scorecard {
     pub running_strokes: u16,
     pub total_strokes: u16,
-    pub earned_cards: HVec<u8, 4>, // Max 4 earned cards
+    pub earned_cards: HVec<u8, 16>, // Max 16 earned cards
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::replication::Ball;
-use crate::ui::components::{BoardCellNode, PlayerTokenMarker, BoardContainerNode, CurrentHole, GameSettings};
+use crate::ui::components::{BoardCellNode, PlayerTokenMarker, BoardContainerNode, CurrentHole, GameSettings, WagerTokenMarker, ClientWagers};
 
 pub fn update_board_cell_visuals(
     ball_query: Query<&Ball>,
@@ -19,6 +19,39 @@ pub fn update_board_cell_visuals(
             if parent.get() == cell_entity {
                 if cell_node.index == active_cell_idx {
                     style.display = Display::Flex;
+                } else {
+                    style.display = Display::None;
+                }
+            }
+        }
+    }
+}
+
+pub fn update_wagers_on_board(
+    wagers: Res<ClientWagers>,
+    cell_query: Query<(Entity, &BoardCellNode)>,
+    mut wager_marker_query: Query<(&Parent, &mut Style, &mut BackgroundColor, &Children), With<WagerTokenMarker>>,
+    mut text_query: Query<&mut Text>,
+) {
+    for (cell_entity, cell_node) in cell_query.iter() {
+        for (parent, mut style, mut bg_color, children) in wager_marker_query.iter_mut() {
+            if parent.get() == cell_entity {
+                if let Some(wager) = wagers.0.iter().find(|w| w.cell_index == cell_node.index) {
+                    style.display = Display::Flex;
+                    *bg_color = match wager.card_type {
+                        0 => Color::srgb(0.2, 0.4, 0.8).into(),   // Shield (Blue)
+                        1 => Color::srgb(0.9, 0.8, 0.1).into(),   // Banana (Yellow)
+                        _ => Color::srgb(0.8, 0.1, 0.1).into(),   // Golden Die (Red)
+                    };
+                    if let Some(&text_child) = children.first() {
+                        if let Ok(mut text) = text_query.get_mut(text_child) {
+                            text.sections[0].value = match wager.card_type {
+                                0 => "S".to_string(),
+                                1 => "B".to_string(),
+                                _ => "G".to_string(),
+                            };
+                        }
+                    }
                 } else {
                     style.display = Display::None;
                 }
@@ -79,7 +112,7 @@ pub fn rebuild_board_on_hole_change_system(
                         };
 
                         grid.spawn((
-                            NodeBundle {
+                            ButtonBundle {
                                 style: Style {
                                     width: Val::Px(46.0),
                                     height: Val::Px(46.0),
@@ -103,6 +136,7 @@ pub fn rebuild_board_on_hole_change_system(
                                 },
                             ));
 
+                            // Ball location indicator (bottom right)
                             cell.spawn((
                                 NodeBundle {
                                     style: Style {
@@ -119,6 +153,36 @@ pub fn rebuild_board_on_hole_change_system(
                                 },
                                 PlayerTokenMarker,
                             ));
+
+                            // Wager token indicator (top left)
+                            cell.spawn((
+                                NodeBundle {
+                                    style: Style {
+                                        width: Val::Px(12.0),
+                                        height: Val::Px(12.0),
+                                        display: Display::None,
+                                        position_type: PositionType::Absolute,
+                                        top: Val::Px(1.0),
+                                        left: Val::Px(1.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                    background_color: Color::NONE.into(),
+                                    border_radius: BorderRadius::all(Val::Px(2.0)),
+                                    ..default()
+                                },
+                                WagerTokenMarker,
+                            )).with_children(|wager_indicator| {
+                                wager_indicator.spawn(TextBundle::from_section(
+                                    "",
+                                    TextStyle {
+                                        font_size: 8.0,
+                                        color: Color::WHITE,
+                                        ..default()
+                                    },
+                                ));
+                            });
                         });
                     }
                 }

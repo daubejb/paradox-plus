@@ -5,7 +5,7 @@ use client::ui::{
     ClientUiPlugin,
 };
 use client::network::events::ClientActionRequest;
-use protocol::messages::ClientAction;
+use protocol::messages::{ClientAction, ServerUpdate};
 
 fn setup_headless_ui_app() -> App {
     let mut app = App::new();
@@ -81,6 +81,23 @@ fn test_wager_card_selection_interaction() {
     // Run startup systems
     app.update();
 
+    // Transition state to SoloSetup, then trigger PlayGameButton click to start game and spawn board
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
+        next_state.set(ClientScreenState::SoloSetup);
+    }
+    app.update();
+    app.update();
+
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<PlayGameButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Play Game button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+    app.update();
+    app.update();
+    app.update();
+
     // Query for a WagerCardButtonNode with card_type = 1 (Banana)
     let mut banana_query = app.world_mut().query_filtered::<(Entity, &WagerCardButtonNode), With<Button>>();
     let (banana_entity, _) = banana_query
@@ -94,15 +111,41 @@ fn test_wager_card_selection_interaction() {
     // Update to trigger interaction systems
     app.update();
 
-    // Verify that ClientActionRequest event was dispatched
+    // Verify that the SelectedWagerCard resource has been updated to Some(1)
+    {
+        let selected_card = app.world().resource::<SelectedWagerCard>();
+        assert_eq!(selected_card.0, Some(1), "Expected SelectedWagerCard to be Some(1)");
+    }
+
+    // Query for a BoardCellNode with index = 10
+    let mut cell_query = app.world_mut().query_filtered::<(Entity, &BoardCellNode), With<Button>>();
+    let (cell_entity, _) = cell_query
+        .iter(app.world())
+        .find(|(_, node)| node.index == 10)
+        .expect("Board cell button with index 10 not found");
+
+    // Simulate clicking the board cell
+    app.world_mut().entity_mut(cell_entity).insert(Interaction::Pressed);
+
+    // Update to trigger cell click handler system
+    app.update();
+
+    // Verify that the SelectedWagerCard resource has been reset to None
+    {
+        let selected_card = app.world().resource::<SelectedWagerCard>();
+        assert_eq!(selected_card.0, None, "Expected SelectedWagerCard to be reset to None");
+    }
+
+    // Verify that ClientActionRequest event for DraftCard was dispatched with cell_index = 10
     let events = app.world().resource::<Events<ClientActionRequest>>();
     let mut reader = events.get_reader();
     let sent_events: Vec<&ClientActionRequest> = reader.read(events).collect();
 
-    assert_eq!(sent_events.len(), 1, "Expected exactly one ClientActionRequest to be sent");
-    if let ClientAction::DraftCard { card_type, cell_index } = &sent_events[0].0 {
+    let draft_card_event = sent_events.iter().find(|event| matches!(event.0, ClientAction::DraftCard { .. }));
+    assert!(draft_card_event.is_some(), "Expected a ClientAction::DraftCard event to be sent");
+    if let Some(ClientActionRequest(ClientAction::DraftCard { card_type, cell_index })) = draft_card_event {
         assert_eq!(*card_type, 1, "Expected card_type to be 1 (Banana)");
-        assert_eq!(*cell_index, 10, "Expected cell_index to match drafted spot");
+        assert_eq!(*cell_index, 10, "Expected cell_index to match drafted spot (10)");
     } else {
         panic!("Sent event was not a ClientAction::DraftCard variant");
     }
@@ -319,5 +362,81 @@ fn test_screen_state_transitions() {
         let screen_state = app.world().resource::<State<ClientScreenState>>();
         assert_eq!(*screen_state.get(), ClientScreenState::Landing);
     }
+}
+
+#[test]
+fn test_wager_card_qty_hud_rendering() {
+    let mut app = setup_headless_ui_app();
+
+    // Run startup systems to spawn HUD
+    app.update();
+
+    // Transition to Gameplay state
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
+        next_state.set(ClientScreenState::Gameplay);
+    }
+    app.update();
+
+    // Send a mock StateSync event with 1 Shield and 2 Golden Die cards in player's hand
+    let mut hand = heapless::Vec::new();
+    hand.push(0).unwrap(); // Shield
+    hand.push(2).unwrap(); // Golden Die
+    hand.push(2).unwrap(); // Golden Die
+
+    let mut scores = heapless::Vec::new();
+    scores.push(protocol::messages::Scorecard {
+        running_strokes: 3,
+        total_strokes: 3,
+        earned_cards: hand,
+    }).unwrap();
+
+    let sync_event = ServerUpdate::StateSync {
+        sequence: 1,
+        game_state: protocol::messages::GameStateEnum::AwaitingTurn,
+        active_player_id: 1234,
+        current_hole: 1,
+        player_positions: {
+            let mut v = heapless::Vec::new();
+            v.push(0).unwrap();
+            v
+        },
+        player_scores: scores,
+        placed_wagers: heapless::Vec::new(),
+    };
+
+    app.world_mut().resource_mut::<Events<client::network::ServerUpdateEvent>>().send(client::network::ServerUpdateEvent(sync_event));
+
+    // Update to process events and run render system
+    app.update();
+
+    // Query WagerCardQtyTextNode text values
+    let mut text_query = app.world_mut().query::<(&Text, &WagerCardQtyTextNode)>();
+    let mut found_shield = false;
+    let mut found_banana = false;
+    let mut found_golden = false;
+
+    for (text, node) in text_query.iter(app.world()) {
+        let val = &text.sections[0].value;
+        match node.card_type {
+            0 => {
+                assert_eq!(val, "SHIELD (1)");
+                found_shield = true;
+            }
+            1 => {
+                assert_eq!(val, "BANANA (0)");
+                found_banana = true;
+            }
+            2 => {
+                assert_eq!(val, "GOLDEN (2)");
+                found_golden = true;
+            }
+            _ => {}
+        }
+    }
+
+    assert!(found_shield);
+    assert!(found_banana);
+    assert!(found_golden);
 }
 

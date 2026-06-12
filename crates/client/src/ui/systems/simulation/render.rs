@@ -61,10 +61,10 @@ pub fn update_ui_elements_system(
                     text.sections[0].value = format!("{} ({})", label, count);
                 }
 
-                let (roll_display, skip_display) = if *game_state == GameStateEnum::MarkerPlacement {
-                    (Display::None, Display::Flex)
-                } else {
-                    (Display::Flex, Display::None)
+                let (roll_display, skip_display) = match game_state {
+                    GameStateEnum::MarkerPlacement => (Display::None, Display::Flex),
+                    GameStateEnum::AwaitingTurn => (Display::Flex, Display::None),
+                    _ => (Display::None, Display::None),
                 };
 
                 if let Ok(mut style) = roll_one_query.get_single_mut() {

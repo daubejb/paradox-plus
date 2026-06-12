@@ -177,6 +177,10 @@ pub fn local_offline_server_system(
                 continue;
             }
 
+            if !protocol::fsm::is_valid_action(&action, state.game_state) {
+                continue;
+            }
+
             let updates = handlers::handle_action(&mut state, &action, &course);
             for update in updates {
                 send_buf.resize(65536, 0);
