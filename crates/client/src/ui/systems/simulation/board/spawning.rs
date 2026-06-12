@@ -70,7 +70,7 @@ pub fn rebuild_board_on_hole_change_system(
         let l = (w * 0.35).max(60.0);
         let perimeter = 2.0 * l + 2.0 * std::f32::consts::PI * r;
         let spacing = perimeter / layout_capacity as f32;
-        let tile_length = spacing * 1.35;
+        let tile_length = spacing;
         let tile_thickness = 72.0;
 
         commands.entity(root_entity).with_children(|board| {
@@ -185,7 +185,7 @@ pub fn rebuild_board_on_hole_change_system(
                 }
             }
 
-            // Spawn tile dividers and inner boundary dots
+            // Spawn tile dividers
             for idx in 0..layout_capacity {
                 let layout = calculate_capsule_layout(idx as f32 + 0.5, layout_capacity, size);
                 board.spawn(SpriteBundle {
@@ -197,17 +197,6 @@ pub fn rebuild_board_on_hole_change_system(
                     transform: Transform::from_translation(layout.position.extend(0.6)) // slightly in front of tiles and tokens
                         .with_rotation(Quat::from_rotation_z(layout.rotation_angle)),
                     ..default()
-                }).with_children(|divider| {
-                    // Spawn a small boundary dot at the inner edge (local X = tile_thickness / 2.0)
-                    divider.spawn(SpriteBundle {
-                        sprite: Sprite {
-                            color: Color::WHITE,
-                            custom_size: Some(Vec2::splat(4.0)),
-                            ..default()
-                        },
-                        transform: Transform::from_translation(Vec3::new(tile_thickness / 2.0, 0.0, 0.1)),
-                        ..default()
-                    });
                 });
             }
         });
