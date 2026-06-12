@@ -596,8 +596,8 @@ fn test_capsule_geometry_calculations() {
     assert!(layout_tee.position.y < 0.0, "Tee should be on bottom straight segment");
     assert!((layout_tee.rotation_angle + std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards");
 
-    // Test a cell on the top segment (e.g. index 18)
-    let top_idx = 18;
+    // Test a cell on the top segment (e.g. index 15)
+    let top_idx = 15;
     let layout_top = calculate_capsule_layout(top_idx, total_cells, viewport);
     // Top cell should be on the top segment (going right to left)
     assert!(layout_top.position.y > 0.0, "Top cell should be on top segment");

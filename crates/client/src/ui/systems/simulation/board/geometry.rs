@@ -23,8 +23,8 @@ pub fn calculate_capsule_layout(
     };
 
     // Define racetrack dimensions: straight length l, semicircle radius r
-    let r = (h * 0.33).min(w * 0.20).max(40.0);
-    let l = (w * 0.50).max(60.0);
+    let r = (h * 0.40).min(w * 0.25).max(40.0);
+    let l = (w * 0.35).max(60.0);
 
     let perimeter = 2.0 * l + 2.0 * std::f32::consts::PI * r;
 
