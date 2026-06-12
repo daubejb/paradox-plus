@@ -39,7 +39,25 @@ pub fn update_ui_elements_system(
 
                 if *game_state == GameStateEnum::HoleCompleted {
                     if let Ok(mut text) = status_query.get_single_mut() {
-                        text.sections[0].value = format!("Completed Hole {}! Well played!", current_hole);
+                        let score_val = player_scores.first();
+                        let cards_str = if let Some(score) = score_val {
+                            if score.earned_cards.is_empty() {
+                                " No cards earned.".to_string()
+                            } else {
+                                let mut names = Vec::new();
+                                for card in score.earned_cards.iter() {
+                                    match card {
+                                        0 => names.push("Guardian Shield"),
+                                        1 => names.push("Trickster Banana"),
+                                        _ => names.push("Golden Die"),
+                                    }
+                                }
+                                format!(" Earned: {}", names.join(", "))
+                            }
+                        } else {
+                            "".to_string()
+                        };
+                        text.sections[0].value = format!("Completed Hole {}! Well played!{}", current_hole, cards_str);
                     }
                 }
             }

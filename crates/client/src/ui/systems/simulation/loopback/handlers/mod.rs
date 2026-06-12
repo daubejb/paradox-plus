@@ -119,6 +119,22 @@ pub fn handle_action(
             state.strokes += (shot_strokes + penalty_strokes) as u32;
             state.sequence += 1;
 
+            let mut earned_cards = HVec::new();
+            if state.is_wager_mode && completed_hole {
+                let score_relative_to_par = state.strokes as i32 - course.par as i32;
+                use rand::Rng;
+                let mut rng = rand::thread_rng();
+                if score_relative_to_par <= -3 || state.strokes == 1 {
+                    let _ = earned_cards.push(2);
+                } else if score_relative_to_par == -2 {
+                    let card = if rng.gen_bool(0.5) { 1 } else { 2 };
+                    let _ = earned_cards.push(card);
+                } else if score_relative_to_par == -1 {
+                    let r = rng.gen_range(0..3);
+                    let _ = earned_cards.push(r);
+                }
+            }
+
             if completed_hole {
                 state.game_state = GameStateEnum::HoleCompleted;
             } else {
@@ -132,7 +148,7 @@ pub fn handle_action(
             player_scores.push(Scorecard {
                 running_strokes: state.strokes as u16,
                 total_strokes: state.strokes as u16,
-                earned_cards: HVec::new(),
+                earned_cards,
             }).unwrap();
 
             updates.push(ServerUpdate::StateSync {
