@@ -50,8 +50,8 @@ pub fn handle_board_clicks_system(
             for (global_transform, cell) in cell_query.iter() {
                 let cell_pos = global_transform.translation().xy();
                 
-                // Each cell sprite is 42x42. Radial distance check <= 22.0 is extremely robust and rotation-independent.
-                if world_position.distance(cell_pos) <= 22.0 {
+                // Each cell sprite is 72.0 wide. Radial distance check <= 32.0 is extremely robust and rotation-independent.
+                if world_position.distance(cell_pos) <= 32.0 {
                     events.send(ClientActionRequest(ClientAction::DraftCard {
                         card_type,
                         cell_index: cell.index,
