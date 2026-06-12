@@ -15,8 +15,9 @@ pub fn setup_board_camera_system(
         commands.spawn((
             Camera2dBundle {
                 camera: Camera {
-                    // Render underneath the main UI (which defaults to order 1)
-                    order: 0,
+                    // Render on top of the main UI camera (which remains at default order 0)
+                    // physically constrained to the central spacer viewport node
+                    order: 1,
                     ..default()
                 },
                 ..default()
@@ -60,21 +61,43 @@ pub fn sync_board_camera_viewport_system(
         raw_size
     };
 
-    camera.is_active = true;
+    let physical_width = window.physical_width();
+    let physical_height = window.physical_height();
 
-    // Convert logical UI spacer bounds to physical coordinates for camera viewport bounds
-    let scale_factor = window.scale_factor();
+    // Deactivate if window minimized or physical bounds are invalid
+    if physical_width == 0 || physical_height == 0 {
+        camera.is_active = false;
+        return;
+    }
+
+    let scale_factor = window.scale_factor() as f32;
     let half_size = size / 2.0;
     let translation = transform.translation();
 
-    let left = (translation.x - half_size.x) * scale_factor;
-    let top = (translation.y - half_size.y) * scale_factor;
-    let width = size.x * scale_factor;
-    let height = size.y * scale_factor;
+    // Map UI layout space (origin center of screen, Y-up) to physical Viewport space (origin top-left, Y-down)
+    let left_window = (window.width() / 2.0) + (translation.x - half_size.x);
+    let top_window = (window.height() / 2.0) - (translation.y + half_size.y);
 
+    // Safeguard physical positions to be strictly within window dimensions
+    let left_physical = (left_window * scale_factor).max(0.0).min(physical_width.saturating_sub(1) as f32) as u32;
+    let top_physical = (top_window * scale_factor).max(0.0).min(physical_height.saturating_sub(1) as f32) as u32;
+
+    let max_width = physical_width.saturating_sub(left_physical);
+    let max_height = physical_height.saturating_sub(top_physical);
+
+    // Enforce viewport size >= 1 to prevent validation layer panics
+    let width_physical = (size.x * scale_factor).max(1.0).min(max_width as f32) as u32;
+    let height_physical = (size.y * scale_factor).max(1.0).min(max_height as f32) as u32;
+
+    if width_physical == 0 || height_physical == 0 {
+        camera.is_active = false;
+        return;
+    }
+
+    camera.is_active = true;
     camera.viewport = Some(Viewport {
-        physical_position: UVec2::new(left.max(0.0) as u32, top.max(0.0) as u32),
-        physical_size: UVec2::new(width.max(1.0) as u32, height.max(1.0) as u32),
+        physical_position: UVec2::new(left_physical, top_physical),
+        physical_size: UVec2::new(width_physical, height_physical),
         depth: 0.0..1.0,
     });
 
