@@ -6,17 +6,17 @@ pub struct CellLayout {
     pub rotation_angle: f32,
 }
 
-const TARGET_ASPECT_RATIO: f32 = 0.68;
+const TARGET_ASPECT_RATIO: f32 = 0.85;
 const VIEWPORT_PADDING: f32 = 24.0;
 
-const MIN_OUTER_WIDTH: f32 = 90.0;
-const MIN_OUTER_HEIGHT: f32 = 124.2;
+const MIN_OUTER_WIDTH: f32 = 336.0;
+const MIN_OUTER_HEIGHT: f32 = 376.0;
 
-const MIDLINE_PADDING: f32 = 72.0;
-const MIN_MIDLINE_WIDTH: f32 = 36.0;
-const MIN_MIDLINE_HEIGHT: f32 = 48.0;
+const MIDLINE_PADDING: f32 = 96.0;
+const MIN_MIDLINE_WIDTH: f32 = 240.0;
+const MIN_MIDLINE_HEIGHT: f32 = 280.0;
 
-const RADIUS_COEFFICIENT: f32 = 0.35;
+const RADIUS_COEFFICIENT: f32 = 0.22;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TrackGeometry {

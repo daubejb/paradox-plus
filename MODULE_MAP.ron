@@ -133,5 +133,6 @@ Sitemap(
     Doc(path: "doc/adr/0012-track-outer-boundary-chamfering.md", description: "ADR 0012: Track Outer Boundary Chamfering and Widening"),
     Doc(path: "doc/adr/0013-rounded-rectangle-track-geometry.md", description: "ADR 0013: Rounded Rectangle Track Geometry Model"),
     Doc(path: "doc/adr/0014-track-aspect-ratio-fitting.md", description: "ADR 0014: Constant Aspect Ratio Fitting for Track Geometry"),
+    Doc(path: "doc/adr/0015-track-proportions-expansion.md", description: "ADR 0015: Track Proportions and Width Expansion"),
   ]
 )

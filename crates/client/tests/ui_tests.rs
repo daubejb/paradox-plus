@@ -621,7 +621,7 @@ fn test_capsule_geometry_calculations() {
     for vp in viewports {
         let geom = TrackGeometry::calculate(vp);
         let ratio = geom.outer_width / geom.outer_height;
-        assert!((ratio - 0.68).abs() < 1e-4, "Expected aspect ratio of 0.68 for viewport {:?}", vp);
+        assert!((ratio - 0.85).abs() < 1e-4, "Expected aspect ratio of 0.85 for viewport {:?}", vp);
     }
 }
 

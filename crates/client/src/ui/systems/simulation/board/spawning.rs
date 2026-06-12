@@ -78,7 +78,7 @@ pub fn rebuild_board_on_hole_change_system(
         let total_cells = preset.cells.len();
         let layout_capacity = total_cells.max(27);
 
-        let tile_thickness = 72.0;
+        let tile_thickness = 96.0;
         let d = tile_thickness / 2.0;
 
         commands.entity(root_entity).with_children(|board| {
