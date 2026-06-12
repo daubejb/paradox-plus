@@ -100,19 +100,10 @@ pub fn rebuild_board_on_hole_change_system(
                 let mesh = generate_quad_tile_mesh(c_out_start, c_out_end, c_in_end, c_in_start);
                 let mesh_handle = meshes.add(mesh);
 
-                let color = if idx < total_cells {
-                    let cell_type = preset.cells[idx];
-                    match cell_type {
-                        protocol::terrain::TerrainType::TeeBox => Color::srgb(0.2, 0.6, 0.3),
-                        protocol::terrain::TerrainType::Fairway => Color::srgb(0.3, 0.7, 0.4),
-                        protocol::terrain::TerrainType::Rough => Color::srgb(0.25, 0.5, 0.3),
-                        protocol::terrain::TerrainType::Bunker => Color::srgb(0.8, 0.7, 0.5),
-                        protocol::terrain::TerrainType::Water => Color::srgb(0.1, 0.4, 0.7),
-                        protocol::terrain::TerrainType::OutOfBounds => Color::srgb(0.9, 0.2, 0.2),
-                        protocol::terrain::TerrainType::Green(_) => Color::srgb(0.1, 0.5, 0.2),
-                    }
+                let (color, text_color) = if idx < total_cells {
+                    super::style::get_terrain_style(&preset.cells[idx])
                 } else {
-                    Color::srgba(0.16, 0.26, 0.20, 0.4)
+                    (Color::srgba(0.16, 0.26, 0.20, 0.4), Color::WHITE)
                 };
 
                 let material_handle = materials.add(ColorMaterial::from(color));
@@ -209,8 +200,8 @@ pub fn rebuild_board_on_hole_change_system(
                             text: Text::from_section(
                                 name,
                                 TextStyle {
-                                    font_size: 9.0,
-                                    color: Color::WHITE,
+                                    font_size: 12.0,
+                                    color: text_color,
                                     ..default()
                                 },
                             ),
