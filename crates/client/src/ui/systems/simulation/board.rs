@@ -78,19 +78,21 @@ pub fn rebuild_board_on_hole_change_system(
         commands.entity(container_entity).with_children(|board| {
             board.spawn(NodeBundle {
                 style: Style {
-                    width: Val::Percent(95.0),
-                    height: Val::Percent(95.0),
-                    flex_wrap: FlexWrap::Wrap,
-                    justify_content: JustifyContent::Center,
-                    align_content: AlignContent::Center,
-                    column_gap: Val::Px(6.0),
-                    row_gap: Val::Px(6.0),
+                    width: Val::Px(450.0),
+                    height: Val::Px(580.0),
+                    position_type: PositionType::Relative,
+                    margin: UiRect::all(Val::Auto),
                     ..default()
                 },
                 ..default()
-            }).with_children(|grid| {
+            }).with_children(|relative_board| {
                 if let Some(preset) = protocol::terrain::presets::get_course_preset(&settings.course, current_hole.0) {
                     for (idx, &cell_type) in preset.cells.iter().enumerate() {
+                        if idx >= crate::ui::layout::board::BOARD_TILE_POSITIONS.len() {
+                            break;
+                        }
+                        let (left_pct, top_pct) = crate::ui::layout::board::BOARD_TILE_POSITIONS[idx];
+
                         let name = match cell_type {
                             protocol::terrain::TerrainType::TeeBox => "TEE".to_string(),
                             protocol::terrain::TerrainType::Fairway => format!("{} FW", idx),
@@ -111,11 +113,14 @@ pub fn rebuild_board_on_hole_change_system(
                             protocol::terrain::TerrainType::Green(_) => Color::srgb(0.1, 0.5, 0.2),
                         };
 
-                        grid.spawn((
+                        relative_board.spawn((
                             ButtonBundle {
                                 style: Style {
-                                    width: Val::Px(46.0),
-                                    height: Val::Px(46.0),
+                                    width: Val::Px(crate::ui::layout::board::TILE_SIZE),
+                                    height: Val::Px(crate::ui::layout::board::TILE_SIZE),
+                                    position_type: PositionType::Absolute,
+                                    left: Val::Percent(left_pct - crate::ui::layout::board::TILE_OFFSET_X),
+                                    top: Val::Percent(top_pct - crate::ui::layout::board::TILE_OFFSET_Y),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
                                     border: UiRect::all(Val::Px(1.0)),
@@ -144,11 +149,12 @@ pub fn rebuild_board_on_hole_change_system(
                                         height: Val::Px(8.0),
                                         display: Display::None,
                                         position_type: PositionType::Absolute,
-                                        bottom: Val::Px(1.0),
-                                        right: Val::Px(1.0),
+                                        bottom: Val::Px(2.0),
+                                        right: Val::Px(2.0),
                                         ..default()
                                     },
                                     background_color: Color::srgb(0.95, 0.85, 0.1).into(),
+                                    border_radius: BorderRadius::all(Val::Px(4.0)),
                                     ..default()
                                 },
                                 PlayerTokenMarker,
@@ -162,14 +168,14 @@ pub fn rebuild_board_on_hole_change_system(
                                         height: Val::Px(12.0),
                                         display: Display::None,
                                         position_type: PositionType::Absolute,
-                                        top: Val::Px(1.0),
-                                        left: Val::Px(1.0),
+                                        top: Val::Px(2.0),
+                                        left: Val::Px(2.0),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
                                         ..default()
                                     },
                                     background_color: Color::NONE.into(),
-                                    border_radius: BorderRadius::all(Val::Px(2.0)),
+                                    border_radius: BorderRadius::all(Val::Px(3.0)),
                                     ..default()
                                 },
                                 WagerTokenMarker,
