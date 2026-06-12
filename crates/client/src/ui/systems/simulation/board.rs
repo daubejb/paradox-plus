@@ -78,19 +78,19 @@ pub fn rebuild_board_on_hole_change_system(
         commands.entity(container_entity).with_children(|board| {
             board.spawn(NodeBundle {
                 style: Style {
-                    width: Val::Px(450.0),
-                    height: Val::Px(580.0),
-                    position_type: PositionType::Relative,
-                    margin: UiRect::all(Val::Auto),
+                    width: Val::Percent(95.0),
+                    height: Val::Percent(95.0),
+                    flex_wrap: FlexWrap::Wrap,
+                    justify_content: JustifyContent::Center,
+                    align_content: AlignContent::Center,
+                    column_gap: Val::Px(6.0),
+                    row_gap: Val::Px(6.0),
                     ..default()
                 },
                 ..default()
-            }).with_children(|relative_board| {
+            }).with_children(|grid| {
                 if let Some(preset) = protocol::terrain::presets::get_course_preset(&settings.course, current_hole.0) {
-                    let total_cells = preset.cells.len();
                     for (idx, &cell_type) in preset.cells.iter().enumerate() {
-                        let layout = crate::ui::layout::board::calculate_cell_layout(idx, total_cells);
-
                         let name = match cell_type {
                             protocol::terrain::TerrainType::TeeBox => "TEE".to_string(),
                             protocol::terrain::TerrainType::Fairway => format!("{} FW", idx),
@@ -104,21 +104,18 @@ pub fn rebuild_board_on_hole_change_system(
                         let color = match cell_type {
                             protocol::terrain::TerrainType::TeeBox => Color::srgb(0.2, 0.6, 0.3),
                             protocol::terrain::TerrainType::Fairway => Color::srgb(0.3, 0.7, 0.4),
-                            protocol::terrain::TerrainType::Rough => Color::srgb(0.15, 0.35, 0.2),
-                            protocol::terrain::TerrainType::Bunker => Color::srgb(0.85, 0.75, 0.5),
-                            protocol::terrain::TerrainType::Water => Color::srgb(0.15, 0.45, 0.75),
+                            protocol::terrain::TerrainType::Rough => Color::srgb(0.25, 0.5, 0.3),
+                            protocol::terrain::TerrainType::Bunker => Color::srgb(0.8, 0.7, 0.5),
+                            protocol::terrain::TerrainType::Water => Color::srgb(0.1, 0.4, 0.7),
                             protocol::terrain::TerrainType::OutOfBounds => Color::srgb(0.9, 0.2, 0.2),
                             protocol::terrain::TerrainType::Green(_) => Color::srgb(0.1, 0.5, 0.2),
                         };
 
-                        relative_board.spawn((
+                        grid.spawn((
                             ButtonBundle {
                                 style: Style {
-                                    width: Val::Px(crate::ui::layout::board::TILE_SIZE),
-                                    height: Val::Px(crate::ui::layout::board::TILE_SIZE),
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Percent(layout.left_pct - 6.0),
-                                    top: Val::Percent(layout.top_pct - 4.6551724),
+                                    width: Val::Px(46.0),
+                                    height: Val::Px(46.0),
                                     justify_content: JustifyContent::Center,
                                     align_items: AlignItems::Center,
                                     border: UiRect::all(Val::Px(1.0)),
@@ -126,7 +123,6 @@ pub fn rebuild_board_on_hole_change_system(
                                 },
                                 background_color: color.into(),
                                 border_color: Color::srgb(0.05, 0.15, 0.10).into(),
-                                transform: Transform::from_rotation(Quat::from_rotation_z(layout.rotation_angle)),
                                 ..default()
                             },
                             BoardCellNode { index: idx as u32 },
@@ -148,12 +144,11 @@ pub fn rebuild_board_on_hole_change_system(
                                         height: Val::Px(8.0),
                                         display: Display::None,
                                         position_type: PositionType::Absolute,
-                                        bottom: Val::Px(2.0),
-                                        right: Val::Px(2.0),
+                                        bottom: Val::Px(1.0),
+                                        right: Val::Px(1.0),
                                         ..default()
                                     },
                                     background_color: Color::srgb(0.95, 0.85, 0.1).into(),
-                                    border_radius: BorderRadius::all(Val::Px(4.0)),
                                     ..default()
                                 },
                                 PlayerTokenMarker,
@@ -167,14 +162,14 @@ pub fn rebuild_board_on_hole_change_system(
                                         height: Val::Px(12.0),
                                         display: Display::None,
                                         position_type: PositionType::Absolute,
-                                        top: Val::Px(2.0),
-                                        left: Val::Px(2.0),
+                                        top: Val::Px(1.0),
+                                        left: Val::Px(1.0),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
                                         ..default()
                                     },
                                     background_color: Color::NONE.into(),
-                                    border_radius: BorderRadius::all(Val::Px(3.0)),
+                                    border_radius: BorderRadius::all(Val::Px(2.0)),
                                     ..default()
                                 },
                                 WagerTokenMarker,
