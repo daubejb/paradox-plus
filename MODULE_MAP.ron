@@ -129,5 +129,7 @@ Sitemap(
     Doc(path: "doc/adr/0008-solo-practice-setup-lifecycle.md", description: "ADR 0008: Solo Practice Setup Lifecycle"),
     Doc(path: "doc/adr/0009-2d-world-space-board-rendering.md", description: "ADR 0009: 2D World Space Board Rendering Refactoring"),
     Doc(path: "doc/adr/0010-procedural-tile-mesh-rendering.md", description: "ADR 0010: Procedural Tile Mesh Rendering"),
+    Doc(path: "doc/adr/0011-client-side-simulation-validation.md", description: "ADR 0011: Client-Side Simulation Validation"),
+    Doc(path: "doc/adr/0012-track-outer-boundary-chamfering.md", description: "ADR 0012: Track Outer Boundary Chamfering and Widening"),
   ]
 )

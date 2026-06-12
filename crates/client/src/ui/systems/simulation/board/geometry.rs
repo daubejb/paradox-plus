@@ -23,7 +23,7 @@ pub fn calculate_capsule_layout(
     };
 
     // Define racetrack dimensions: straight length l, semicircle radius r
-    let r = (h * 0.40).min(w * 0.25).max(40.0);
+    let r = (h * 0.45).min(w * 0.30).max(40.0);
     let l = (w * 0.35).max(60.0);
 
     let perimeter = 2.0 * l + 2.0 * std::f32::consts::PI * r;
@@ -135,5 +135,69 @@ pub fn calculate_line_segment_transform_and_size(
 
     let size = Vec2::new(length, thickness);
     (transform, size)
+}
+
+/// Calculates the outer boundary point by casting a ray from the midline position
+/// in the outward normal direction, intersecting it with a flattened (chamfered box) outer boundary.
+pub fn calculate_outer_point(
+    pos: Vec2,
+    normal: Vec2,
+    r: f32,
+    l: f32,
+    d: f32,
+    is_portrait: bool,
+) -> Vec2 {
+    // Determine outer boundaries of the octagon based on layout orientation
+    let x_limit = if is_portrait { r + d } else { l / 2.0 + r + d };
+    let y_limit = if is_portrait { l / 2.0 + r + d } else { r + d };
+
+    // Flat horizontal/vertical edge limits (where the corner chamfers begin).
+    let (x_top, y_side) = if is_portrait {
+        (0.35 * x_limit, l / 2.0)
+    } else {
+        (l / 2.0, 0.35 * y_limit)
+    };
+
+    let s_x = normal.x.signum();
+    let s_y = normal.y.signum();
+
+    // Corner diagonal line: s_x * dy * x + s_y * dx * y = c
+    let dx = x_limit - x_top;
+    let dy = y_limit - y_side;
+    let c = x_limit * y_limit - x_top * y_side;
+
+    let mut min_t = f32::MAX;
+
+    // 1. Intersect with vertical boundary: x = s_x * x_limit
+    if normal.x.abs() > 1e-5 {
+        let t = (s_x * x_limit - pos.x) / normal.x;
+        if t > 0.0 && t < min_t {
+            min_t = t;
+        }
+    }
+
+    // 2. Intersect with horizontal boundary: y = s_y * y_limit
+    if normal.y.abs() > 1e-5 {
+        let t = (s_y * y_limit - pos.y) / normal.y;
+        if t > 0.0 && t < min_t {
+            min_t = t;
+        }
+    }
+
+    // 3. Intersect with corner diagonal boundary
+    let denom = s_x * dy * normal.x + s_y * dx * normal.y;
+    if denom.abs() > 1e-5 {
+        let t = (c - s_x * dy * pos.x - s_y * dx * pos.y) / denom;
+        if t > 0.0 && t < min_t {
+            min_t = t;
+        }
+    }
+
+    // Fallback if no intersection found (should not happen for valid rays)
+    if min_t == f32::MAX {
+        pos + normal * d
+    } else {
+        pos + normal * min_t
+    }
 }
 

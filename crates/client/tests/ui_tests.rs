@@ -613,3 +613,34 @@ fn test_capsule_geometry_calculations() {
     assert!(layout_tee_portrait.rotation_angle.abs() < 1e-5, "Portrait Tee rotation should face perpendicular outwards");
 }
 
+#[test]
+fn test_calculate_outer_point() {
+    use client::ui::systems::simulation::board::geometry::calculate_outer_point;
+
+    let r = 160.0;
+    let l = 100.0;
+    let d = 36.0;
+
+    // Test in portrait mode
+    let is_portrait = true;
+
+    // 1. Ray pointing exactly right (vertical side outer wall should be at x = r + d)
+    let pos = Vec2::new(r, 0.0);
+    let normal = Vec2::new(1.0, 0.0);
+    let pt = calculate_outer_point(pos, normal, r, l, d, is_portrait);
+    assert!((pt.x - (r + d)).abs() < 1e-4, "Expected vertical right outer boundary at {}", r + d);
+
+    // 2. Ray pointing exactly left (vertical side outer wall should be at x = -(r + d))
+    let pos = Vec2::new(-r, 0.0);
+    let normal = Vec2::new(-1.0, 0.0);
+    let pt = calculate_outer_point(pos, normal, r, l, d, is_portrait);
+    assert!((pt.x + (r + d)).abs() < 1e-4, "Expected vertical left outer boundary at -{}", r + d);
+
+    // 3. Ray pointing exactly up (horizontal top outer wall should be at y = l/2 + r + d)
+    let pos = Vec2::new(0.0, l / 2.0 + r);
+    let normal = Vec2::new(0.0, 1.0);
+    let pt = calculate_outer_point(pos, normal, r, l, d, is_portrait);
+    assert!((pt.y - (l / 2.0 + r + d)).abs() < 1e-4, "Expected horizontal top outer boundary at {}", l / 2.0 + r + d);
+}
+
+
