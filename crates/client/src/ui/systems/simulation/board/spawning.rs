@@ -13,22 +13,41 @@ pub fn rebuild_board_on_hole_change_system(
     settings: Res<GameSettings>,
     container_query: Query<&Node, With<BoardContainerNode>>,
     root_query: Query<Entity, With<BoardWorldRoot>>,
+    mut last_size: Local<Option<Vec2>>,
 ) {
-    // Clean up old board root and its children recursively to prevent memory leaks
-    for root_entity in root_query.iter() {
-        commands.entity(root_entity).despawn_recursive();
-    }
-
     let Ok(node) = container_query.get_single() else {
         return;
     };
 
     let raw_size = node.size();
+
+    // Check if the container size has resolved to a non-zero value and changed
+    let size_changed = match *last_size {
+        None => true, // Rebuild on first run
+        Some(old_size) => (raw_size - old_size).length_squared() > 1e-4,
+    };
+
+    let hole_changed = current_hole.is_changed();
+
+    // If neither size nor hole changed, skip rebuilding
+    if !size_changed && !hole_changed {
+        return;
+    }
+
+    *last_size = Some(raw_size);
+
+    // Use fallback size if size has not resolved (e.g. in headless tests)
     let size = if raw_size.x <= 0.0 || raw_size.y <= 0.0 {
         Vec2::new(400.0, 400.0)
     } else {
         raw_size
     };
+
+    // Clean up old board root and its children recursively to prevent memory leaks
+    for root_entity in root_query.iter() {
+        commands.entity(root_entity).despawn_recursive();
+    }
+
 
     // Spawn new BoardWorldRoot
     let root_entity = commands.spawn((

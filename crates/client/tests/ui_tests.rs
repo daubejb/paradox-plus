@@ -592,22 +592,23 @@ fn test_capsule_geometry_calculations() {
 
     // Test TeeBox (first cell, idx 0)
     let layout_tee = calculate_capsule_layout(0, total_cells, viewport);
-    // Tee should be on the top segment
-    assert!(layout_tee.position.y > 0.0, "Tee should be on top straight segment");
+    // Tee should be on the bottom segment
+    assert!(layout_tee.position.y < 0.0, "Tee should be on bottom straight segment");
     assert!((layout_tee.rotation_angle + std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards");
 
-    // Test a cell on the bottom segment (e.g. index 18)
-    let bottom_idx = 18;
-    let layout_bottom = calculate_capsule_layout(bottom_idx, total_cells, viewport);
-    // Bottom cell should be on the bottom segment (going right to left)
-    assert!(layout_bottom.position.y < 0.0, "Bottom cell should be on bottom segment");
-    assert!((layout_bottom.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Bottom segment rotation should face perpendicular outwards");
+    // Test a cell on the top segment (e.g. index 18)
+    let top_idx = 18;
+    let layout_top = calculate_capsule_layout(top_idx, total_cells, viewport);
+    // Top cell should be on the top segment (going right to left)
+    assert!(layout_top.position.y > 0.0, "Top cell should be on top segment");
+    assert!((layout_top.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Top segment rotation should face perpendicular outwards");
 
     // Test portrait viewport transposition (e.g. 300x400)
     let viewport_portrait = Vec2::new(300.0, 400.0);
     let layout_tee_portrait = calculate_capsule_layout(0, total_cells, viewport_portrait);
-    // Since it's transposed (rotated 90 deg counter-clockwise), Tee should be on the left vertical segment
+    // Since it's transposed, Tee should be on the left vertical segment and at the bottom
     assert!(layout_tee_portrait.position.x < 0.0, "Portrait Tee should be on the left vertical segment");
+    assert!(layout_tee_portrait.position.y < 0.0, "Portrait Tee should be at the bottom of the segment");
     assert!(layout_tee_portrait.rotation_angle.abs() < 1e-5, "Portrait Tee rotation should face perpendicular outwards");
 }
 
