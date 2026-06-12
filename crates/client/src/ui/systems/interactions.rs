@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::ui::components::{RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode, SelectedWagerCard, BoardCellNode};
+use crate::ui::components::{RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode, SelectedWagerCard};
 use crate::network::events::ClientActionRequest;
 use protocol::messages::ClientAction;
 
@@ -33,27 +33,6 @@ pub fn handle_wager_card_buttons(
     }
 }
 
-/// System to handle board cell clicks to draft/place the selected card.
-pub fn handle_board_cell_clicks(
-    mut selected_card: ResMut<SelectedWagerCard>,
-    mut events: EventWriter<ClientActionRequest>,
-    cell_query: Query<(&Interaction, &BoardCellNode), Changed<Interaction>>,
-) {
-    let card_type = match selected_card.0 {
-        Some(c) => c,
-        None => return,
-    };
-
-    for (interaction, cell) in cell_query.iter() {
-        if *interaction == Interaction::Pressed {
-            events.send(ClientActionRequest(ClientAction::DraftCard {
-                card_type,
-                cell_index: cell.index,
-            }));
-            selected_card.0 = None; // Clear selection after drafting
-        }
-    }
-}
 
 /// System to handle skip placement button clicks.
 pub fn handle_skip_placement_button(

@@ -170,6 +170,9 @@ pub struct ClientWagers(pub Vec<protocol::messages::WagerToken>);
 #[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SelectedWagerCard(pub Option<u8>);
 
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq)]
+pub struct CursorPositionOverride(pub Option<Vec2>);
+
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RadioDotNode {
     pub mode: GameMode,

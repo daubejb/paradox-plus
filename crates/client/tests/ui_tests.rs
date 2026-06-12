@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::window::{Window, WindowResolution};
 use client::ui::{
     components::*,
     ClientUiPlugin,
@@ -28,8 +27,11 @@ fn setup_headless_ui_app() -> App {
 
     app.add_plugins((
         MinimalPlugins,
+        bevy::window::WindowPlugin::default(),
         bevy::state::app::StatesPlugin,
         bevy::input::InputPlugin,
+        TransformPlugin,
+        HierarchyPlugin,
         AssetPlugin::default(),
         client::network::ClientNetworkPlugin,
         client::replication::ClientReplicationPlugin,
@@ -39,11 +41,7 @@ fn setup_headless_ui_app() -> App {
     app.init_asset::<Image>();
     app.add_event::<ReceivedCharacter>();
 
-    // Spawn a dummy window to ensure layout computations and updates run
-    app.world_mut().spawn(Window {
-        resolution: WindowResolution::new(1920.0, 1080.0),
-        ..default()
-    });
+
 
     app
 }
@@ -117,18 +115,29 @@ fn test_wager_card_selection_interaction() {
         assert_eq!(selected_card.0, Some(1), "Expected SelectedWagerCard to be Some(1)");
     }
 
-    // Query for a BoardCellNode with index = 10
-    let mut cell_query = app.world_mut().query_filtered::<(Entity, &BoardCellNode), With<Button>>();
-    let (cell_entity, _) = cell_query
-        .iter(app.world())
-        .find(|(_, node)| node.index == 10)
-        .expect("Board cell button with index 10 not found");
+    // Query for a BoardCellNode with index = 10 and get its position
+    let cell_pos = {
+        let mut cell_query = app.world_mut().query::<(&BoardCellNode, &Transform)>();
+        let (_, cell_transform) = cell_query
+            .iter(app.world())
+            .find(|(node, _)| node.index == 10)
+            .expect("Board cell with index 10 not found");
+        cell_transform.translation.xy()
+    };
 
-    // Simulate clicking the board cell
-    app.world_mut().entity_mut(cell_entity).insert(Interaction::Pressed);
+    // Set cursor position override resource
+    app.insert_resource(client::ui::components::CursorPositionOverride(Some(cell_pos)));
 
-    // Update to trigger cell click handler system
-    app.update();
+    // Simulate clicking the board cell using the mouse input resource
+    {
+        let mut mouse_input = app.world_mut().resource_mut::<ButtonInput<MouseButton>>();
+        mouse_input.press(MouseButton::Left);
+    }
+
+    // Run the clicks handler system directly to prevent PreUpdate clearing the input
+    use bevy::ecs::system::RunSystemOnce;
+    use client::ui::systems::simulation::board::interaction::handle_board_clicks_system;
+    app.world_mut().run_system_once(handle_board_clicks_system);
 
     // Verify that the SelectedWagerCard resource has been reset to None
     {
@@ -572,5 +581,26 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
     let track_entity = track_query.get_single(app.world()).unwrap();
     let children = app.world().get::<Children>(track_entity).expect("Track should have spawned children");
     assert_eq!(children.len(), 2, "Expected 2 player pill items in track");
+}
+
+#[test]
+fn test_capsule_geometry_calculations() {
+    use client::ui::systems::simulation::board::geometry::calculate_capsule_layout;
+
+    let viewport = Vec2::new(400.0, 300.0);
+    let total_cells = 27;
+
+    // Test TeeBox (first cell, idx 0)
+    let layout_tee = calculate_capsule_layout(0, total_cells, viewport);
+    // Tee should be on the top segment
+    assert!(layout_tee.position.y > 0.0, "Tee should be on top straight segment");
+    assert!((layout_tee.rotation_angle + std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards");
+
+    // Test a cell on the bottom segment (e.g. index 18)
+    let bottom_idx = 18;
+    let layout_bottom = calculate_capsule_layout(bottom_idx, total_cells, viewport);
+    // Bottom cell should be on the bottom segment (going right to left)
+    assert!(layout_bottom.position.y < 0.0, "Bottom cell should be on bottom segment");
+    assert!((layout_bottom.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Bottom segment rotation should face perpendicular outwards");
 }
 

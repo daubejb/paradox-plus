@@ -40,7 +40,12 @@ Sitemap(
         File(path: "src/ui/systems/simulation/loopback/handlers/terrain.rs", description: "Offline simulation bunker/terrain resolutions"),
         File(path: "src/ui/systems/simulation/loopback/handlers/movement.rs", description: "Offline simulation overshoot/undershoot movement"),
         File(path: "src/ui/systems/simulation/loopback/handlers/banana.rs", description: "Offline simulation choose banana slide handler"),
-        File(path: "src/ui/systems/simulation/board.rs", description: "Offline simulation visual active cell highlight"),
+        File(path: "src/ui/systems/simulation/board/mod.rs", description: "Simulation 2D board module re-exports"),
+        File(path: "src/ui/systems/simulation/board/geometry.rs", description: "Parametric capsule layout track math calculations"),
+        File(path: "src/ui/systems/simulation/board/camera.rs", description: "2D viewport camera setup and sync systems"),
+        File(path: "src/ui/systems/simulation/board/spawning.rs", description: "Game board cell tile sprites spawner system"),
+        File(path: "src/ui/systems/simulation/board/tokens.rs", description: "Player and wager cell token visual synchronization"),
+        File(path: "src/ui/systems/simulation/board/interaction.rs", description: "Screen-to-world raycasted cursor click drafting input system"),
         File(path: "src/ui/systems/simulation/render.rs", description: "Offline simulation HUD text updates"),
         File(path: "src/ui/systems/simulation/leaderboard.rs", description: "Offline simulation leaderboard par score logic"),
         File(path: "tests/replication_tests.rs", description: "Integration tests for FSM replication and presenter interpolation"),
@@ -120,5 +125,6 @@ Sitemap(
     Doc(path: "doc/adr/0006-course-presets.md", description: "ADR 0006: Course Presets in Shared Protocol Crate"),
     Doc(path: "doc/adr/0007-client-offline-simulation.md", description: "ADR 0007: Client-Side Offline Loopback Server Simulation"),
     Doc(path: "doc/adr/0008-solo-practice-setup-lifecycle.md", description: "ADR 0008: Solo Practice Setup Lifecycle"),
+    Doc(path: "doc/adr/0009-2d-world-space-board-rendering.md", description: "ADR 0009: 2D World Space Board Rendering Refactoring"),
   ]
 )

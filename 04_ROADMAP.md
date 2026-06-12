@@ -116,6 +116,19 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_leaderboard_ticker_hierarchy_and_updates` (verifying container spawning, player entries sorting, par-relative completion score updates, and persistent scores during active play).
     - WASM target verification.
 
+### [x] Iteration 10: 2D World Space Board Rendering Refactoring (Completed 2026-06-12)
+*   **Objectives**:
+    - Transition the gameplay board from Bevy UI flex layout to a 2D World Space (`bevy_sprite`) paradigm.
+    - Spawn cells as 2D Sprite board tiles along a parametric capsule track.
+    - Spawn a 2D camera viewport sync'd with Bevy UI spacers.
+    - Implement distance-based screen-to-world click raycasting for draft interactions.
+    - Support headless test execution fallback to logical coordinates.
+*   **Verification**:
+    - Headless Bevy unit tests in `crates/client/tests/ui_tests.rs`:
+      - `test_capsule_geometry_calculations` (verifying geometry and rotation calculations).
+      - `test_board_rebuild_on_hole_change` (verifying spawning and rebuilding cells).
+      - `test_wager_card_selection_interaction` (verifying 2D click-raycast drafts).
+
 ---
 
 ## 📈 Retrospective Log
@@ -127,3 +140,4 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Iteration 5 (Client Replication & Presenter):** Implemented client-side network polling and FSM replication with zero-heap frame loops. Built `FixedToFloatPlugin` translating fixed-point discrete positions into native float coordinates inside Bevy's `PostUpdate` phase, preserving read-only properties of gameplay-authoritative state. Handled WASM target constraints (Mutex-wrapped receivers, boxed heapless Vec buffers, and getrandom configuration flags) to ensure full compilation compatibility for `wasm32-unknown-unknown`. All tests pass.
 - **Iteration 7 (Game Selection Landing Page):** Implemented responsive dark-green mobile-optimized landing screen. Managed layout transitions on entering respective states to prevent Taffy layout recalculation overhead on every update. Handled game exit safely by resetting authoritative offline server state and returning client view to landing. All tests pass.
 - **Iteration 9 (Scrolling Ticker style Leaderboard):** Implemented a responsive scrolling ticker leaderboard showing player rank badges, names, and par relative scores updated only when holes are completed (Even Par "E" initially). Highlighted the active player, and implemented a Bevy UI autoscroll track when content exceeds container width. Extracted systems to `leaderboard.rs` to maintain strict compliance with the 300-line budget limit. All tests pass.
+- **Iteration 10 (2D World Space Board Rendering):** Refactored the gameplay viewport to a 2D world space paradigm using sprite tiles on a parametric capsule track layout. Standardized screen-to-world raycasting distance checks for click drafting, and added headless testing fallback logic. Clean recursive despawning avoids WASM leaks. All tests pass.

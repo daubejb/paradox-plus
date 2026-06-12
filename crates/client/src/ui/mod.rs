@@ -25,7 +25,10 @@ impl Plugin for ClientUiPlugin {
             )
             .add_systems(
                 OnEnter(ClientScreenState::Gameplay),
-                systems::show_gameplay_screen_system,
+                (
+                    systems::show_gameplay_screen_system,
+                    systems::simulation::setup_board_camera_system,
+                ),
             )
             .add_systems(
                 PreUpdate,
@@ -38,12 +41,13 @@ impl Plugin for ClientUiPlugin {
                     systems::handle_roll_buttons,
                     systems::handle_wager_card_buttons,
                     systems::handle_skip_placement_button,
-                    systems::handle_board_cell_clicks,
                     systems::handle_landing_button_clicks,
                     systems::handle_gameplay_exit,
                     systems::handle_setup_button_clicks,
                     systems::handle_nickname_keyboard_input,
                     systems::update_setup_screen_ui,
+                    systems::simulation::sync_board_camera_viewport_system,
+                    systems::simulation::handle_board_clicks_system,
                     systems::simulation::update_board_cell_visuals,
                     systems::simulation::update_wagers_on_board,
                     systems::simulation::update_ui_elements_system,
