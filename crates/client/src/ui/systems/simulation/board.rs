@@ -76,25 +76,20 @@ pub fn rebuild_board_on_hole_change_system(
 
         // Rebuild new board cells matching current_hole.0 config
         commands.entity(container_entity).with_children(|board| {
-            // 1. Spawn Outer Stadium Track Container
             board.spawn(NodeBundle {
                 style: Style {
-                    width: Val::Px(460.0),
-                    height: Val::Px(590.0),
+                    width: Val::Px(450.0),
+                    height: Val::Px(580.0),
                     position_type: PositionType::Relative,
                     margin: UiRect::all(Val::Auto),
-                    border: UiRect::all(Val::Px(1.5)),
                     ..default()
                 },
-                background_color: Color::srgb(0.04, 0.08, 0.06).into(), // Dark green track background
-                border_color: Color::srgb(0.2, 0.5, 0.35).into(), // Light green outer line
-                border_radius: BorderRadius::all(Val::Px(230.0)),
                 ..default()
-            }).with_children(|outer_board| {
+            }).with_children(|relative_board| {
                 if let Some(preset) = protocol::terrain::presets::get_course_preset(&settings.course, current_hole.0) {
-                    // 2. Spawn the cells first (they will render under the inner mask)
+                    let total_cells = preset.cells.len();
                     for (idx, &cell_type) in preset.cells.iter().enumerate() {
-                        let (left_pct, top_pct, angle_rad) = crate::ui::layout::board::get_stadium_tile_transform(idx);
+                        let layout = crate::ui::layout::board::calculate_cell_layout(idx, total_cells);
 
                         let name = match cell_type {
                             protocol::terrain::TerrainType::TeeBox => "TEE".to_string(),
@@ -109,111 +104,105 @@ pub fn rebuild_board_on_hole_change_system(
                         let color = match cell_type {
                             protocol::terrain::TerrainType::TeeBox => Color::srgb(0.2, 0.6, 0.3),
                             protocol::terrain::TerrainType::Fairway => Color::srgb(0.3, 0.7, 0.4),
-                            protocol::terrain::TerrainType::Rough => Color::srgb(0.25, 0.5, 0.3),
-                            protocol::terrain::TerrainType::Bunker => Color::srgb(0.8, 0.7, 0.5),
-                            protocol::terrain::TerrainType::Water => Color::srgb(0.1, 0.4, 0.7),
+                            protocol::terrain::TerrainType::Rough => Color::srgb(0.15, 0.35, 0.2),
+                            protocol::terrain::TerrainType::Bunker => Color::srgb(0.85, 0.75, 0.5),
+                            protocol::terrain::TerrainType::Water => Color::srgb(0.15, 0.45, 0.75),
                             protocol::terrain::TerrainType::OutOfBounds => Color::srgb(0.9, 0.2, 0.2),
                             protocol::terrain::TerrainType::Green(_) => Color::srgb(0.1, 0.5, 0.2),
                         };
 
-                        outer_board.spawn((
-                            ButtonBundle {
-                                style: Style {
-                                    width: Val::Px(crate::ui::layout::board::TILE_WIDTH),
-                                    height: Val::Px(crate::ui::layout::board::TILE_HEIGHT),
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Percent(left_pct - crate::ui::layout::board::TILE_HALF_WIDTH_PCT),
-                                    top: Val::Percent(top_pct - crate::ui::layout::board::TILE_HALF_HEIGHT_PCT),
-                                    justify_content: JustifyContent::Center,
-                                    align_items: AlignItems::Center,
-                                    border: UiRect::right(Val::Px(1.5)),
-                                    ..default()
-                                },
-                                background_color: color.into(),
-                                border_color: Color::srgba(0.04, 0.08, 0.06, 0.4).into(), // Separator line
-                                transform: Transform::from_rotation(Quat::from_rotation_z(angle_rad)),
+                        // Spawn absolute zero-size centering anchor node
+                        relative_board.spawn(NodeBundle {
+                            style: Style {
+                                position_type: PositionType::Absolute,
+                                left: Val::Percent(layout.left_pct),
+                                top: Val::Percent(layout.top_pct),
+                                width: Val::Px(0.0),
+                                height: Val::Px(0.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
                                 ..default()
                             },
-                            BoardCellNode { index: idx as u32 },
-                        )).with_children(|cell| {
-                            // Centered cell name text
-                            cell.spawn(TextBundle::from_section(
-                                name,
-                                TextStyle {
-                                    font_size: 9.0,
-                                    color: Color::WHITE,
-                                    ..default()
-                                },
-                            ));
-
-                            // Ball location indicator (bottom right)
-                            cell.spawn((
-                                NodeBundle {
+                            ..default()
+                        }).with_children(|anchor| {
+                            anchor.spawn((
+                                ButtonBundle {
                                     style: Style {
-                                        width: Val::Px(8.0),
-                                        height: Val::Px(8.0),
-                                        display: Display::None,
-                                        position_type: PositionType::Absolute,
-                                        bottom: Val::Px(2.0),
-                                        right: Val::Px(2.0),
-                                        ..default()
-                                    },
-                                    background_color: Color::srgb(0.95, 0.85, 0.1).into(),
-                                    border_radius: BorderRadius::all(Val::Px(4.0)),
-                                    ..default()
-                                },
-                                PlayerTokenMarker,
-                            ));
-
-                            // Wager token indicator (top left)
-                            cell.spawn((
-                                NodeBundle {
-                                    style: Style {
-                                        width: Val::Px(12.0),
-                                        height: Val::Px(12.0),
-                                        display: Display::None,
-                                        position_type: PositionType::Absolute,
-                                        top: Val::Px(2.0),
-                                        left: Val::Px(2.0),
+                                        width: Val::Px(crate::ui::layout::board::TILE_SIZE),
+                                        height: Val::Px(crate::ui::layout::board::TILE_SIZE),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
+                                        border: UiRect::all(Val::Px(1.0)),
                                         ..default()
                                     },
-                                    background_color: Color::NONE.into(),
-                                    border_radius: BorderRadius::all(Val::Px(3.0)),
+                                    background_color: color.into(),
+                                    border_color: Color::srgb(0.05, 0.15, 0.10).into(),
+                                    transform: Transform::from_rotation(Quat::from_rotation_z(layout.rotation_angle)),
                                     ..default()
                                 },
-                                WagerTokenMarker,
-                            )).with_children(|wager_indicator| {
-                                wager_indicator.spawn(TextBundle::from_section(
-                                    "",
+                                BoardCellNode { index: idx as u32 },
+                            )).with_children(|cell| {
+                                cell.spawn(TextBundle::from_section(
+                                    name,
                                     TextStyle {
-                                        font_size: 8.0,
+                                        font_size: 9.0,
                                         color: Color::WHITE,
                                         ..default()
                                     },
                                 ));
+
+                                // Ball location indicator (bottom right)
+                                cell.spawn((
+                                    NodeBundle {
+                                        style: Style {
+                                            width: Val::Px(8.0),
+                                            height: Val::Px(8.0),
+                                            display: Display::None,
+                                            position_type: PositionType::Absolute,
+                                            bottom: Val::Px(2.0),
+                                            right: Val::Px(2.0),
+                                            ..default()
+                                        },
+                                        background_color: Color::srgb(0.95, 0.85, 0.1).into(),
+                                        border_radius: BorderRadius::all(Val::Px(4.0)),
+                                        ..default()
+                                    },
+                                    PlayerTokenMarker,
+                                ));
+
+                                // Wager token indicator (top left)
+                                cell.spawn((
+                                    NodeBundle {
+                                        style: Style {
+                                            width: Val::Px(12.0),
+                                            height: Val::Px(12.0),
+                                            display: Display::None,
+                                            position_type: PositionType::Absolute,
+                                            top: Val::Px(2.0),
+                                            left: Val::Px(2.0),
+                                            justify_content: JustifyContent::Center,
+                                            align_items: AlignItems::Center,
+                                            ..default()
+                                        },
+                                        background_color: Color::NONE.into(),
+                                        border_radius: BorderRadius::all(Val::Px(3.0)),
+                                        ..default()
+                                    },
+                                    WagerTokenMarker,
+                                )).with_children(|wager_indicator| {
+                                    wager_indicator.spawn(TextBundle::from_section(
+                                        "",
+                                        TextStyle {
+                                            font_size: 8.0,
+                                            color: Color::WHITE,
+                                            ..default()
+                                        },
+                                    ));
+                                });
                             });
                         });
                     }
                 }
-
-                // 3. Spawn the Inner Stadium Mask Node (on top of the cells)
-                outer_board.spawn(NodeBundle {
-                    style: Style {
-                        width: Val::Px(340.0),
-                        height: Val::Px(470.0),
-                        position_type: PositionType::Absolute,
-                        left: Val::Px(58.5), // Center it: (460 - 340)/2 - border = 60 - 1.5 = 58.5px
-                        top: Val::Px(58.5),
-                        border: UiRect::all(Val::Px(1.5)),
-                        ..default()
-                    },
-                    background_color: Color::srgb(0.08, 0.22, 0.14).into(), // Rich forest green theme to mask inner cell corners
-                    border_color: Color::srgb(0.2, 0.5, 0.35).into(), // Inner border line
-                    border_radius: BorderRadius::all(Val::Px(170.0)),
-                    ..default()
-                });
             });
         });
     }
