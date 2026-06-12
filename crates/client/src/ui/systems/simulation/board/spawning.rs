@@ -85,8 +85,9 @@ pub fn rebuild_board_on_hole_change_system(
                                 ..default()
                             },
                         ),
-                        // Position slightly in front of the cell background to prevent z-fighting
-                        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)),
+                        // Position slightly in front of the cell background to prevent z-fighting, and counteract parent rotation
+                        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 1.0))
+                            .with_rotation(Quat::from_rotation_z(-layout.rotation_angle)),
                         ..default()
                     });
 
