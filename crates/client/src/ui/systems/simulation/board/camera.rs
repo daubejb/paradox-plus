@@ -74,9 +74,9 @@ pub fn sync_board_camera_viewport_system(
     let half_size = size / 2.0;
     let translation = transform.translation();
 
-    // Map UI layout space (origin bottom-left, Y-up) to physical Viewport space (origin top-left, Y-down)
+    // Map UI layout space (origin top-left, Y-down) to physical Viewport space (origin top-left, Y-down)
     let left_window = translation.x - half_size.x;
-    let top_window = window.height() - (translation.y + half_size.y);
+    let top_window = translation.y - half_size.y;
 
     // Safeguard physical positions to be strictly within window dimensions
 
