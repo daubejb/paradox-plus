@@ -16,7 +16,10 @@ const MIDLINE_PADDING: f32 = 96.0;
 const MIN_MIDLINE_WIDTH: f32 = 240.0;
 const MIN_MIDLINE_HEIGHT: f32 = 280.0;
 
-const RADIUS_COEFFICIENT: f32 = 0.22;
+/// Client-side visual corner radius coefficient.
+/// Strictly used for rendering and visual interpolation in `FixedToFloatPlugin`.
+/// All authoritative simulation coordinates are calculated using fixed-point math on the server.
+const RADIUS_COEFFICIENT: f32 = 0.28;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct TrackGeometry {
