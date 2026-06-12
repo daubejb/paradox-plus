@@ -8,7 +8,7 @@ pub struct CellLayout {
 
 /// Computes the 2D position and rotation of a cell along a parametric capsule track.
 pub fn calculate_capsule_layout(
-    idx: usize,
+    idx: f32,
     total_cells: usize,
     viewport_size: Vec2,
 ) -> CellLayout {
@@ -28,8 +28,10 @@ pub fn calculate_capsule_layout(
 
     let perimeter = 2.0 * l + 2.0 * std::f32::consts::PI * r;
 
-    // Distribute cells evenly along the perimeter
-    let fraction = idx as f32 / total_cells as f32;
+    // Distribute cells evenly along the perimeter with clean loop wrapping
+    let capacity = total_cells as f32;
+    let wrapped_idx = (idx % capacity + capacity) % capacity;
+    let fraction = wrapped_idx / capacity;
     let s = fraction * perimeter;
 
     let mut pos = Vec2::ZERO;
