@@ -60,7 +60,7 @@ pub fn spawn_landing_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetS
                 SoloPracticeButtonNode,
             )).with_children(|btn| {
                 btn.spawn(TextBundle::from_section(
-                    "👤 SOLO PRACTICE",
+                    "SOLO PRACTICE",
                     TextStyle {
                         font_size: 14.0,
                         color: Color::WHITE,
@@ -88,7 +88,7 @@ pub fn spawn_landing_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetS
                 VsBotsButtonNode,
             )).with_children(|btn| {
                 btn.spawn(TextBundle::from_section(
-                    "🤖 VS COMPUTER BOTS",
+                    "VS COMPUTER BOTS",
                     TextStyle {
                         font_size: 14.0,
                         color: Color::WHITE,
@@ -116,7 +116,7 @@ pub fn spawn_landing_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetS
                 OnlineMultiplayerButtonNode,
             )).with_children(|btn| {
                 btn.spawn(TextBundle::from_section(
-                    "🌐 ONLINE MULTIPLAYER",
+                    "ONLINE MULTIPLAYER",
                     TextStyle {
                         font_size: 14.0,
                         color: Color::WHITE,
@@ -144,7 +144,7 @@ pub fn spawn_landing_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetS
                 StatsButtonNode,
             )).with_children(|btn| {
                 btn.spawn(TextBundle::from_section(
-                    "📊 STATISTICS",
+                    "STATISTICS",
                     TextStyle {
                         font_size: 12.0,
                         color: Color::srgb(0.85, 0.95, 0.90),
@@ -189,7 +189,7 @@ pub fn spawn_landing_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetS
                     ViewRulesButtonNode,
                 )).with_children(|btn| {
                     btn.spawn(TextBundle::from_section(
-                        "ⓘ View Rules",
+                        "View Rules",
                         TextStyle {
                             font_size: 13.0,
                             color: Color::srgb(0.7, 0.9, 0.8),
@@ -212,7 +212,7 @@ pub fn spawn_landing_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetS
                     SettingsButtonNode,
                 )).with_children(|btn| {
                     btn.spawn(TextBundle::from_section(
-                        "⚙ Settings",
+                        "Settings",
                         TextStyle {
                             font_size: 13.0,
                             color: Color::srgb(0.7, 0.9, 0.8),

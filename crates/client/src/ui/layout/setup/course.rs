@@ -52,7 +52,7 @@ pub fn spawn_course_section(parent: &mut ChildBuilder, _asset_server: &Res<Asset
                 CourseGreenButtonNode,
             )).with_children(|btn| {
                 btn.spawn(TextBundle::from_section(
-                    "⛳ GREEN COURSE",
+                    "GREEN COURSE",
                     TextStyle {
                         font_size: 13.0,
                         color: Color::WHITE,
@@ -90,7 +90,7 @@ pub fn spawn_course_section(parent: &mut ChildBuilder, _asset_server: &Res<Asset
                 CourseBlueButtonNode,
             )).with_children(|btn| {
                 btn.spawn(TextBundle::from_section(
-                    "🌊 BLUE COURSE",
+                    "BLUE COURSE",
                     TextStyle {
                         font_size: 13.0,
                         color: Color::WHITE,

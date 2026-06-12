@@ -45,7 +45,7 @@ pub fn spawn_setup_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetSer
         }).with_children(|card| {
             // Screen Header
             card.spawn(TextBundle::from_section(
-                "👤 SOLO PRACTICE",
+                "SOLO PRACTICE",
                 TextStyle {
                     font_size: 18.0,
                     color: Color::WHITE,
