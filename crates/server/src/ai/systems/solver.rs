@@ -17,7 +17,7 @@ use crate::ai::mdp_solver::{
 };
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
 use crate::systems::validation::ClientActionEvent;
-use protocol::messages::ClientAction;
+use protocol::messages::{ClientAction, CardType};
 
 /// Spawns the off-thread solver task for active bot players.
 pub fn trigger_ai_solver_system(
@@ -113,7 +113,7 @@ fn select_action(
     let terrain = course.cells.get(cell as usize).copied().unwrap_or(TerrainType::Fairway);
     let on_rough = terrain == TerrainType::Rough;
     let has_own_shield = wagers_query.iter().any(|w| {
-        w.cell_index == cell && w.card_type == 0 && w.owner_id == active_player_id
+        w.cell_index == cell && w.card_type == CardType::Shield && w.owner_id == active_player_id
     });
     let can_roll_2_dice = !on_rough || has_own_shield;
 

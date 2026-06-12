@@ -1,5 +1,5 @@
 use super::super::state::OfflineServerState;
-use protocol::messages::{ServerUpdate, GameStateEnum, Scorecard};
+use protocol::messages::{ServerUpdate, GameStateEnum, Scorecard, CardType};
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
 use super::movement;
 use super::terrain;
@@ -69,16 +69,15 @@ pub fn handle_choose_banana_slide(
 
     if let Some(wager) = state.placed_wagers.iter().find(|w| w.cell_index == final_pos) {
         match wager.card_type {
-            0 => { // Guardian Shield
+            CardType::Shield => {
                 has_shield = true;
             }
-            1 => { // Trickster Banana
+            CardType::Banana => {
                 trigger_banana = true;
             }
-            2 => { // Golden Die
+            CardType::GoldenDie => {
                 trigger_golden_die = true;
             }
-            _ => {}
         }
     }
 

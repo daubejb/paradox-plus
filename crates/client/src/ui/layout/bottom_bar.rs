@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use protocol::messages::CardType;
 use crate::ui::components::{
     BottomBarNode, RollOneButtonNode, RollTwoButtonNode, WagerPanelNode, WagerCardButtonNode,
     SkipPlacementButtonNode, WagerCardQtyTextNode
@@ -51,7 +52,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                     border_color: Color::srgb(0.4, 0.6, 0.8).into(),
                     ..default()
                 },
-                WagerCardButtonNode { card_type: 0 },
+                WagerCardButtonNode { card_type: CardType::Shield },
             )).with_children(|btn| {
                 btn.spawn((
                     TextBundle::from_section(
@@ -62,7 +63,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                             ..default()
                         },
                     ),
-                    WagerCardQtyTextNode { card_type: 0 },
+                    WagerCardQtyTextNode { card_type: CardType::Shield },
                 ));
             });
 
@@ -81,7 +82,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                     border_color: Color::srgb(0.9, 0.8, 0.2).into(),
                     ..default()
                 },
-                WagerCardButtonNode { card_type: 1 },
+                WagerCardButtonNode { card_type: CardType::Banana },
             )).with_children(|btn| {
                 btn.spawn((
                     TextBundle::from_section(
@@ -92,7 +93,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                             ..default()
                         },
                     ),
-                    WagerCardQtyTextNode { card_type: 1 },
+                    WagerCardQtyTextNode { card_type: CardType::Banana },
                 ));
             });
 
@@ -111,7 +112,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                     border_color: Color::srgb(0.8, 0.3, 0.3).into(),
                     ..default()
                 },
-                WagerCardButtonNode { card_type: 2 },
+                WagerCardButtonNode { card_type: CardType::GoldenDie },
             )).with_children(|btn| {
                 btn.spawn((
                     TextBundle::from_section(
@@ -122,7 +123,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                             ..default()
                         },
                     ),
-                    WagerCardQtyTextNode { card_type: 2 },
+                    WagerCardQtyTextNode { card_type: CardType::GoldenDie },
                 ));
             });
         });

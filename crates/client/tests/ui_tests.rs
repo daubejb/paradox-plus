@@ -4,7 +4,7 @@ use client::ui::{
     ClientUiPlugin,
 };
 use client::network::events::ClientActionRequest;
-use protocol::messages::{ClientAction, ServerUpdate};
+use protocol::messages::{ClientAction, ServerUpdate, CardType};
 
 fn setup_headless_ui_app() -> App {
     let mut app = App::new();
@@ -98,11 +98,11 @@ fn test_wager_card_selection_interaction() {
     app.update();
     app.update();
 
-    // Query for a WagerCardButtonNode with card_type = 1 (Banana)
+    // Query for a WagerCardButtonNode with card_type = CardType::Banana
     let mut banana_query = app.world_mut().query_filtered::<(Entity, &WagerCardButtonNode), With<Button>>();
     let (banana_entity, _) = banana_query
         .iter(app.world())
-        .find(|(_, node)| node.card_type == 1)
+        .find(|(_, node)| node.card_type == CardType::Banana)
         .expect("Banana wager card button not found");
 
     // Simulate clicking the Banana button
@@ -111,10 +111,10 @@ fn test_wager_card_selection_interaction() {
     // Update to trigger interaction systems
     app.update();
 
-    // Verify that the SelectedWagerCard resource has been updated to Some(1)
+    // Verify that the SelectedWagerCard resource has been updated to Some(CardType::Banana)
     {
         let selected_card = app.world().resource::<SelectedWagerCard>();
-        assert_eq!(selected_card.0, Some(1), "Expected SelectedWagerCard to be Some(1)");
+        assert_eq!(selected_card.0, Some(CardType::Banana), "Expected SelectedWagerCard to be Some(CardType::Banana)");
     }
 
     // Query for a BoardCellNode with index = 10 and get its position
@@ -155,7 +155,7 @@ fn test_wager_card_selection_interaction() {
     let draft_card_event = sent_events.iter().find(|event| matches!(event.0, ClientAction::DraftCard { .. }));
     assert!(draft_card_event.is_some(), "Expected a ClientAction::DraftCard event to be sent");
     if let Some(ClientActionRequest(ClientAction::DraftCard { card_type, cell_index })) = draft_card_event {
-        assert_eq!(*card_type, 1, "Expected card_type to be 1 (Banana)");
+        assert_eq!(*card_type, CardType::Banana, "Expected card_type to be CardType::Banana");
         assert_eq!(*cell_index, 10, "Expected cell_index to match drafted spot (10)");
     } else {
         panic!("Sent event was not a ClientAction::DraftCard variant");
@@ -430,19 +430,18 @@ fn test_wager_card_qty_hud_rendering() {
     for (text, node) in text_query.iter(app.world()) {
         let val = &text.sections[0].value;
         match node.card_type {
-            0 => {
+            CardType::Shield => {
                 assert_eq!(val, "SHIELD (1)");
                 found_shield = true;
             }
-            1 => {
+            CardType::Banana => {
                 assert_eq!(val, "BANANA (0)");
                 found_banana = true;
             }
-            2 => {
+            CardType::GoldenDie => {
                 assert_eq!(val, "GOLDEN (2)");
                 found_golden = true;
             }
-            _ => {}
         }
     }
 
@@ -587,30 +586,44 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
 
 #[test]
 fn test_capsule_geometry_calculations() {
-    use client::ui::systems::simulation::board::geometry::calculate_capsule_layout;
+    use client::ui::systems::simulation::board::geometry::{calculate_capsule_layout, TrackGeometry};
 
     let viewport = Vec2::new(400.0, 300.0);
-    let total_cells = 27;
+    let total_cells = 28;
 
     // Test TeeBox (first cell, idx 0.0)
     let layout_tee = calculate_capsule_layout(0.0, total_cells, viewport);
-    // Tee should be on the bottom segment
-    assert!(layout_tee.position.y < 0.0, "Tee should be on bottom straight segment");
-    assert!((layout_tee.rotation_angle + std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards");
+    // Tee should be on the left vertical segment, at the bottom
+    assert!(layout_tee.position.x < 0.0, "Tee should be on the left segment");
+    assert!(layout_tee.position.y < 0.0, "Tee should be at the bottom of the left segment");
+    assert!((layout_tee.rotation_angle - std::f32::consts::PI).abs() < 1e-5, "Tee rotation angle should face perpendicular outwards (left)");
 
-    // Test a cell on the top segment (e.g. index 15.0)
-    let top_idx = 15.0;
-    let layout_top = calculate_capsule_layout(top_idx, total_cells, viewport);
-    // Top cell should be on the top segment (going right to left)
+    // Test a cell on the top segment (e.g. index 10.0)
+    let layout_top = calculate_capsule_layout(10.0, total_cells, viewport);
+    // Top cell should be on the top segment (going left to right)
     assert!(layout_top.position.y > 0.0, "Top cell should be on top segment");
-    assert!((layout_top.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Top segment rotation should face perpendicular outwards");
+    assert!((layout_top.rotation_angle - std::f32::consts::FRAC_PI_2).abs() < 1e-5, "Top segment rotation should face perpendicular outwards (up)");
 
-    // Test portrait viewport transposition (e.g. 300x400)
+    // Test portrait viewport (e.g. 300x400)
     let viewport_portrait = Vec2::new(300.0, 400.0);
     let layout_tee_portrait = calculate_capsule_layout(0.0, total_cells, viewport_portrait);
-    // Since it's transposed, Tee should be on the left vertical segment and at the bottom
-    assert!(layout_tee_portrait.position.x < 0.0, "Portrait Tee should be on the left vertical segment");
-    assert!(layout_tee_portrait.position.y < 0.0, "Portrait Tee should be at the bottom of the segment");
-    assert!(layout_tee_portrait.rotation_angle.abs() < 1e-5, "Portrait Tee rotation should face perpendicular outwards");
+    // Tee should still be on the left vertical segment, at the bottom
+    assert!(layout_tee_portrait.position.x < 0.0, "Portrait Tee should be on the left segment");
+    assert!(layout_tee_portrait.position.y < 0.0, "Portrait Tee should be at the bottom of the left segment");
+    assert!((layout_tee_portrait.rotation_angle - std::f32::consts::PI).abs() < 1e-5, "Portrait Tee rotation should face perpendicular outwards (left)");
+
+    // Test extreme viewports and aspect ratio compliance
+    let viewports = vec![
+        Vec2::new(10.0, 10.0),
+        Vec2::new(100.0, 800.0),
+        Vec2::new(1920.0, 400.0),
+    ];
+    for vp in viewports {
+        let geom = TrackGeometry::calculate(vp);
+        let ratio = geom.outer_width / geom.outer_height;
+        assert!((ratio - 0.85).abs() < 1e-4, "Expected aspect ratio of 0.85 for viewport {:?}", vp);
+    }
 }
+
+
 

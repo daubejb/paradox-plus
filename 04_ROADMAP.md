@@ -129,6 +129,18 @@ This document catalogs the active milestones, development backlog iterations, an
       - `test_board_rebuild_on_hole_change` (verifying spawning and rebuilding cells).
       - `test_wager_card_selection_interaction` (verifying 2D click-raycast drafts).
 
+### [x] Iteration 11: 1-Die Limit in the Rough & Sand Bunker (Completed 2026-06-12)
+*   **Objectives**:
+    - Restrict dice rolls to exactly 1 die when the player is in the Rough (unless overridden by their own active Guardian Shield) or in a Sand Bunker.
+    - Hide the "Roll 2" button in the UI under these conditions.
+    - Authoritatively clamp the dice count to 1 inside the offline loopback simulator.
+    - Introduce type-safe `CardType` enum to replace magic `u8` numbers in both client and server crates.
+*   **Verification**:
+    - Integration tests in `crates/client/tests/loopback_tests.rs`:
+      - `test_loopback_rough_dice_limit` (verifying dice clamp on Rough, and override when own Guardian Shield is active).
+    - Verified all unit and integration tests compile and pass.
+    - Verified WASM target compatibility check.
+
 ---
 
 ## 📈 Retrospective Log
@@ -142,4 +154,21 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Iteration 9 (Scrolling Ticker style Leaderboard):** Implemented a responsive scrolling ticker leaderboard showing player rank badges, names, and par relative scores updated only when holes are completed (Even Par "E" initially). Highlighted the active player, and implemented a Bevy UI autoscroll track when content exceeds container width. Extracted systems to `leaderboard.rs` to maintain strict compliance with the 300-line budget limit. All tests pass.
 - **Iteration 10 (2D World Space Board Rendering):** Refactored the gameplay viewport to a 2D world space paradigm using sprite tiles on a parametric capsule track layout. Standardized screen-to-world raycasting distance checks for click drafting, and added headless testing fallback logic. Clean recursive despawning avoids WASM leaks. All tests pass.
 - **Visual Refinement (Racetrack Tiles & Dividers):** Adjusted racetrack rendering logic so that green tile colors are precisely constrained within the radial divider boundaries, preventing corner bleeding. Removed boundary dot child sprites to clean up the track design and match the visual inspiration layout. All tests pass.
+- **Iteration 11 (1-Die Limit in the Rough & Sand Bunker):** Successfully enforced the 1-die roll restriction on Rough and Bunker terrain. Extracted the simulated roll handler into a new submodule `roll.rs` to respect the 300-line budget limit. Replaced magic card numbers with a type-safe `CardType` enum across all crates, ensuring bounded and type-safe serialization. All tests pass.
+- **Visual Styling (Board Colors & Text Contrast):** Refactored cell tile background color configurations to distinguish the Green (lightest), Fairway (mid-shade), and Rough (darkest) green terrains. Extracted styling lookup logic into a new `style.rs` helper module to keep `spawning.rs` safely under the 300-line budget limit. Increased text label font size to `12.0` and implemented dynamic contrast adjustments (black on light terrains, white on dark terrains) to optimize legibility. All tests pass.
+- **Track Widening & Chamfering:** Widened the horizontal span of the capsule track by increasing the midline radius calculation multipliers. Implemented a ray-casting intersection solver (`calculate_outer_point`) in `geometry.rs` to flatten the top and bottom outer perimeter of the track, matching the rectangular/chamfered look of the inspiration design while keeping the inner loop curved and the dividers radial. Resolved an in/out naming and direction vector swap in Bevy rendering variables to fix coordinate starburst artifacts. Added unit tests for intersection math. All tests pass.
+- **Rounded Rectangle Track Geometry:** Replaced the capsule layout and raycasting chamfer calculations with a dedicated 8-segment portrait rounded rectangle trajectory for the midline path, producing perfectly straight vertical (left/right) and horizontal (top/bottom) walls and rounded corners (quarter-circles) on both the inside and outside of the track using clean parallel offsets. Resolved overlapping cell click hitboxes on smaller viewports by refactoring the click handler to select the closest cell under the threshold rather than the first matching element. All unit and integration tests compile and pass successfully.
+- **Track Proportions Optimization:** Optimized track geometry dimensions to occupy the maximum width and height of the board viewport while maintaining a strict `0.68` portrait aspect ratio stadium layout. Encapsulated bounds calculations in a structured `TrackGeometry` model, scaling the corner radius by width and adding defensive clamping to prevent divide-by-zeros or negative segment parameters. Ensured Tee Box (index 0) remains fixed on the left vertical segment under all viewport scales. All tests passed.
+- **Track Proportions and Width Expansion:** Expanded overall track width horizontally by increasing the portrait aspect ratio target to `0.85` and flattened the top and bottom straight walls by decreasing the corner radius coefficient to `0.22`. Increased track lane cell width (tile thickness) to `96.0`. Enforced safe minimum bounds to guarantee positive inner corner radius and prevent layout coordinate underflow. All tests passed.
+- **Track Corner Radius Optimization:** Increased `RADIUS_COEFFICIENT` to `0.28` in `geometry.rs`, making the corner caps noticeably rounder and increasing the minimum inner corner radius to a smooth `27.6` units. Documented constant scopes for client-side rendering boundaries to clarify authoritative validation separation. All tests passed.
+- **Curved Racetrack Corners:** Subdivided the outer/inner cell boundary coords and cell tile backgrounds into 8 subdivisions. Consolidated border curves into unified ribbon meshes (one outer, one inner) to reduce Bevy entity overhead from 640 down to 2. Extracted geometry calculations to `borders.rs` to maintain compliance with the 300-line budget limit. All tests pass.
+- **Bunker Dice Choice Correction:** Fixed the Sand Bunker escape check to allow rolling 1 or 2 dice (per PARADOX_GAME.md rules). If 2 dice are chosen, the sum of the dice is checked (even sum escapes, odd fails). Rough terrain remains clamped to 1-die limit unless shielded. Added integration tests to verify both choices and limits. All tests pass.
+
+
+
+
+
+
+
+
 

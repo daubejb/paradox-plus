@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use serde::{Serialize, Deserialize};
+use protocol::messages::CardType;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RootUiNode;
@@ -33,7 +34,7 @@ pub struct WagerPanelNode;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WagerCardButtonNode {
-    pub card_type: u8,
+    pub card_type: CardType,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -158,7 +159,7 @@ pub struct SkipPlacementButtonNode;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WagerCardQtyTextNode {
-    pub card_type: u8,
+    pub card_type: CardType,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -168,7 +169,7 @@ pub struct WagerTokenMarker;
 pub struct ClientWagers(pub Vec<protocol::messages::WagerToken>);
 
 #[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SelectedWagerCard(pub Option<u8>);
+pub struct SelectedWagerCard(pub Option<CardType>);
 
 #[derive(Resource, Default, Debug, Clone, Copy, PartialEq)]
 pub struct CursorPositionOverride(pub Option<Vec2>);

@@ -2,6 +2,7 @@ use crate::ai::mdp_state::MdpState;
 use crate::ai::mdp_solver::landing::{is_ob_or_occupied, resolve_landing_simple};
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
 use protocol::physics::{MovementDirection, SlideTracker};
+use protocol::messages::CardType;
 use fixed::types::I32F32;
 
 /// Resolves a single procedural physics step.
@@ -84,14 +85,14 @@ pub fn resolve_physics_step(
             if !triggered_wagers.contains(&final_cell) {
                 let _ = triggered_wagers.push(final_cell);
                 match wager.card_type {
-                    0 => { // Guardian Shield
+                    CardType::Shield => {
                         if wager.owner_id == active_player_id {
                             terrain_override = Some(TerrainType::Fairway);
                         } else {
                             penalty = penalty.saturating_add(I32F32::from_num(1));
                         }
                     }
-                    1 => { // Trickster (Banana Slip)
+                    CardType::Banana => {
                         if wager.owner_id == active_player_id {
                             // Own Banana Choice - bot chooses best option (0..4).
                             let mut best_state = None;
@@ -193,14 +194,13 @@ pub fn resolve_physics_step(
                             }
                         }
                     }
-                    2 => { // Golden Die
+                    CardType::GoldenDie => {
                         if wager.owner_id == active_player_id {
                             penalty = penalty.saturating_sub(I32F32::from_num(2));
                         } else {
                             penalty = penalty.saturating_add(I32F32::from_num(2));
                         }
                     }
-                    _ => {}
                 }
             }
             break;

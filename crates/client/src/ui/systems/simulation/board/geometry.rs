@@ -6,73 +6,145 @@ pub struct CellLayout {
     pub rotation_angle: f32,
 }
 
+const TARGET_ASPECT_RATIO: f32 = 0.85;
+const VIEWPORT_PADDING: f32 = 24.0;
+
+const MIN_OUTER_WIDTH: f32 = 336.0;
+const MIN_OUTER_HEIGHT: f32 = 376.0;
+
+const MIDLINE_PADDING: f32 = 96.0;
+const MIN_MIDLINE_WIDTH: f32 = 240.0;
+const MIN_MIDLINE_HEIGHT: f32 = 280.0;
+
+/// Client-side visual corner radius coefficient.
+/// Strictly used for rendering and visual interpolation in `FixedToFloatPlugin`.
+/// All authoritative simulation coordinates are calculated using fixed-point math on the server.
+const RADIUS_COEFFICIENT: f32 = 0.28;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TrackGeometry {
+    pub r: f32,
+    pub l_h: f32,
+    pub l_v: f32,
+    pub outer_width: f32,
+    pub outer_height: f32,
+}
+
+impl TrackGeometry {
+    pub fn calculate(viewport_size: Vec2) -> Self {
+        // Clamp minimum viewport size to prevent zero or negative dimensions
+        let width = viewport_size.x.max(MIN_OUTER_WIDTH + VIEWPORT_PADDING);
+        let height = viewport_size.y.max(MIN_OUTER_HEIGHT + VIEWPORT_PADDING);
+        
+        let available_width = width - VIEWPORT_PADDING;
+        let available_height = height - VIEWPORT_PADDING;
+        
+        let (outer_width, outer_height) = if available_width / available_height > TARGET_ASPECT_RATIO {
+            // Viewport is wider than target aspect ratio (bounded by height)
+            (available_height * TARGET_ASPECT_RATIO, available_height)
+        } else {
+            // Viewport is taller than target aspect ratio (bounded by width)
+            (available_width, available_width / TARGET_ASPECT_RATIO)
+        };
+
+        let midline_width = (outer_width - MIDLINE_PADDING).max(MIN_MIDLINE_WIDTH);
+        let midline_height = (outer_height - MIDLINE_PADDING).max(MIN_MIDLINE_HEIGHT);
+
+        // Scale corner radius relative to the width (smaller dimension) and clamp to prevent segment underflow
+        let r = (midline_width * RADIUS_COEFFICIENT)
+            .min(midline_width * 0.5)
+            .min(midline_height * 0.5);
+        let l_h = (midline_width - 2.0 * r).max(0.0);
+        let l_v = (midline_height - 2.0 * r).max(0.0);
+
+        debug_assert!(l_v >= 0.0, "Vertical segment length must be non-negative");
+        debug_assert!(l_h >= 0.0, "Horizontal segment length must be non-negative");
+
+        Self {
+            r,
+            l_h,
+            l_v,
+            outer_width,
+            outer_height,
+        }
+    }
+}
+
 /// Computes the 2D position and rotation of a cell along a parametric capsule track.
 pub fn calculate_capsule_layout(
     idx: f32,
     total_cells: usize,
     viewport_size: Vec2,
 ) -> CellLayout {
-    // Check if orientation is portrait
-    let is_portrait = viewport_size.y > viewport_size.x;
+    let geom = TrackGeometry::calculate(viewport_size);
+    let (r, l_h, l_v) = (geom.r, geom.l_h, geom.l_v);
 
-    // Swap width and height for calculations if in portrait mode
-    let (w, h) = if is_portrait {
-        (viewport_size.y, viewport_size.x)
-    } else {
-        (viewport_size.x, viewport_size.y)
-    };
+    let arc = std::f32::consts::FRAC_PI_2 * r;
+    let perimeter = 2.0 * l_h + 2.0 * l_v + 4.0 * arc;
 
-    // Define racetrack dimensions: straight length l, semicircle radius r
-    let r = (h * 0.40).min(w * 0.25).max(40.0);
-    let l = (w * 0.35).max(60.0);
-
-    let perimeter = 2.0 * l + 2.0 * std::f32::consts::PI * r;
-
-    // Distribute cells evenly along the perimeter with clean loop wrapping
     let capacity = total_cells as f32;
     let wrapped_idx = (idx % capacity + capacity) % capacity;
     let fraction = wrapped_idx / capacity;
     let s = fraction * perimeter;
 
     let mut pos = Vec2::ZERO;
-    let mut tangent;
+    let tangent;
 
-    if s < l {
-        // 1. Bottom straight segment (left to right)
-        pos.x = -l / 2.0 + s;
-        pos.y = -r;
+    if s < l_v {
+        // 1. Left straight segment (going bottom to top)
+        pos.x = -l_h / 2.0 - r;
+        pos.y = -l_v / 2.0 + s;
+        tangent = Vec2::new(0.0, 1.0);
+    } else if s < l_v + arc {
+        // 2. Top-left corner (angle goes from PI to PI/2)
+        let phi = (s - l_v) / r;
+        let theta = std::f32::consts::PI - phi;
+        pos.x = -l_h / 2.0 + r * theta.cos();
+        pos.y = l_v / 2.0 + r * theta.sin();
+        tangent = Vec2::new(theta.sin(), -theta.cos());
+    } else if s < l_v + l_h + arc {
+        // 3. Top straight segment (going left to right)
+        let ds = s - (l_v + arc);
+        pos.x = -l_h / 2.0 + ds;
+        pos.y = l_v / 2.0 + r;
         tangent = Vec2::new(1.0, 0.0);
-    } else if s < l + std::f32::consts::PI * r {
-        // 2. Right semicircle (bottom to top, clockwise)
-        let arc_s = s - l;
-        let theta = -std::f32::consts::FRAC_PI_2 + (arc_s / r);
-        pos.x = l / 2.0 + r * theta.cos();
-        pos.y = r * theta.sin();
-        tangent = Vec2::new(-theta.sin(), theta.cos());
-    } else if s < 2.0 * l + std::f32::consts::PI * r {
-        // 3. Top straight segment (right to left)
-        let straight_s = s - (l + std::f32::consts::PI * r);
-        pos.x = l / 2.0 - straight_s;
-        pos.y = r;
+    } else if s < l_v + l_h + 2.0 * arc {
+        // 4. Top-right corner (angle goes from PI/2 to 0)
+        let phi = (s - (l_v + l_h + arc)) / r;
+        let theta = std::f32::consts::FRAC_PI_2 - phi;
+        pos.x = l_h / 2.0 + r * theta.cos();
+        pos.y = l_v / 2.0 + r * theta.sin();
+        tangent = Vec2::new(theta.sin(), -theta.cos());
+    } else if s < 2.0 * l_v + l_h + 2.0 * arc {
+        // 5. Right straight segment (going top to bottom)
+        let ds = s - (l_v + l_h + 2.0 * arc);
+        pos.x = l_h / 2.0 + r;
+        pos.y = l_v / 2.0 - ds;
+        tangent = Vec2::new(0.0, -1.0);
+    } else if s < 2.0 * l_v + l_h + 3.0 * arc {
+        // 6. Bottom-right corner (angle goes from 0 to -PI/2)
+        let phi = (s - (2.0 * l_v + l_h + 2.0 * arc)) / r;
+        let theta = -phi;
+        pos.x = l_h / 2.0 + r * theta.cos();
+        pos.y = -l_v / 2.0 + r * theta.sin();
+        tangent = Vec2::new(theta.sin(), -theta.cos());
+    } else if s < 2.0 * l_v + 2.0 * l_h + 3.0 * arc {
+        // 7. Bottom straight segment (going right to left)
+        let ds = s - (2.0 * l_v + l_h + 3.0 * arc);
+        pos.x = l_h / 2.0 - ds;
+        pos.y = -l_v / 2.0 - r;
         tangent = Vec2::new(-1.0, 0.0);
     } else {
-        // 4. Left semicircle (top to bottom, clockwise)
-        let arc_s = s - (2.0 * l + std::f32::consts::PI * r);
-        let theta = std::f32::consts::FRAC_PI_2 + (arc_s / r);
-        pos.x = -l / 2.0 + r * theta.cos();
-        pos.y = r * theta.sin();
-        tangent = Vec2::new(-theta.sin(), theta.cos());
+        // 8. Bottom-left corner (angle goes from -PI/2 to -PI)
+        let phi = (s - (2.0 * l_v + 2.0 * l_h + 3.0 * arc)) / r;
+        let theta = -std::f32::consts::FRAC_PI_2 - phi;
+        pos.x = -l_h / 2.0 + r * theta.cos();
+        pos.y = -l_v / 2.0 + r * theta.sin();
+        tangent = Vec2::new(theta.sin(), -theta.cos());
     }
 
-    if is_portrait {
-        // Transpose coordinates and tangent components to rotate 90 degrees and maintain bottom-left starting point
-        pos = Vec2::new(pos.y, pos.x);
-        tangent = Vec2::new(tangent.y, tangent.x);
-    }
-
-    // Perpendicular outwards rotation
     let tangent_angle = tangent.y.atan2(tangent.x);
-    let rotation_angle = tangent_angle - std::f32::consts::FRAC_PI_2;
+    let rotation_angle = tangent_angle + std::f32::consts::FRAC_PI_2;
 
     CellLayout {
         position: pos,
@@ -136,4 +208,5 @@ pub fn calculate_line_segment_transform_and_size(
     let size = Vec2::new(length, thickness);
     (transform, size)
 }
+
 

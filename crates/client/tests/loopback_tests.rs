@@ -4,7 +4,7 @@ use client::ui::systems::simulation::loopback::{
     LocalServerChannels,
     state::OfflineServerState,
 };
-use protocol::messages::{ClientAction, GameStateEnum, WagerToken};
+use protocol::messages::{ClientAction, GameStateEnum, WagerToken, CardType};
 
 #[test]
 fn test_loopback_hole_transition_marker_placement() {
@@ -26,7 +26,7 @@ fn test_loopback_hole_transition_marker_placement() {
     state.game_state = GameStateEnum::HoleCompleted;
     state.hole_completed_timer_ms = Some(2900); // 100ms away from triggering transition
     state.placed_wagers = vec![WagerToken {
-        card_type: 1,
+        card_type: CardType::Banana,
         owner_id: 1234,
         cell_index: 5,
     }];
@@ -275,7 +275,7 @@ fn test_loopback_landing_on_golden_die() {
     let _updates = handle_action(
         &mut state,
         &ClientAction::DraftCard {
-            card_type: 2,
+            card_type: CardType::GoldenDie,
             cell_index: 6,
         },
         &course,
@@ -355,7 +355,7 @@ fn test_loopback_wager_placement_validations() {
         let updates = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 2,
+                card_type: CardType::GoldenDie,
                 cell_index: 22, // Green cup
             },
             &green_course,
@@ -386,7 +386,7 @@ fn test_loopback_wager_placement_validations() {
         let updates = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 2,
+                card_type: CardType::GoldenDie,
                 cell_index: 0, // Tee Box
             },
             &green_course,
@@ -417,7 +417,7 @@ fn test_loopback_wager_placement_validations() {
         let updates = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 0,
+                card_type: CardType::Shield,
                 cell_index: 6, // Fairway (non-hazard)
             },
             &green_course,
@@ -447,7 +447,7 @@ fn test_loopback_wager_placement_validations() {
         let updates = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 2,
+                card_type: CardType::GoldenDie,
                 cell_index: 14, // Sand Bunker
             },
             &green_course,
@@ -481,7 +481,7 @@ fn test_loopback_wager_placement_validations() {
         let updates = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 1,
+                card_type: CardType::Banana,
                 cell_index: 3, // Fairway, 4 spaces before OB at cell 7 (3 + 4 = 7)
             },
             &blue_course,
@@ -512,7 +512,7 @@ fn test_loopback_wager_placement_validations() {
         let _ = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 2,
+                card_type: CardType::GoldenDie,
                 cell_index: 6, // Fairway
             },
             &green_course,
@@ -523,7 +523,7 @@ fn test_loopback_wager_placement_validations() {
         let updates = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 2,
+                card_type: CardType::GoldenDie,
                 cell_index: 6,
             },
             &green_course,
@@ -563,7 +563,7 @@ fn test_loopback_landing_on_shield_prophecy() {
         let _ = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 0,
+                card_type: CardType::Shield,
                 cell_index: 5,
             },
             &course,
@@ -624,7 +624,7 @@ fn test_loopback_landing_on_shield_prophecy() {
         let _ = handle_action(
             &mut state,
             &ClientAction::DraftCard {
-                card_type: 0,
+                card_type: CardType::Shield,
                 cell_index: 7,
             },
             &blue_course,
@@ -683,7 +683,7 @@ fn test_loopback_landing_on_banana_prophecy() {
     let _ = handle_action(
         &mut state,
         &ClientAction::DraftCard {
-            card_type: 1,
+            card_type: CardType::Banana,
             cell_index: 6,
         },
         &course,
@@ -743,5 +743,126 @@ fn test_loopback_landing_on_banana_prophecy() {
         }
     }
 }
+
+#[test]
+fn test_loopback_rough_dice_limit() {
+    use protocol::terrain::presets::get_course_preset;
+    use client::ui::systems::simulation::loopback::handlers::handle_action;
+
+    let course = get_course_preset("green", 1).unwrap();
+
+    // 1. Without Shield on Rough (cell 5 on green hole 1 is Rough)
+    {
+        let mut state = OfflineServerState::default();
+        state.player_position = 5; // Start in the Rough
+        state.active_player_id = 1234;
+        state.is_initialized = true;
+
+        // Try to roll 2 dice
+        let updates = handle_action(
+            &mut state,
+            &ClientAction::RollDice { dice_count: 2 },
+            &course,
+        );
+
+        // Verify only 1 die was actually rolled (DiceRollOutcome contains exactly 1 value)
+        let mut found_outcome = false;
+        for update in &updates {
+            if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                assert_eq!(roll_values.len(), 1, "Should clamp to exactly 1 die");
+                found_outcome = true;
+            }
+        }
+        assert!(found_outcome, "Expected a DiceRollOutcome update");
+    }
+
+    // 2. With player's own active Shield on Rough (cell 5)
+    {
+        let mut state = OfflineServerState::default();
+        state.player_position = 5; // Start in the Rough
+        state.active_player_id = 1234;
+        state.is_initialized = true;
+        state.placed_wagers = vec![WagerToken {
+            card_type: CardType::Shield,
+            owner_id: 1234, // Player's own
+            cell_index: 5,
+        }];
+
+        // Try to roll 2 dice
+        let updates = handle_action(
+            &mut state,
+            &ClientAction::RollDice { dice_count: 2 },
+            &course,
+        );
+
+        // Verify 2 dice were successfully rolled
+        let mut found_outcome = false;
+        for update in &updates {
+            if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                assert_eq!(roll_values.len(), 2, "Should allow rolling 2 dice when own Shield is active");
+                found_outcome = true;
+            }
+        }
+        assert!(found_outcome, "Expected a DiceRollOutcome update");
+    }
+}
+
+#[test]
+fn test_loopback_bunker_dice_choices() {
+    use protocol::terrain::{TerrainType, presets::get_course_preset};
+    use client::ui::systems::simulation::loopback::handlers::handle_action;
+
+    let course = get_course_preset("green", 2).unwrap(); // Hole 2 has a Sand Bunker at index 12
+    assert_eq!(course.cells[12], TerrainType::Bunker);
+
+    // 1. Roll 2 dice in Sand Bunker
+    {
+        let mut state = OfflineServerState::default();
+        state.player_position = 12; // Start in Bunker
+        state.active_player_id = 1234;
+        state.is_initialized = true;
+
+        let updates = handle_action(
+            &mut state,
+            &ClientAction::RollDice { dice_count: 2 },
+            &course,
+        );
+
+        // Verify that 2 dice were rolled
+        let mut found_outcome = false;
+        for update in &updates {
+            if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                assert_eq!(roll_values.len(), 2, "Bunker must support rolling 2 dice");
+                found_outcome = true;
+            }
+        }
+        assert!(found_outcome, "Expected a DiceRollOutcome update");
+    }
+
+    // 2. Roll 1 die in Sand Bunker
+    {
+        let mut state = OfflineServerState::default();
+        state.player_position = 12; // Start in Bunker
+        state.active_player_id = 1234;
+        state.is_initialized = true;
+
+        let updates = handle_action(
+            &mut state,
+            &ClientAction::RollDice { dice_count: 1 },
+            &course,
+        );
+
+        // Verify that exactly 1 die was rolled
+        let mut found_outcome = false;
+        for update in &updates {
+            if let protocol::messages::ServerUpdate::DiceRollOutcome { roll_values } = update {
+                assert_eq!(roll_values.len(), 1, "Bunker must support rolling 1 die");
+                found_outcome = true;
+            }
+        }
+        assert!(found_outcome, "Expected a DiceRollOutcome update");
+    }
+}
+
 
 

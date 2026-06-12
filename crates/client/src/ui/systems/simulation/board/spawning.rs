@@ -2,9 +2,7 @@ use bevy::prelude::*;
 use bevy::sprite::{ColorMesh2dBundle, Mesh2dHandle, ColorMaterial};
 use protocol::terrain::presets::get_course_preset;
 use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, PlayerTokenMarker, WagerTokenMarker};
-use crate::ui::systems::simulation::board::geometry::{
-    calculate_capsule_layout, generate_quad_tile_mesh, calculate_line_segment_transform_and_size,
-};
+use crate::ui::systems::simulation::board::geometry::calculate_capsule_layout;
 
 #[derive(Component)]
 pub struct TrackTileVisuals {
@@ -76,43 +74,56 @@ pub fn rebuild_board_on_hole_change_system(
     // Spawn cell tiles along capsule track trajectory
     if let Some(preset) = get_course_preset(&settings.course, current_hole.0) {
         let total_cells = preset.cells.len();
-        let layout_capacity = total_cells.max(27);
-
-        let tile_thickness = 72.0;
+        let layout_capacity = 28;
 
         commands.entity(root_entity).with_children(|board| {
+            // Generate and spawn unified outer border ribbon mesh
+            let outer_mesh = super::borders::generate_border_ribbon_mesh(layout_capacity, size, 8, 48.0, 2.0);
+            let outer_handle = meshes.add(outer_mesh);
+            let outer_material = materials.add(ColorMaterial::from(Color::srgba(1.0, 1.0, 1.0, 0.25)));
+
+            board.spawn((
+                ColorMesh2dBundle {
+                    mesh: Mesh2dHandle(outer_handle.clone()),
+                    material: outer_material.clone(),
+                    transform: Transform::from_translation(Vec3::ZERO),
+                    ..default()
+                },
+                TrackTileVisuals {
+                    mesh_handle: outer_handle,
+                    material_handle: outer_material,
+                },
+            ));
+
+            // Generate and spawn unified inner border ribbon mesh
+            let inner_mesh = super::borders::generate_border_ribbon_mesh(layout_capacity, size, 8, -48.0, 2.0);
+            let inner_handle = meshes.add(inner_mesh);
+            let inner_material = materials.add(ColorMaterial::from(Color::srgba(1.0, 1.0, 1.0, 0.25)));
+
+            board.spawn((
+                ColorMesh2dBundle {
+                    mesh: Mesh2dHandle(inner_handle.clone()),
+                    material: inner_material.clone(),
+                    transform: Transform::from_translation(Vec3::ZERO),
+                    ..default()
+                },
+                TrackTileVisuals {
+                    mesh_handle: inner_handle,
+                    material_handle: inner_material,
+                },
+            ));
+
             for idx in 0..layout_capacity {
                 let layout = calculate_capsule_layout(idx as f32, layout_capacity, size);
 
-                // Calculate boundary coordinates
-                let layout_start = calculate_capsule_layout(idx as f32 - 0.5, layout_capacity, size);
-                let layout_end = calculate_capsule_layout(idx as f32 + 0.5, layout_capacity, size);
-
-                let perp_start = Vec2::new(layout_start.rotation_angle.cos(), layout_start.rotation_angle.sin());
-                let perp_end = Vec2::new(layout_end.rotation_angle.cos(), layout_end.rotation_angle.sin());
-
-                let c_in_start = layout_start.position - perp_start * (tile_thickness / 2.0);
-                let c_out_start = layout_start.position + perp_start * (tile_thickness / 2.0);
-                let c_out_end = layout_end.position + perp_end * (tile_thickness / 2.0);
-                let c_in_end = layout_end.position - perp_end * (tile_thickness / 2.0);
-
-                // Create mesh using standard Bevy CCW winding
-                let mesh = generate_quad_tile_mesh(c_out_start, c_out_end, c_in_end, c_in_start);
+                // Create subdivided tile mesh
+                let mesh = super::borders::generate_subdivided_tile_mesh(idx, layout_capacity, size, 8);
                 let mesh_handle = meshes.add(mesh);
 
-                let color = if idx < total_cells {
-                    let cell_type = preset.cells[idx];
-                    match cell_type {
-                        protocol::terrain::TerrainType::TeeBox => Color::srgb(0.2, 0.6, 0.3),
-                        protocol::terrain::TerrainType::Fairway => Color::srgb(0.3, 0.7, 0.4),
-                        protocol::terrain::TerrainType::Rough => Color::srgb(0.25, 0.5, 0.3),
-                        protocol::terrain::TerrainType::Bunker => Color::srgb(0.8, 0.7, 0.5),
-                        protocol::terrain::TerrainType::Water => Color::srgb(0.1, 0.4, 0.7),
-                        protocol::terrain::TerrainType::OutOfBounds => Color::srgb(0.9, 0.2, 0.2),
-                        protocol::terrain::TerrainType::Green(_) => Color::srgb(0.1, 0.5, 0.2),
-                    }
+                let (color, text_color) = if idx < total_cells {
+                    super::style::get_terrain_style(&preset.cells[idx])
                 } else {
-                    Color::srgba(0.16, 0.26, 0.20, 0.4)
+                    (Color::srgba(0.16, 0.26, 0.20, 0.4), Color::WHITE)
                 };
 
                 let material_handle = materials.add(ColorMaterial::from(color));
@@ -133,56 +144,8 @@ pub fn rebuild_board_on_hole_change_system(
                     },
                 ));
 
-                // Spawn outer border segment
-                let (outer_transform, outer_size) = calculate_line_segment_transform_and_size(
-                    c_out_start,
-                    c_out_end,
-                    2.0,
-                    0.5,
-                );
-                board.spawn(SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::srgba(1.0, 1.0, 1.0, 0.25),
-                        custom_size: Some(outer_size),
-                        ..default()
-                    },
-                    transform: outer_transform,
-                    ..default()
-                });
-
-                // Spawn inner border segment
-                let (inner_transform, inner_size) = calculate_line_segment_transform_and_size(
-                    c_in_start,
-                    c_in_end,
-                    2.0,
-                    0.5,
-                );
-                board.spawn(SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::srgba(1.0, 1.0, 1.0, 0.25),
-                        custom_size: Some(inner_size),
-                        ..default()
-                    },
-                    transform: inner_transform,
-                    ..default()
-                });
-
                 // Spawn radial divider line at start boundary
-                let (div_transform, div_size) = calculate_line_segment_transform_and_size(
-                    c_in_start,
-                    c_out_start,
-                    2.0,
-                    0.6,
-                );
-                board.spawn(SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::srgba(1.0, 1.0, 1.0, 0.25),
-                        custom_size: Some(div_size),
-                        ..default()
-                    },
-                    transform: div_transform,
-                    ..default()
-                });
+                super::borders::spawn_radial_divider(board, idx, layout_capacity, size);
 
                 // Spawn logical gameplay markers (text & tokens)
                 if idx < total_cells {
@@ -209,8 +172,8 @@ pub fn rebuild_board_on_hole_change_system(
                             text: Text::from_section(
                                 name,
                                 TextStyle {
-                                    font_size: 9.0,
-                                    color: Color::WHITE,
+                                    font_size: 12.0,
+                                    color: text_color,
                                     ..default()
                                 },
                             ),

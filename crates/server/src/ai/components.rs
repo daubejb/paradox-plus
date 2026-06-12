@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use heapless::Vec as HVec;
-use protocol::messages::MAX_PLAYERS;
+use protocol::messages::{MAX_PLAYERS, CardType};
 use protocol::physics::MovementDirection;
 use fixed::types::I32F32;
 use rand_chacha::ChaCha8Rng;
@@ -64,7 +64,7 @@ pub struct DeterministicRng(pub ChaCha8Rng);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct WagerToken {
-    pub card_type: u8,
+    pub card_type: CardType,
     pub owner_id: u64,
     pub cell_index: u16,
 }
