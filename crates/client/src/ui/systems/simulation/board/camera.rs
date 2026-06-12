@@ -103,8 +103,10 @@ pub fn sync_board_camera_viewport_system(
     });
 
     // Enforce 1:1 aspect ratio locks inside orthographic projections to prevent squishing
-    projection.scaling_mode = bevy::render::camera::ScalingMode::Fixed {
-        width: 500.0,
-        height: 500.0,
-    };
+    let is_portrait = size.y > size.x;
+    if is_portrait {
+        projection.scaling_mode = bevy::render::camera::ScalingMode::FixedVertical(560.0);
+    } else {
+        projection.scaling_mode = bevy::render::camera::ScalingMode::FixedHorizontal(560.0);
+    }
 }
