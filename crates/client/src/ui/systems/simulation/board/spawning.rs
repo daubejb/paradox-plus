@@ -102,10 +102,10 @@ pub fn rebuild_board_on_hole_change_system(
                 let perp_start = Vec2::new(layout_start.rotation_angle.cos(), layout_start.rotation_angle.sin());
                 let perp_end = Vec2::new(layout_end.rotation_angle.cos(), layout_end.rotation_angle.sin());
 
-                let c_in_start = layout_start.position - perp_start * d;
-                let c_out_start = calculate_outer_point(layout_start.position, perp_start, r, l, d, is_portrait);
-                let c_out_end = calculate_outer_point(layout_end.position, perp_end, r, l, d, is_portrait);
-                let c_in_end = layout_end.position - perp_end * d;
+                let c_out_start = layout_start.position + perp_start * d;
+                let c_in_start = calculate_outer_point(layout_start.position, -perp_start, r, l, d, is_portrait);
+                let c_in_end = calculate_outer_point(layout_end.position, -perp_end, r, l, d, is_portrait);
+                let c_out_end = layout_end.position + perp_end * d;
 
                 // Create mesh using standard Bevy CCW winding
                 let mesh = generate_quad_tile_mesh(c_out_start, c_out_end, c_in_end, c_in_start);
