@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::ui::components::{
-    BottomBarNode, RollOneButtonNode, RollTwoButtonNode, WagerPanelNode, WagerCardButtonNode
+    BottomBarNode, RollOneButtonNode, RollTwoButtonNode, WagerPanelNode, WagerCardButtonNode,
+    SkipPlacementButtonNode, WagerCardQtyTextNode
 };
 
 pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>) {
@@ -39,7 +40,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
             panel.spawn((
                 ButtonBundle {
                     style: Style {
-                        width: Val::Px(70.0),
+                        width: Val::Px(85.0),
                         height: Val::Px(40.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
@@ -52,13 +53,16 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                 },
                 WagerCardButtonNode { card_type: 0 },
             )).with_children(|btn| {
-                btn.spawn(TextBundle::from_section(
-                    "SHIELD",
-                    TextStyle {
-                        font_size: 11.0,
-                        color: Color::WHITE,
-                        ..default()
-                    },
+                btn.spawn((
+                    TextBundle::from_section(
+                        "SHIELD (0)",
+                        TextStyle {
+                            font_size: 11.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ),
+                    WagerCardQtyTextNode { card_type: 0 },
                 ));
             });
 
@@ -66,7 +70,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
             panel.spawn((
                 ButtonBundle {
                     style: Style {
-                        width: Val::Px(70.0),
+                        width: Val::Px(85.0),
                         height: Val::Px(40.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
@@ -79,13 +83,16 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                 },
                 WagerCardButtonNode { card_type: 1 },
             )).with_children(|btn| {
-                btn.spawn(TextBundle::from_section(
-                    "BANANA",
-                    TextStyle {
-                        font_size: 11.0,
-                        color: Color::WHITE,
-                        ..default()
-                    },
+                btn.spawn((
+                    TextBundle::from_section(
+                        "BANANA (0)",
+                        TextStyle {
+                            font_size: 11.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ),
+                    WagerCardQtyTextNode { card_type: 1 },
                 ));
             });
 
@@ -93,7 +100,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
             panel.spawn((
                 ButtonBundle {
                     style: Style {
-                        width: Val::Px(70.0),
+                        width: Val::Px(85.0),
                         height: Val::Px(40.0),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
@@ -106,13 +113,16 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                 },
                 WagerCardButtonNode { card_type: 2 },
             )).with_children(|btn| {
-                btn.spawn(TextBundle::from_section(
-                    "GOLDEN",
-                    TextStyle {
-                        font_size: 11.0,
-                        color: Color::WHITE,
-                        ..default()
-                    },
+                btn.spawn((
+                    TextBundle::from_section(
+                        "GOLDEN (0)",
+                        TextStyle {
+                            font_size: 11.0,
+                            color: Color::WHITE,
+                            ..default()
+                        },
+                    ),
+                    WagerCardQtyTextNode { card_type: 2 },
                 ));
             });
         });
@@ -122,7 +132,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
             style: Style {
                 width: Val::Percent(100.0),
                 flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::SpaceBetween,
+                justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 ..default()
             },
@@ -137,6 +147,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         border: UiRect::all(Val::Px(2.0)),
+                        margin: UiRect::right(Val::Px(10.0)),
                         ..default()
                     },
                     background_color: Color::srgb(0.15, 0.45, 0.25).into(),
@@ -164,6 +175,7 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         border: UiRect::all(Val::Px(2.0)),
+                        margin: UiRect::left(Val::Px(10.0)),
                         ..default()
                     },
                     background_color: Color::srgb(0.15, 0.45, 0.25).into(),
@@ -174,6 +186,34 @@ pub fn spawn_bottom_controls(parent: &mut ChildBuilder, _asset_server: &Res<Asse
             )).with_children(|btn| {
                 btn.spawn(TextBundle::from_section(
                     "ROLL 2 DICE",
+                    TextStyle {
+                        font_size: 14.0,
+                        color: Color::WHITE,
+                        ..default()
+                    },
+                ));
+            });
+
+            // Skip Placement button (initially hidden)
+            buttons_row.spawn((
+                ButtonBundle {
+                    style: Style {
+                        width: Val::Px(260.0),
+                        height: Val::Px(50.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        border: UiRect::all(Val::Px(2.0)),
+                        display: Display::None,
+                        ..default()
+                    },
+                    background_color: Color::srgb(0.65, 0.50, 0.15).into(), // Warm gold
+                    border_color: Color::srgb(0.85, 0.70, 0.25).into(),
+                    ..default()
+                },
+                SkipPlacementButtonNode,
+            )).with_children(|btn| {
+                btn.spawn(TextBundle::from_section(
+                    "SKIP PLACEMENT",
                     TextStyle {
                         font_size: 14.0,
                         color: Color::WHITE,

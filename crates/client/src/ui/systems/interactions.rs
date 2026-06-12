@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::ui::components::{RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode};
+use crate::ui::components::{RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode};
 use crate::network::events::ClientActionRequest;
 use protocol::messages::ClientAction;
 
@@ -32,6 +32,18 @@ pub fn handle_wager_card_buttons(
                 card_type: card.card_type,
                 cell_index: 10, // Mock cell index for draft placement validation
             }));
+        }
+    }
+}
+
+/// System to handle skip placement button clicks.
+pub fn handle_skip_placement_button(
+    mut events: EventWriter<ClientActionRequest>,
+    query: Query<&Interaction, (Changed<Interaction>, With<SkipPlacementButtonNode>)>,
+) {
+    for interaction in query.iter() {
+        if *interaction == Interaction::Pressed {
+            events.send(ClientActionRequest(ClientAction::SkipPlacement));
         }
     }
 }

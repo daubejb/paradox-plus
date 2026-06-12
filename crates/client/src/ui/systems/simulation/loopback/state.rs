@@ -16,6 +16,8 @@ pub struct OfflineServerState {
     pub course: String,
     pub is_wager_mode: bool,
     pub player_name: String,
+    pub inventory: Vec<u8>,
+    pub placed_wagers: Vec<protocol::messages::WagerToken>,
 }
 
 impl Default for OfflineServerState {
@@ -33,6 +35,8 @@ impl Default for OfflineServerState {
             course: "green".to_string(),
             is_wager_mode: false,
             player_name: "David".to_string(),
+            inventory: Vec::new(),
+            placed_wagers: Vec::new(),
         }
     }
 }

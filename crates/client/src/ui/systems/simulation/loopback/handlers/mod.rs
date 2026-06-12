@@ -119,7 +119,7 @@ pub fn handle_action(
             state.strokes += (shot_strokes + penalty_strokes) as u32;
             state.sequence += 1;
 
-            let mut earned_cards = HVec::new();
+            let mut earned_cards: HVec<u8, 4> = HVec::new();
             if state.is_wager_mode && completed_hole {
                 let score_relative_to_par = state.strokes as i32 - course.par as i32;
                 use rand::Rng;
@@ -133,6 +133,11 @@ pub fn handle_action(
                     let r = rng.gen_range(0..3);
                     let _ = earned_cards.push(r);
                 }
+                
+                // Store cards in persistent state inventory for next hole placement
+                for &card in &earned_cards {
+                    state.inventory.push(card);
+                }
             }
 
             if completed_hole {
@@ -145,11 +150,22 @@ pub fn handle_action(
             let mut player_positions = HVec::new();
             player_positions.push(final_pos).unwrap();
             let mut player_scores = HVec::new();
+            
+            let mut hand = HVec::new();
+            for &c in &state.inventory {
+                let _ = hand.push(c);
+            }
+            
             player_scores.push(Scorecard {
                 running_strokes: state.strokes as u16,
                 total_strokes: state.strokes as u16,
-                earned_cards,
+                earned_cards: hand,
             }).unwrap();
+
+            let mut wagers = HVec::new();
+            for w in &state.placed_wagers {
+                let _ = wagers.push(w.clone());
+            }
 
             updates.push(ServerUpdate::StateSync {
                 sequence: state.sequence,
@@ -158,7 +174,98 @@ pub fn handle_action(
                 current_hole: state.current_hole,
                 player_positions,
                 player_scores,
-                placed_wagers: HVec::new(),
+                placed_wagers: wagers,
+            });
+        }
+        ClientAction::DraftCard { card_type, cell_index } => {
+            let card_type = *card_type;
+            let cell_index = *cell_index;
+
+            if let Some(pos) = state.inventory.iter().position(|&c| c == card_type) {
+                state.inventory.remove(pos);
+                state.placed_wagers.push(protocol::messages::WagerToken {
+                    card_type,
+                    owner_id: state.active_player_id,
+                    cell_index,
+                });
+                state.sequence += 1;
+
+                if state.inventory.is_empty() {
+                    state.game_state = GameStateEnum::AwaitingTurn;
+                }
+
+                let card_name = match card_type {
+                    0 => "Guardian Shield",
+                    1 => "Trickster Banana",
+                    _ => "Golden Die",
+                };
+                updates.push(ServerUpdate::AlertTriggered {
+                    alert_message: heapless::String::try_from(format!("Placed {} wager!", card_name).as_str()).unwrap(),
+                });
+            } else {
+                updates.push(ServerUpdate::AlertTriggered {
+                    alert_message: heapless::String::try_from("No card of that type in hand!").unwrap(),
+                });
+            }
+
+            let mut player_positions = HVec::new();
+            player_positions.push(state.player_position).unwrap();
+            let mut player_scores = HVec::new();
+            let mut hand = HVec::new();
+            for &c in &state.inventory {
+                let _ = hand.push(c);
+            }
+            player_scores.push(Scorecard {
+                running_strokes: state.strokes as u16,
+                total_strokes: state.strokes as u16,
+                earned_cards: hand,
+            }).unwrap();
+
+            let mut wagers = HVec::new();
+            for w in &state.placed_wagers {
+                let _ = wagers.push(w.clone());
+            }
+
+            updates.push(ServerUpdate::StateSync {
+                sequence: state.sequence,
+                game_state: state.game_state,
+                active_player_id: state.active_player_id,
+                current_hole: state.current_hole,
+                player_positions,
+                player_scores,
+                placed_wagers: wagers,
+            });
+        }
+        ClientAction::SkipPlacement => {
+            state.game_state = GameStateEnum::AwaitingTurn;
+            state.sequence += 1;
+
+            let mut player_positions = HVec::new();
+            player_positions.push(state.player_position).unwrap();
+            let mut player_scores = HVec::new();
+            let mut hand = HVec::new();
+            for &c in &state.inventory {
+                let _ = hand.push(c);
+            }
+            player_scores.push(Scorecard {
+                running_strokes: state.strokes as u16,
+                total_strokes: state.strokes as u16,
+                earned_cards: hand,
+            }).unwrap();
+
+            let mut wagers = HVec::new();
+            for w in &state.placed_wagers {
+                let _ = wagers.push(w.clone());
+            }
+
+            updates.push(ServerUpdate::StateSync {
+                sequence: state.sequence,
+                game_state: state.game_state,
+                active_player_id: state.active_player_id,
+                current_hole: state.current_hole,
+                player_positions,
+                player_scores,
+                placed_wagers: wagers,
             });
         }
         _ => {}

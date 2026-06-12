@@ -154,11 +154,20 @@ pub struct PlayGameButtonNode;
 pub struct CancelSetupButtonNode;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SkipPlacementButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WagerCardQtyTextNode {
+    pub card_type: u8,
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RadioDotNode {
     pub mode: GameMode,
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlayerNameTextNode;
+
 
 

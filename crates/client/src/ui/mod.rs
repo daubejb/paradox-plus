@@ -35,6 +35,7 @@ impl Plugin for ClientUiPlugin {
                     systems::handle_button_hover,
                     systems::handle_roll_buttons,
                     systems::handle_wager_card_buttons,
+                    systems::handle_skip_placement_button,
                     systems::handle_landing_button_clicks,
                     systems::handle_gameplay_exit,
                     systems::handle_setup_button_clicks,

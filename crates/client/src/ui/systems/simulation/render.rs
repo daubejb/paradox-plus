@@ -4,17 +4,22 @@ use protocol::terrain::presets::get_course_preset;
 use crate::network::ServerUpdateEvent;
 use crate::ui::components::{
     HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode,
-    GameSettings, PlayerNameTextNode
+    GameSettings, PlayerNameTextNode, RollOneButtonNode, RollTwoButtonNode,
+    SkipPlacementButtonNode, WagerCardQtyTextNode
 };
 
 pub fn update_ui_elements_system(
     mut update_events: EventReader<ServerUpdateEvent>,
     settings: Res<GameSettings>,
-    mut title_query: Query<&mut Text, (With<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>)>,
-    mut stats_query: Query<&mut Text, (With<HoleStatsTextNode>, Without<HoleTitleTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>)>,
-    mut score_query: Query<&mut Text, (With<PlayerScoreTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>)>,
-    mut status_query: Query<&mut Text, (With<RollStatusTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<PlayerNameTextNode>)>,
-    mut name_query: Query<&mut Text, (With<PlayerNameTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>)>,
+    mut title_query: Query<&mut Text, (With<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>, Without<WagerCardQtyTextNode>)>,
+    mut stats_query: Query<&mut Text, (With<HoleStatsTextNode>, Without<HoleTitleTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>, Without<WagerCardQtyTextNode>)>,
+    mut score_query: Query<&mut Text, (With<PlayerScoreTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>, Without<WagerCardQtyTextNode>)>,
+    mut status_query: Query<&mut Text, (With<RollStatusTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<PlayerNameTextNode>, Without<WagerCardQtyTextNode>)>,
+    mut name_query: Query<&mut Text, (With<PlayerNameTextNode>, Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<WagerCardQtyTextNode>)>,
+    mut qty_query: Query<(&mut Text, &WagerCardQtyTextNode), (Without<HoleTitleTextNode>, Without<HoleStatsTextNode>, Without<PlayerScoreTextNode>, Without<RollStatusTextNode>, Without<PlayerNameTextNode>)>,
+    mut roll_one_query: Query<&mut Style, (With<RollOneButtonNode>, Without<RollTwoButtonNode>, Without<SkipPlacementButtonNode>)>,
+    mut roll_two_query: Query<&mut Style, (With<RollTwoButtonNode>, Without<RollOneButtonNode>, Without<SkipPlacementButtonNode>)>,
+    mut skip_query: Query<&mut Style, (With<SkipPlacementButtonNode>, Without<RollOneButtonNode>, Without<RollTwoButtonNode>)>,
 ) {
     for event in update_events.read() {
         match &event.0 {
@@ -35,6 +40,41 @@ pub fn update_ui_elements_system(
 
                 if let Ok(mut text) = name_query.get_single_mut() {
                     text.sections[0].value = settings.nickname.to_uppercase();
+                }
+
+                let score_val = player_scores.first();
+                let shield_count = score_val.map(|s| s.earned_cards.iter().filter(|&&c| c == 0).count()).unwrap_or(0);
+                let banana_count = score_val.map(|s| s.earned_cards.iter().filter(|&&c| c == 1).count()).unwrap_or(0);
+                let die_count = score_val.map(|s| s.earned_cards.iter().filter(|&&c| c == 2).count()).unwrap_or(0);
+
+                for (mut text, node) in qty_query.iter_mut() {
+                    let count = match node.card_type {
+                        0 => shield_count,
+                        1 => banana_count,
+                        _ => die_count,
+                    };
+                    let label = match node.card_type {
+                        0 => "SHIELD",
+                        1 => "BANANA",
+                        _ => "GOLDEN",
+                    };
+                    text.sections[0].value = format!("{} ({})", label, count);
+                }
+
+                let (roll_display, skip_display) = if *game_state == GameStateEnum::MarkerPlacement {
+                    (Display::None, Display::Flex)
+                } else {
+                    (Display::Flex, Display::None)
+                };
+
+                if let Ok(mut style) = roll_one_query.get_single_mut() {
+                    style.display = roll_display;
+                }
+                if let Ok(mut style) = roll_two_query.get_single_mut() {
+                    style.display = roll_display;
+                }
+                if let Ok(mut style) = skip_query.get_single_mut() {
+                    style.display = skip_display;
                 }
 
                 if *game_state == GameStateEnum::HoleCompleted {

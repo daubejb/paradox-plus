@@ -36,18 +36,32 @@ pub fn local_offline_server_system(
                 state.player_position = 0;
                 state.strokes = 0;
                 state.direction = protocol::physics::MovementDirection::Forward;
-                state.game_state = GameStateEnum::AwaitingTurn;
+                state.placed_wagers.clear();
+                if state.is_wager_mode && !state.inventory.is_empty() {
+                    state.game_state = GameStateEnum::MarkerPlacement;
+                } else {
+                    state.game_state = GameStateEnum::AwaitingTurn;
+                }
             }
             state.sequence = state.sequence.saturating_add(1);
 
             let mut player_positions = HVec::new();
             player_positions.push(state.player_position).unwrap();
             let mut player_scores = HVec::new();
+            let mut hand = HVec::new();
+            for &c in &state.inventory {
+                let _ = hand.push(c);
+            }
             player_scores.push(Scorecard {
                 running_strokes: state.strokes as u16,
                 total_strokes: state.strokes as u16,
-                earned_cards: HVec::new(),
+                earned_cards: hand,
             }).unwrap();
+
+            let mut wagers = HVec::new();
+            for w in &state.placed_wagers {
+                let _ = wagers.push(w.clone());
+            }
 
             let update = ServerUpdate::StateSync {
                 sequence: state.sequence,
@@ -56,7 +70,7 @@ pub fn local_offline_server_system(
                 current_hole: state.current_hole,
                 player_positions,
                 player_scores,
-                placed_wagers: HVec::new(),
+                placed_wagers: wagers,
             };
 
             let mut send_buf = match channels.send_buf.lock() {
