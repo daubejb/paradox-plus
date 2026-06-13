@@ -6,6 +6,8 @@ pub mod interaction;
 pub mod style;
 pub mod borders;
 pub mod token;
+pub mod wager_meshes;
+
 
 pub use camera::{setup_board_camera_system, sync_board_camera_viewport_system};
 pub use spawning::rebuild_board_on_hole_change_system;

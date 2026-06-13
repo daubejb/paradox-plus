@@ -35,10 +35,10 @@ impl FromWorld for PlayerTokenAssets {
                     meshes.add(Circle::new(12.0)),
                     meshes.add(Circle::new(8.0)),
                     meshes.add(Rectangle::new(3.0, 1.0)),
-                    meshes.add(Rectangle::new(12.0, 12.0)), // Shield diamond
-                    meshes.add(Circle::new(7.0)),           // Banana circle
-                    meshes.add(Rectangle::new(12.0, 12.0)), // Die square
-                    meshes.add(Circle::new(1.2)),           // Pip circle
+                    meshes.add(super::wager_meshes::generate_shield_mesh()),
+                    meshes.add(super::wager_meshes::generate_banana_peel_mesh()),
+                    meshes.add(Rectangle::new(16.0, 16.0)),
+                    meshes.add(Circle::new(1.5)),
                 )
             } else {
                 (
@@ -174,11 +174,10 @@ pub fn spawn_wager_token(
             SpatialBundle::default(),
             WagerVisual { card_type: CardType::Shield },
         )).with_children(|shield| {
-            // Blue Diamond (rotated square)
+            // Blue Crest Shield (custom mesh)
             shield.spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle(assets.wager_shield_mesh.clone()),
                 material: assets.wager_shield_material.clone(),
-                transform: Transform::from_rotation(Quat::from_rotation_z(std::f32::consts::FRAC_PI_4)),
                 ..default()
             });
             // White "S" text in center
@@ -201,7 +200,7 @@ pub fn spawn_wager_token(
             SpatialBundle::default(),
             WagerVisual { card_type: CardType::Banana },
         )).with_children(|banana| {
-            // Yellow Circle
+            // Yellow Banana Peel (custom mesh)
             banana.spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle(assets.wager_banana_mesh.clone()),
                 material: assets.wager_banana_material.clone(),
@@ -235,7 +234,7 @@ pub fn spawn_wager_token(
             });
 
             // 5 Pips (Charcoal dots)
-            let pip_offset = 3.0;
+            let pip_offset = 4.2;
             let pips = [
                 Vec2::new(0.0, 0.0),
                 Vec2::new(-pip_offset, pip_offset),
