@@ -133,6 +133,9 @@ pub fn rebuild_board_on_hole_change_system(
                         justify: JustifyText::Center,
                         ..default()
                     },
+                    text_2d_bounds: bevy::text::Text2dBounds {
+                        size: Vec2::new(geom.l_h + 2.0 * geom.r - 120.0, 50.0),
+                    },
                     transform: Transform::from_translation(Vec3::new(0.0, text_y, 2.0)),
                     ..default()
                 },
