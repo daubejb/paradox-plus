@@ -919,6 +919,99 @@ fn test_in_progress_scorecard_toggle() {
     }
 }
 
+#[test]
+fn test_corner_cell_outer_boundary_click() {
+    let mut app = setup_headless_ui_app();
+    app.update();
+
+    // Transition state to SoloSetup, then trigger PlayGameButton click to start game and spawn board
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
+        next_state.set(ClientScreenState::SoloSetup);
+    }
+    app.update();
+    app.update();
+
+    // Change current hole to Hole 5 (index 5)
+    {
+        let mut current_hole = app.world_mut().resource_mut::<client::ui::components::CurrentHole>();
+        current_hole.0 = 5;
+    }
+    app.update();
+
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<PlayGameButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Play Game button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+    app.update();
+    app.update();
+    app.update();
+
+    // Set ClientGameState to MarkerPlacement
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<client::replication::ClientGameState>>();
+        next_state.set(client::replication::ClientGameState::MarkerPlacement);
+    }
+    app.update();
+
+    // Select Banana wager card
+    {
+        let mut selected_card = app.world_mut().resource_mut::<SelectedWagerCard>();
+        selected_card.0 = Some(CardType::Banana);
+    }
+
+    // Find cell 7 (which is curved corner tile 7 FW on Hole 5)
+    let (cell_pos, cell_rot) = {
+        let mut cell_query = app.world_mut().query::<(&BoardCellNode, &Transform)>();
+        let (_, cell_transform) = cell_query
+            .iter(app.world())
+            .find(|(node, _)| node.index == 7)
+            .expect("Board cell with index 7 (7 FW) not found");
+        (cell_transform.translation.xy(), cell_transform.rotation)
+    };
+
+    // Calculate local X axis from rotation (perp direction)
+    let local_x = (cell_rot * Vec3::X).xy().normalize();
+
+    // Click at 75.0 units away from center (which exceeds the old 60.0 limit, but is within new 85.0 limit)
+    let click_pos = cell_pos + local_x * 75.0;
+
+    // Set cursor position override resource
+    app.insert_resource(client::ui::components::CursorPositionOverride(Some(click_pos)));
+
+    // Simulate clicking the board cell
+    {
+        let mut mouse_input = app.world_mut().resource_mut::<ButtonInput<MouseButton>>();
+        mouse_input.press(MouseButton::Left);
+    }
+
+    // Run the clicks handler system directly
+    use bevy::ecs::system::RunSystemOnce;
+    use client::ui::systems::simulation::board::interaction::handle_board_clicks_system;
+    app.world_mut().run_system_once(handle_board_clicks_system);
+
+    // Verify that SelectedWagerCard resource was reset to None (meaning the click was accepted and drafted)
+    {
+        let selected_card = app.world().resource::<SelectedWagerCard>();
+        assert_eq!(selected_card.0, None, "Expected SelectedWagerCard to be reset to None after successful click");
+    }
+
+    // Verify that ClientActionRequest event for DraftCard was dispatched with cell_index = 7
+    let events = app.world().resource::<Events<ClientActionRequest>>();
+    let mut reader = events.get_reader();
+    let sent_events: Vec<&ClientActionRequest> = reader.read(events).collect();
+
+    let draft_card_event = sent_events.iter().find(|event| matches!(event.0, ClientAction::DraftCard { .. }));
+    assert!(draft_card_event.is_some(), "Expected a ClientAction::DraftCard event to be sent");
+    if let Some(ClientActionRequest(ClientAction::DraftCard { card_type, cell_index })) = draft_card_event {
+        assert_eq!(*card_type, CardType::Banana, "Expected card_type to be CardType::Banana");
+        assert_eq!(*cell_index, 7, "Expected cell_index to be 7 (7 FW)");
+    } else {
+        panic!("Sent event was not a ClientAction::DraftCard variant");
+    }
+}
+
 
 
 
