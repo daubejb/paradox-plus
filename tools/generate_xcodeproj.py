@@ -13,17 +13,19 @@ def main():
 	objects = {
 
 /* Begin PBXBuildFile section */
-		FFFFFFFFFFFFFFFFFFFFFFFF /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 222222222222222222222222 /* App.swift */; };
+		FFFFFFFFFFFFFFFFFFFFFFFF /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 222222222222222222222222 /* main.swift */; };
 		000000000000000000000000 /* libclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 444444444444444444444444 /* libclient.a */; };
 		555555555555555555555558 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 555555555555555555555557 /* Assets.xcassets */; };
+		666666666666666666666662 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 666666666666666666666661 /* assets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		222222222222222222222222 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		222222222222222222222222 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		333333333333333333333333 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		444444444444444444444444 /* libclient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libclient.a; path = "../target/aarch64-apple-ios/release/libclient.a"; sourceTree = "<group>"; };
 		555555555555555555555556 /* ParadoxPlus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParadoxPlus.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		555555555555555555555557 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
+		666666666666666666666661 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../../assets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,6 +45,7 @@ def main():
 			buildActionMask = 2147483647;
 			files = (
 				555555555555555555555558 /* Assets.xcassets in Resources */,
+				666666666666666666666662 /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -52,11 +55,12 @@ def main():
 		111111111111111111111111 /* ParadoxPlus */ = {
 			isa = PBXGroup;
 			children = (
-				222222222222222222222222 /* App.swift */,
+				222222222222222222222222 /* main.swift */,
 				333333333333333333333333 /* Info.plist */,
 				444444444444444444444444 /* libclient.a */,
 				555555555555555555555556 /* ParadoxPlus.app */,
 				555555555555555555555557 /* Assets.xcassets */,
+				666666666666666666666661 /* assets */,
 			);
 			path = ParadoxPlus;
 			sourceTree = "<group>";
@@ -121,7 +125,7 @@ def main():
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FFFFFFFFFFFFFFFFFFFFFFFF /* App.swift in Sources */,
+				FFFFFFFFFFFFFFFFFFFFFFFF /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,7 +138,7 @@ def main():
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 21;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -150,7 +154,7 @@ def main():
 					"$(PROJECT_DIR)/../target/x86_64-apple-ios/release",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paradox.plus.client;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kahndaube.paradoxgolf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -163,7 +167,7 @@ def main():
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 21;
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -179,7 +183,7 @@ def main():
 					"$(PROJECT_DIR)/../target/x86_64-apple-ios/release",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paradox.plus.client;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kahndaube.paradoxgolf;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";

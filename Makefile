@@ -21,7 +21,7 @@ else
   IOS_SIM_TARGET := aarch64-apple-ios-sim
 endif
 
-.PHONY: help critique-plan android-emulator iphone-emulator build-android build-iphone-sim build-iphone-release check-env-testflight deploy-testflight mac run-iphone-sim
+.PHONY: help critique-plan android-emulator iphone-emulator build-android build-iphone-sim build-iphone-release check-env-testflight deploy-testflight mac run-iphone-sim verify-bundle-id
 
 help:
 	@echo "🟢 Paradox Plus Mobile Build & Emulation Makefile"
@@ -52,7 +52,7 @@ run-iphone-sim: build-iphone-sim iphone-emulator
 	echo "Installing App on Simulator..."; \
 	xcrun simctl install "$$UDID" ios/build/derivedData/Build/Products/Debug-iphonesimulator/ParadoxPlus.app; \
 	echo "Launching App on Simulator..."; \
-	xcrun simctl launch "$$UDID" com.paradox.plus.client
+	xcrun simctl launch "$$UDID" com.kahndaube.paradoxgolf
 
 critique-plan:
 	@echo "Running automated implementation plan critique..."
@@ -164,3 +164,9 @@ deploy-testflight: check-env-testflight
 		echo "ERROR: build/ios/ipa/Paradox.ipa not found. Run 'make build-iphone-release' first."; \
 		exit 1; \
 	fi
+
+verify-bundle-id:
+	@echo "Checking for stale bundle identifier references in iOS and build tooling..."
+	@! grep -rn --exclude-dir=build "com.paradox.plus.client" ios tools/generate_xcodeproj.py || \
+	(echo "Error: Found stale references to com.paradox.plus.client" && exit 1)
+	@echo "Verification successful: No stale references found."
