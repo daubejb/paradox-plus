@@ -11,10 +11,15 @@ fn send_state_sync(state: &mut OfflineServerState, mut updates: Vec<ServerUpdate
     for &c in &state.inventory {
         let _ = hand.push(c);
     }
+    let mut cards_earned = HVec::new();
+    for &c in &state.cards_earned_this_hole {
+        let _ = cards_earned.push(c);
+    }
     player_scores.push(Scorecard {
         running_strokes: state.strokes as u16,
         total_strokes: state.strokes as u16,
         earned_cards: hand,
+        cards_earned_this_hole: cards_earned,
     }).unwrap();
 
     let mut wagers = HVec::new();

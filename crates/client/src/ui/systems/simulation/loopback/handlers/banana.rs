@@ -14,10 +14,15 @@ fn send_state_sync(state: &mut OfflineServerState, mut updates: Vec<ServerUpdate
     for &c in &state.inventory {
         let _ = hand.push(c);
     }
+    let mut cards_earned = HVec::new();
+    for &c in &state.cards_earned_this_hole {
+        let _ = cards_earned.push(c);
+    }
     player_scores.push(Scorecard {
         running_strokes: state.strokes as u16,
         total_strokes: state.strokes as u16,
         earned_cards: hand,
+        cards_earned_this_hole: cards_earned,
     }).unwrap();
 
     let mut wagers = HVec::new();
@@ -44,6 +49,7 @@ pub fn handle_choose_banana_slide(
     course: &ActiveCourseTrack,
 ) -> Vec<ServerUpdate> {
     let mut updates = Vec::new();
+    state.cards_earned_this_hole.clear();
 
     if state.game_state != GameStateEnum::BananaChoice {
         return send_state_sync(state, updates);
@@ -149,6 +155,7 @@ pub fn handle_choose_banana_slide(
             if state.inventory.len() < 16 {
                 state.inventory.push(card);
             }
+            let _ = state.cards_earned_this_hole.push(card);
         }
     } else if trigger_banana {
         // Nested banana trigger! State remains BananaChoice

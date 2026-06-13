@@ -74,6 +74,7 @@ pub struct Scorecard {
     pub running_strokes: u16,
     pub total_strokes: u16,
     pub earned_cards: HVec<u8, 16>, // Max 16 earned cards
+    pub cards_earned_this_hole: HVec<u8, 4>, // Max 4 earned cards on this hole
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]

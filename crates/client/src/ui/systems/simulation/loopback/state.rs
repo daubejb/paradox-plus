@@ -18,6 +18,7 @@ pub struct OfflineServerState {
     pub player_name: String,
     pub inventory: Vec<u8>,
     pub placed_wagers: Vec<protocol::messages::WagerToken>,
+    pub cards_earned_this_hole: heapless::Vec<u8, 4>,
 }
 
 impl Default for OfflineServerState {
@@ -37,6 +38,7 @@ impl Default for OfflineServerState {
             player_name: "David".to_string(),
             inventory: Vec::new(),
             placed_wagers: Vec::new(),
+            cards_earned_this_hole: heapless::Vec::new(),
         }
     }
 }

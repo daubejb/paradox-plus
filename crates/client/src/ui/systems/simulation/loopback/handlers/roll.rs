@@ -10,6 +10,7 @@ pub fn handle_roll_dice(
     course: &ActiveCourseTrack,
 ) -> Vec<ServerUpdate> {
     let mut updates = Vec::new();
+    state.cards_earned_this_hole.clear();
     let current_pos = state.player_position;
     let current_terrain = course.cells.get(current_pos as usize).copied().unwrap_or(TerrainType::Fairway);
 
@@ -64,6 +65,7 @@ pub fn handle_roll_dice(
                 running_strokes: state.strokes as u16,
                 total_strokes: state.strokes as u16,
                 earned_cards: HVec::new(),
+                cards_earned_this_hole: HVec::new(),
             }).unwrap();
 
             updates.push(ServerUpdate::StateSync {
@@ -221,6 +223,9 @@ pub fn handle_roll_dice(
                 state.inventory.push(card);
             }
         }
+        for &card in &earned_cards {
+            let _ = state.cards_earned_this_hole.push(card);
+        }
     }
 
     if completed_hole {
@@ -241,10 +246,16 @@ pub fn handle_roll_dice(
         let _ = hand.push(c);
     }
     
+    let mut cards_earned = HVec::new();
+    for &c in &state.cards_earned_this_hole {
+        let _ = cards_earned.push(c);
+    }
+    
     player_scores.push(Scorecard {
         running_strokes: state.strokes as u16,
         total_strokes: state.strokes as u16,
         earned_cards: hand,
+        cards_earned_this_hole: cards_earned,
     }).unwrap();
 
     let mut wagers = HVec::new();

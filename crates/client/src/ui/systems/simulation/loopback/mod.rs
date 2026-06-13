@@ -37,6 +37,7 @@ pub fn local_offline_server_system(
                 state.strokes = 0;
                 state.direction = protocol::physics::MovementDirection::Forward;
                 state.placed_wagers.clear();
+                state.cards_earned_this_hole.clear();
                 if state.is_wager_mode && !state.inventory.is_empty() {
                     state.game_state = GameStateEnum::MarkerPlacement;
                 } else {
@@ -56,6 +57,7 @@ pub fn local_offline_server_system(
                 running_strokes: state.strokes as u16,
                 total_strokes: state.strokes as u16,
                 earned_cards: hand,
+                cards_earned_this_hole: HVec::new(),
             }).unwrap();
 
             let mut wagers = HVec::new();
@@ -125,6 +127,7 @@ pub fn local_offline_server_system(
                     running_strokes: 0,
                     total_strokes: 0,
                     earned_cards: HVec::new(),
+                    cards_earned_this_hole: HVec::new(),
                 }).unwrap();
 
                 let update = ServerUpdate::StateSync {
@@ -156,6 +159,7 @@ pub fn local_offline_server_system(
                     running_strokes: 0,
                     total_strokes: 0,
                     earned_cards: HVec::new(),
+                    cards_earned_this_hole: HVec::new(),
                 }).unwrap();
 
                 let update = ServerUpdate::StateSync {

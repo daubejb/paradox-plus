@@ -98,11 +98,11 @@ pub fn update_ui_elements_system(
                     if let Ok(mut text) = status_query.get_single_mut() {
                         let score_val = player_scores.first();
                         let cards_str = if let Some(score) = score_val {
-                            if score.earned_cards.is_empty() {
+                            if score.cards_earned_this_hole.is_empty() {
                                 " No cards earned.".to_string()
                             } else {
                                 let mut names = Vec::new();
-                                for card in score.earned_cards.iter() {
+                                for card in score.cards_earned_this_hole.iter() {
                                     match card {
                                         0 => names.push("Guardian Shield"),
                                         1 => names.push("Trickster Banana"),

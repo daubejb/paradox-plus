@@ -183,6 +183,7 @@ fn test_loopback_payloads_serialization_compliance() {
         running_strokes: 3,
         total_strokes: 3,
         earned_cards: HVec::new(),
+        cards_earned_this_hole: HVec::new(),
     }).unwrap();
 
     let update = ServerUpdate::StateSync {
@@ -400,6 +401,7 @@ fn test_wager_card_qty_hud_rendering() {
         running_strokes: 3,
         total_strokes: 3,
         earned_cards: hand,
+        cards_earned_this_hole: heapless::Vec::new(),
     }).unwrap();
 
     let sync_event = ServerUpdate::StateSync {
@@ -484,11 +486,13 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
                 running_strokes: 3,
                 total_strokes: 3,
                 earned_cards: heapless::Vec::new(),
+                cards_earned_this_hole: heapless::Vec::new(),
             }).unwrap();
             v.push(Scorecard {
                 running_strokes: 5,
                 total_strokes: 5,
                 earned_cards: heapless::Vec::new(),
+                cards_earned_this_hole: heapless::Vec::new(),
             }).unwrap();
             v
         },
@@ -521,11 +525,13 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
                 running_strokes: 7, // 7 strokes: +1 over par
                 total_strokes: 7,
                 earned_cards: heapless::Vec::new(),
+                cards_earned_this_hole: heapless::Vec::new(),
             }).unwrap();
             v.push(Scorecard {
                 running_strokes: 5, // 5 strokes: -1 under par
                 total_strokes: 5,
                 earned_cards: heapless::Vec::new(),
+                cards_earned_this_hole: heapless::Vec::new(),
             }).unwrap();
             v
         },
@@ -559,11 +565,13 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
                 running_strokes: 2, // 2 strokes on Hole 2 (should not affect completed score)
                 total_strokes: 9,
                 earned_cards: heapless::Vec::new(),
+                cards_earned_this_hole: heapless::Vec::new(),
             }).unwrap();
             v.push(Scorecard {
                 running_strokes: 1, // 1 stroke on Hole 2 (should not affect completed score)
                 total_strokes: 6,
                 earned_cards: heapless::Vec::new(),
+                cards_earned_this_hole: heapless::Vec::new(),
             }).unwrap();
             v
         },
