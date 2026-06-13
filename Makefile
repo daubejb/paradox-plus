@@ -158,8 +158,8 @@ endif
 
 deploy-testflight: check-env-testflight
 	@if [ -f "build/ios/ipa/Paradox.ipa" ]; then \
-		echo "Uploading Paradox.ipa to TestFlight..."; \
-		xcrun transporter -m upload -u "$(APPLE_ID)" -p "$(APP_SPECIFIC_PASSWORD)" -f build/ios/ipa/Paradox.ipa; \
+		echo "Uploading Paradox.ipa to TestFlight via altool..."; \
+		xcrun altool --upload-app --type ios --file build/ios/ipa/Paradox.ipa --username "$(APPLE_ID)" --password "$(APP_SPECIFIC_PASSWORD)"; \
 	else \
 		echo "ERROR: build/ios/ipa/Paradox.ipa not found. Run 'make build-iphone-release' first."; \
 		exit 1; \
