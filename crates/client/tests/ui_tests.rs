@@ -184,6 +184,7 @@ fn test_loopback_payloads_serialization_compliance() {
         total_strokes: 3,
         earned_cards: HVec::new(),
         cards_earned_this_hole: HVec::new(),
+        strokes_per_hole: HVec::new(),
     }).unwrap();
 
     let update = ServerUpdate::StateSync {
@@ -247,20 +248,20 @@ fn test_board_rebuild_on_hole_change() {
         assert_eq!(cell_count, 27, "Expected 27 cells spawned for Hole 1");
     }
 
-    // Manually change CurrentHole to 2 and trigger change detection
+    // Manually change CurrentHole to 18 and trigger change detection
     {
         let mut current_hole = app.world_mut().resource_mut::<CurrentHole>();
-        current_hole.0 = 2;
+        current_hole.0 = 18;
     }
 
     // Run systems to trigger rebuilding
     app.update();
 
-    // Verify Hole 2 has 14 cells spawned (TeeBox + 13 preset spaces)
+    // Verify Hole 18 has 14 cells spawned (TeeBox + 13 preset spaces)
     {
         let mut cell_query = app.world_mut().query::<&BoardCellNode>();
         let cell_count = cell_query.iter(app.world()).count();
-        assert_eq!(cell_count, 14, "Expected 14 cells spawned for Hole 2");
+        assert_eq!(cell_count, 14, "Expected 14 cells spawned for Hole 18");
     }
 }
 
@@ -402,6 +403,7 @@ fn test_wager_card_qty_hud_rendering() {
         total_strokes: 3,
         earned_cards: hand,
         cards_earned_this_hole: heapless::Vec::new(),
+        strokes_per_hole: heapless::Vec::new(),
     }).unwrap();
 
     let sync_event = ServerUpdate::StateSync {
@@ -487,12 +489,14 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
                 total_strokes: 3,
                 earned_cards: heapless::Vec::new(),
                 cards_earned_this_hole: heapless::Vec::new(),
+                strokes_per_hole: heapless::Vec::new(),
             }).unwrap();
             v.push(Scorecard {
                 running_strokes: 5,
                 total_strokes: 5,
                 earned_cards: heapless::Vec::new(),
                 cards_earned_this_hole: heapless::Vec::new(),
+                strokes_per_hole: heapless::Vec::new(),
             }).unwrap();
             v
         },
@@ -526,12 +530,14 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
                 total_strokes: 7,
                 earned_cards: heapless::Vec::new(),
                 cards_earned_this_hole: heapless::Vec::new(),
+                strokes_per_hole: heapless::Vec::new(),
             }).unwrap();
             v.push(Scorecard {
                 running_strokes: 5, // 5 strokes: -1 under par
                 total_strokes: 5,
                 earned_cards: heapless::Vec::new(),
                 cards_earned_this_hole: heapless::Vec::new(),
+                strokes_per_hole: heapless::Vec::new(),
             }).unwrap();
             v
         },
@@ -566,12 +572,14 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
                 total_strokes: 9,
                 earned_cards: heapless::Vec::new(),
                 cards_earned_this_hole: heapless::Vec::new(),
+                strokes_per_hole: heapless::Vec::new(),
             }).unwrap();
             v.push(Scorecard {
                 running_strokes: 1, // 1 stroke on Hole 2 (should not affect completed score)
                 total_strokes: 6,
                 earned_cards: heapless::Vec::new(),
                 cards_earned_this_hole: heapless::Vec::new(),
+                strokes_per_hole: heapless::Vec::new(),
             }).unwrap();
             v
         },
@@ -718,6 +726,68 @@ fn test_banana_slide_click_interaction() {
         assert_eq!(*step_count, 4, "Expected step_count to be 4");
     } else {
         panic!("Sent event was not a ClientAction::ChooseBananaSlide variant");
+    }
+}
+
+#[test]
+fn test_match_completed_scorecard_screen() {
+    use protocol::messages::{Scorecard, GameStateEnum};
+    use client::network::ServerUpdateEvent;
+    use client::replication::ClientGameState;
+
+    let mut app = setup_headless_ui_app();
+    app.update();
+
+    let mut strokes_history = heapless::Vec::new();
+    for _ in 0..18 {
+        strokes_history.push(4u16).unwrap();
+    }
+
+    let scorecard = Scorecard {
+        running_strokes: 0,
+        total_strokes: 72,
+        earned_cards: heapless::Vec::new(),
+        cards_earned_this_hole: heapless::Vec::new(),
+        strokes_per_hole: strokes_history,
+    };
+
+    let mut player_scores = heapless::Vec::new();
+    player_scores.push(scorecard).unwrap();
+
+    let sync_update = ServerUpdate::StateSync {
+        sequence: 100,
+        game_state: GameStateEnum::MatchCompleted,
+        active_player_id: 1234,
+        current_hole: 19,
+        player_positions: {
+            let mut v = heapless::Vec::new();
+            v.push(0).unwrap();
+            v
+        },
+        player_scores,
+        placed_wagers: heapless::Vec::new(),
+    };
+
+    app.world_mut().send_event(ServerUpdateEvent(sync_update));
+    app.update();
+    app.update();
+    app.update();
+
+    let client_state = app.world().resource::<State<ClientGameState>>();
+    assert_eq!(*client_state.get(), ClientGameState::MatchCompleted);
+
+    let mut summary_style_query = app.world_mut().query_filtered::<&Style, With<client::ui::components::MatchCompletedScreenNode>>();
+    let style = summary_style_query.get_single(app.world()).expect("MatchCompletedScreenNode missing");
+    assert_eq!(style.display, Display::Flex);
+
+    let mut cell_query = app.world_mut().query::<(&Text, &client::ui::components::ScorecardCellTextNode)>();
+    let cells: Vec<(&Text, &client::ui::components::ScorecardCellTextNode)> = cell_query.iter(app.world()).collect();
+    assert!(!cells.is_empty(), "Expected scorecard cells to be populated");
+
+    let total_cell = cells.iter().find(|(_, cell)| cell.hole_num == 22);
+    assert!(total_cell.is_some(), "Total strokes cell (hole 22) not found");
+    if let Some((text, _)) = total_cell {
+        assert!(text.sections[0].value.contains("TOTAL STROKES: 72"), "Expected total strokes text to show 72, got: {}", text.sections[0].value);
     }
 }
 

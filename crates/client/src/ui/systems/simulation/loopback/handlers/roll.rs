@@ -1,5 +1,5 @@
 use super::super::state::OfflineServerState;
-use protocol::messages::{ServerUpdate, GameStateEnum, Scorecard, CardType};
+use protocol::messages::{ServerUpdate, GameStateEnum, CardType};
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
 use heapless::Vec as HVec;
 use super::{dice, terrain, movement};
@@ -61,12 +61,7 @@ pub fn handle_roll_dice(
             let mut player_positions = HVec::new();
             player_positions.push(current_pos).unwrap();
             let mut player_scores = HVec::new();
-            player_scores.push(Scorecard {
-                running_strokes: state.strokes as u16,
-                total_strokes: state.strokes as u16,
-                earned_cards: HVec::new(),
-                cards_earned_this_hole: HVec::new(),
-            }).unwrap();
+            player_scores.push(state.build_scorecard()).unwrap();
 
             updates.push(ServerUpdate::StateSync {
                 sequence: state.sequence,
@@ -230,6 +225,13 @@ pub fn handle_roll_dice(
 
     if completed_hole {
         state.game_state = GameStateEnum::HoleCompleted;
+        let strokes_u16 = u16::try_from(state.strokes).unwrap_or(u16::MAX);
+        if state.strokes_per_hole.push(strokes_u16).is_err() {
+            bevy::log::error!(
+                "Failed to record strokes for hole {}: Scorecard capacity exceeded",
+                state.strokes_per_hole.len() + 1
+            );
+        }
     } else if trigger_banana {
         state.game_state = GameStateEnum::BananaChoice;
     } else {
@@ -240,23 +242,7 @@ pub fn handle_roll_dice(
     let mut player_positions = HVec::new();
     player_positions.push(final_pos).unwrap();
     let mut player_scores = HVec::new();
-    
-    let mut hand = HVec::new();
-    for &c in &state.inventory {
-        let _ = hand.push(c);
-    }
-    
-    let mut cards_earned = HVec::new();
-    for &c in &state.cards_earned_this_hole {
-        let _ = cards_earned.push(c);
-    }
-    
-    player_scores.push(Scorecard {
-        running_strokes: state.strokes as u16,
-        total_strokes: state.strokes as u16,
-        earned_cards: hand,
-        cards_earned_this_hole: cards_earned,
-    }).unwrap();
+    player_scores.push(state.build_scorecard()).unwrap();
 
     let mut wagers = HVec::new();
     for w in &state.placed_wagers {

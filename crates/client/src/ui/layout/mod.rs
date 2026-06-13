@@ -4,11 +4,13 @@ pub mod bottom_bar;
 pub mod landing;
 pub mod setup;
 pub mod leaderboard;
+pub mod match_summary;
 
 use bevy::prelude::*;
 use crate::ui::components::{RootUiNode, GameplayScreenNode};
 use landing::spawn_landing_screen;
 use setup::spawn_setup_screen;
+use match_summary::spawn_match_summary_screen;
 
 pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
     let ui_camera = commands.spawn(Camera2dBundle::default()).id();
@@ -55,6 +57,7 @@ pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
             leaderboard::spawn_leaderboard_ticker(gameplay_container, &asset_server);
             board::spawn_central_board(gameplay_container, &asset_server);
             bottom_bar::spawn_bottom_controls(gameplay_container, &asset_server);
+            spawn_match_summary_screen(gameplay_container, &asset_server);
         });
     });
 }

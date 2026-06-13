@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use std::sync::mpsc::{Receiver, Sender};
-use protocol::messages::{ClientAction, ServerUpdate, GameStateEnum, Scorecard};
+use protocol::messages::{ClientAction, ServerUpdate, GameStateEnum};
 use protocol::terrain::presets::get_course_preset;
 use heapless::Vec as HVec;
 
@@ -49,16 +49,7 @@ pub fn local_offline_server_system(
             let mut player_positions = HVec::new();
             player_positions.push(state.player_position).unwrap();
             let mut player_scores = HVec::new();
-            let mut hand = HVec::new();
-            for &c in &state.inventory {
-                let _ = hand.push(c);
-            }
-            player_scores.push(Scorecard {
-                running_strokes: state.strokes as u16,
-                total_strokes: state.strokes as u16,
-                earned_cards: hand,
-                cards_earned_this_hole: HVec::new(),
-            }).unwrap();
+            player_scores.push(state.build_scorecard()).unwrap();
 
             let mut wagers = HVec::new();
             for w in &state.placed_wagers {
@@ -100,11 +91,6 @@ pub fn local_offline_server_system(
         Err(_) => return,
     };
 
-    let course = match get_course_preset(&state.course, state.current_hole) {
-        Some(c) => c,
-        None => return,
-    };
-
     let mut count = 0;
     while let Ok(raw_payload) = rx.try_recv() {
         if count >= 10 {
@@ -123,12 +109,7 @@ pub fn local_offline_server_system(
                 let mut player_positions = HVec::new();
                 player_positions.push(state.player_position).unwrap();
                 let mut player_scores = HVec::new();
-                player_scores.push(Scorecard {
-                    running_strokes: 0,
-                    total_strokes: 0,
-                    earned_cards: HVec::new(),
-                    cards_earned_this_hole: HVec::new(),
-                }).unwrap();
+                player_scores.push(state.build_scorecard()).unwrap();
 
                 let update = ServerUpdate::StateSync {
                     sequence: state.sequence,
@@ -155,12 +136,7 @@ pub fn local_offline_server_system(
                 let mut player_positions = HVec::new();
                 player_positions.push(state.player_position).unwrap();
                 let mut player_scores = HVec::new();
-                player_scores.push(Scorecard {
-                    running_strokes: 0,
-                    total_strokes: 0,
-                    earned_cards: HVec::new(),
-                    cards_earned_this_hole: HVec::new(),
-                }).unwrap();
+                player_scores.push(state.build_scorecard()).unwrap();
 
                 let update = ServerUpdate::StateSync {
                     sequence: state.sequence,
@@ -185,14 +161,18 @@ pub fn local_offline_server_system(
                 continue;
             }
 
-            let updates = handlers::handle_action(&mut state, &action, &course);
-            for update in updates {
-                send_buf.resize(65536, 0);
-                if let Ok(serialized) = postcard::to_slice(&update, &mut *send_buf) {
-                    let len = serialized.len();
-                    let bytes = send_buf[..len].to_vec();
-                    let _ = channels.update_tx.send(bytes);
+            if let Some(course) = get_course_preset(&state.course, state.current_hole) {
+                let updates = handlers::handle_action(&mut state, &action, &course);
+                for update in updates {
+                    send_buf.resize(65536, 0);
+                    if let Ok(serialized) = postcard::to_slice(&update, &mut *send_buf) {
+                        let len = serialized.len();
+                        let bytes = send_buf[..len].to_vec();
+                        let _ = channels.update_tx.send(bytes);
+                    }
                 }
+            } else {
+                bevy::log::error!("Action received but course preset not found for hole {}", state.current_hole);
             }
         }
     }

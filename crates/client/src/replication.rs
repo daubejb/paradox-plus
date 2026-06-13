@@ -53,6 +53,7 @@ pub fn sync_state_from_server(
     mut next_state: ResMut<NextState<ClientGameState>>,
     mut current_hole: ResMut<crate::ui::components::CurrentHole>,
     mut client_wagers: ResMut<crate::ui::components::ClientWagers>,
+    mut client_scorecards: ResMut<crate::ui::components::ClientScorecards>,
     player_query: Query<Entity, With<Player>>,
 ) {
     for event in update_events.read() {
@@ -62,11 +63,15 @@ pub fn sync_state_from_server(
             player_positions,
             current_hole: sync_hole,
             placed_wagers,
+            player_scores,
             ..
         } = &event.0
         {
             // Update ClientWagers resource
             client_wagers.0 = placed_wagers.to_vec();
+
+            // Update ClientScorecards resource
+            client_scorecards.0 = player_scores.to_vec();
 
             // Guard assignment to preserve Bevy's change detection
             if current_hole.0 != *sync_hole {
@@ -109,6 +114,7 @@ impl Plugin for ClientReplicationPlugin {
         app.init_state::<ClientGameState>()
             .init_resource::<crate::ui::components::CurrentHole>()
             .init_resource::<crate::ui::components::ClientWagers>()
+            .init_resource::<crate::ui::components::ClientScorecards>()
             .init_resource::<ActivePlayerId>()
             .add_systems(Update, sync_state_from_server);
     }

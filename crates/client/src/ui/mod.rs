@@ -56,6 +56,9 @@ impl Plugin for ClientUiPlugin {
                     systems::simulation::scroll_leaderboard_ticker_system,
                     systems::simulation::rebuild_board_on_hole_change_system
                         .after(crate::replication::sync_state_from_server),
+                    systems::handle_match_completed_buttons,
+                    systems::simulation::toggle_match_completed_ui_system,
+                    systems::simulation::render_scorecard_system,
                 ),
             );
     }

@@ -45,3 +45,32 @@ pub fn handle_skip_placement_button(
         }
     }
 }
+
+/// System to handle match completed scorecard button clicks.
+pub fn handle_match_completed_buttons(
+    mut events: EventWriter<ClientActionRequest>,
+    settings: Res<crate::ui::components::GameSettings>,
+    mut screen_state: ResMut<NextState<crate::ui::components::ClientScreenState>>,
+    play_again_query: Query<&Interaction, (Changed<Interaction>, With<crate::ui::components::PlayAgainButtonNode>)>,
+    main_menu_query: Query<&Interaction, (Changed<Interaction>, With<crate::ui::components::MainMenuButtonNode>)>,
+) {
+    for interaction in play_again_query.iter() {
+        if *interaction == Interaction::Pressed {
+            let nickname = heapless::String::try_from(settings.nickname.as_str()).unwrap_or_default();
+            let course = heapless::String::try_from(settings.course.as_str()).unwrap_or_default();
+            let is_wager_mode = settings.mode == crate::ui::components::GameMode::WagerCards;
+            
+            events.send(ClientActionRequest(ClientAction::StartPractice {
+                nickname,
+                course,
+                is_wager_mode,
+            }));
+        }
+    }
+    for interaction in main_menu_query.iter() {
+        if *interaction == Interaction::Pressed {
+            events.send(ClientActionRequest(ClientAction::LeaveRoom));
+            screen_state.set(crate::ui::components::ClientScreenState::Landing);
+        }
+    }
+}

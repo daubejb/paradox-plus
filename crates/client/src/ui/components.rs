@@ -199,5 +199,24 @@ pub struct LeaderboardCompletedHolesScore {
     pub last_completed_hole: u8,
 }
 
+#[derive(Resource, Default, Debug, Clone)]
+pub struct ClientScorecards(pub Vec<protocol::messages::Scorecard>);
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MatchCompletedScreenNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PlayAgainButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MainMenuButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ScorecardCellTextNode {
+    pub hole_num: u8, // 1..=18, or 0 for total, 99 for header
+    pub is_par: bool,
+    pub is_score: bool,
+}
+
 
 

@@ -2,6 +2,7 @@ pub mod loopback;
 pub mod board;
 pub mod render;
 pub mod leaderboard;
+pub mod scorecard_render;
 
 pub use loopback::{local_offline_server_system, LocalServerChannels};
 pub use loopback::state::OfflineServerState;
@@ -11,3 +12,4 @@ pub use board::{
 };
 pub use render::{update_ui_elements_system};
 pub use leaderboard::{update_leaderboard_ticker_system, scroll_leaderboard_ticker_system};
+pub use scorecard_render::{toggle_match_completed_ui_system, render_scorecard_system};
