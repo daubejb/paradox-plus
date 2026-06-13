@@ -203,12 +203,16 @@ fn test_loopback_payloads_serialization_compliance() {
         strokes_per_hole: HVec::new(),
     }).unwrap();
 
+    let mut player_directions = HVec::new();
+    player_directions.push(protocol::physics::MovementDirection::Forward).unwrap();
+
     let update = ServerUpdate::StateSync {
         sequence: 123,
         game_state: GameStateEnum::AwaitingTurn,
         active_player_id: 999,
         current_hole: 1,
         player_positions,
+        player_directions,
         player_scores,
         placed_wagers: HVec::new(),
     };
@@ -432,6 +436,11 @@ fn test_wager_card_qty_hud_rendering() {
             v.push(0).unwrap();
             v
         },
+        player_directions: {
+            let mut v = heapless::Vec::new();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
+            v
+        },
         player_scores: scores,
         placed_wagers: heapless::Vec::new(),
     };
@@ -498,6 +507,12 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
             v.push(0).unwrap();
             v
         },
+        player_directions: {
+            let mut v = heapless::Vec::new();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
+            v
+        },
         player_scores: {
             let mut v = heapless::Vec::new();
             v.push(Scorecard {
@@ -537,6 +552,12 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
             let mut v = heapless::Vec::new();
             v.push(26).unwrap();
             v.push(26).unwrap();
+            v
+        },
+        player_directions: {
+            let mut v = heapless::Vec::new();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
             v
         },
         player_scores: {
@@ -579,6 +600,12 @@ fn test_leaderboard_ticker_hierarchy_and_updates() {
             let mut v = heapless::Vec::new();
             v.push(0).unwrap();
             v.push(0).unwrap();
+            v
+        },
+        player_directions: {
+            let mut v = heapless::Vec::new();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
             v
         },
         player_scores: {
@@ -778,6 +805,11 @@ fn test_match_completed_scorecard_screen() {
         player_positions: {
             let mut v = heapless::Vec::new();
             v.push(0).unwrap();
+            v
+        },
+        player_directions: {
+            let mut v = heapless::Vec::new();
+            v.push(protocol::physics::MovementDirection::Forward).unwrap();
             v
         },
         player_scores,

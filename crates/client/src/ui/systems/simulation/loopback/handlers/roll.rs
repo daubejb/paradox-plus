@@ -60,6 +60,8 @@ pub fn handle_roll_dice(
             
             let mut player_positions = HVec::new();
             player_positions.push(current_pos).unwrap();
+            let mut player_directions = HVec::new();
+            player_directions.push(state.direction).unwrap();
             let mut player_scores = HVec::new();
             player_scores.push(state.build_scorecard()).unwrap();
 
@@ -69,6 +71,7 @@ pub fn handle_roll_dice(
                 active_player_id: state.active_player_id,
                 current_hole: state.current_hole,
                 player_positions,
+                player_directions,
                 player_scores,
                 placed_wagers: HVec::new(),
             });
@@ -241,6 +244,8 @@ pub fn handle_roll_dice(
     // Create and push state sync update
     let mut player_positions = HVec::new();
     player_positions.push(final_pos).unwrap();
+    let mut player_directions = HVec::new();
+    player_directions.push(state.direction).unwrap();
     let mut player_scores = HVec::new();
     player_scores.push(state.build_scorecard()).unwrap();
 
@@ -255,6 +260,7 @@ pub fn handle_roll_dice(
         active_player_id: state.active_player_id,
         current_hole: state.current_hole,
         player_positions,
+        player_directions,
         player_scores,
         placed_wagers: wagers,
     });

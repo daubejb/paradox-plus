@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use heapless::{Vec as HVec, String as HString};
+use crate::physics::MovementDirection;
 
 // Compile-time size boundaries for zero-heap serialization safety
 pub const MAX_PLAYERS: usize = 8;
@@ -52,6 +53,7 @@ pub enum ServerUpdate {
         active_player_id: u64,
         current_hole: u8,
         player_positions: HVec<u32, MAX_PLAYERS>,
+        player_directions: HVec<MovementDirection, MAX_PLAYERS>,
         player_scores: HVec<Scorecard, MAX_PLAYERS>,
         placed_wagers: HVec<WagerToken, MAX_WAGERS>,
     },

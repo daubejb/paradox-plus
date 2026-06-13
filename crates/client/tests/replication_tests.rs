@@ -31,6 +31,8 @@ fn test_client_replication_sync() {
     // Construct a StateSync update
     let mut player_positions = heapless::Vec::new();
     player_positions.push(2).unwrap(); // Player 1 is at cell 2
+    let mut player_directions = heapless::Vec::new();
+    player_directions.push(MovementDirection::Forward).unwrap();
 
     let sync_payload = ServerUpdate::StateSync {
         sequence: 10,
@@ -38,6 +40,7 @@ fn test_client_replication_sync() {
         active_player_id: 1234,
         current_hole: 1,
         player_positions,
+        player_directions,
         player_scores: heapless::Vec::new(),
         placed_wagers: heapless::Vec::new(),
     };

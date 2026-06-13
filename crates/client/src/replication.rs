@@ -61,6 +61,7 @@ pub fn sync_state_from_server(
             game_state,
             active_player_id,
             player_positions,
+            player_directions,
             current_hole: sync_hole,
             placed_wagers,
             player_scores,
@@ -91,11 +92,12 @@ pub fn sync_state_from_server(
 
             for (i, pos) in player_positions.iter().enumerate() {
                 let player_id = if i == 0 { *active_player_id } else { i as u64 };
+                let direction = player_directions.get(i).cloned().unwrap_or(MovementDirection::Forward);
                 commands.spawn((
                     Player { player_id },
                     Ball {
                         cell_index: *pos as u16,
-                        direction: MovementDirection::Forward,
+                        direction,
                         origin_cell: *pos as u16,
                     },
                     BallVisualInterpolation { slide_offset: 0.0 },
