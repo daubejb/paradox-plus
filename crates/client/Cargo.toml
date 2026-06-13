@@ -21,13 +21,15 @@ rand = "0.8.5"
 protocol = { path = "../protocol" }
 
 [target.'cfg(target_os = "android")'.dependencies]
-android-activity = { version = "0.5", features = ["game-activity"] }
+android-activity = { version = "0.6", features = ["native-activity"] }
 android_logger = "0.13"
 log = "0.4"
 
 [package.metadata.android]
 package = "com.paradox.plus.client"
 apk_name = "ParadoxPlus"
+label = "Paradox Plus"
+icon = "../../assets/logo.png"
 assets = "../../assets"
 
 [package.metadata.android.sdk]
