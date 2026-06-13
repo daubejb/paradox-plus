@@ -214,6 +214,7 @@ This document catalogs the active milestones, development backlog iterations, an
 - **iOS Simulator Configuration Fix (2026-06-13):** Resolved simulator installation failure caused by missing `CFBundleExecutable` key in `Info.plist`. Confirmed successful iOS build, bundle packaging, and simulator launch.
 - **iOS Screen Resolution Alignment Fix (2026-06-13):** Resolved layout off-centering and edge clipping on iOS simulator by passing UIKit logical screen bounds from Swift to Bevy's window resolution configuration. Fixed HUD name update bug. All tests pass.
 - **iOS App Icon Scaling Refinement (2026-06-13):** Resized the central Paradox die logo emblem in the app icon to a balanced 55% of the total icon dimensions using a custom PIL script. Blended the resized logo's RGB and Alpha channels using alpha-minimum blending to avoid boundary artifacts. Discarded simulator caching issues by performing a clean reinstall of the application. The app icon proportions now align with Apple's human interface guidelines and match other native apps.
+- **Board Click Hit Detection Responsiveness (2026-06-13):** Increased the click distance threshold in `interaction.rs` from `32.0` to `60.0` logical pixels. This expands the hit detection zone to cover the full width of curved track cells (96.0 thickness), ensuring that placing wagers on corner fairway tiles (such as 11 FW and 12 FW on Hole 4) registers reliably. All unit tests and compilation checks pass.
 
 
 

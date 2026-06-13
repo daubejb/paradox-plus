@@ -68,7 +68,7 @@ pub fn handle_board_clicks_system(
     }
 
     let Some(cell_index) = closest_cell else { return };
-    if min_dist > 32.0 {
+    if min_dist > 60.0 {
         return;
     }
 
