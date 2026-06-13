@@ -43,7 +43,14 @@ pub fn handle_board_clicks_system(
         let world_position = if camera.logical_viewport_size().is_none() {
             Some(cursor_position)
         } else {
-            camera.viewport_to_world_2d(camera_transform, cursor_position)
+            let scale_factor = window_query.get_single().map(|w| w.scale_factor() as f32).unwrap_or(1.0);
+            let viewport_offset = if let Some(viewport) = &camera.viewport {
+                Vec2::new(viewport.physical_position.x as f32, viewport.physical_position.y as f32) / scale_factor
+            } else {
+                Vec2::ZERO
+            };
+            let viewport_position = cursor_position - viewport_offset;
+            camera.viewport_to_world_2d(camera_transform, viewport_position)
         };
 
         if let Some(world_position) = world_position {
