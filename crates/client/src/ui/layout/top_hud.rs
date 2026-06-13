@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use crate::ui::components::{
     TopHudNode, HamburgerButtonNode, HoleInfoNode, PlayerInfoNode,
-    HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode,
+    HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode,
     PlayerNameTextNode
 };
 
@@ -82,17 +82,6 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
                     },
                 ),
                 HoleStatsTextNode,
-            ));
-            info.spawn((
-                TextBundle::from_section(
-                    "Press roll to start...",
-                    TextStyle {
-                        font_size: 10.0,
-                        color: Color::srgb(0.9, 0.8, 0.3),
-                        ..default()
-                    },
-                ),
-                RollStatusTextNode,
             ));
         });
 

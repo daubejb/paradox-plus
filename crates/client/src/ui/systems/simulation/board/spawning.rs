@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::{ColorMesh2dBundle, Mesh2dHandle, ColorMaterial};
 use protocol::terrain::presets::get_course_preset;
-use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, WagerTokenMarker};
+use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, WagerTokenMarker, RollStatusTextNode};
 use crate::ui::systems::simulation::board::geometry::calculate_capsule_layout;
 
 #[derive(Component)]
@@ -112,6 +112,31 @@ pub fn rebuild_board_on_hole_change_system(
                     mesh_handle: inner_handle,
                     material_handle: inner_material,
                 },
+            ));
+
+            // Spawn status text bottom-aligned inside the track interior
+            let geom = super::geometry::TrackGeometry::calculate(size);
+            let bottom_y = -geom.l_v / 2.0 - geom.r + 48.0;
+            let text_y = bottom_y + 24.0;
+
+            board.spawn((
+                Text2dBundle {
+                    text: Text {
+                        sections: vec![TextSection {
+                            value: "Press roll to start...".to_string(),
+                            style: TextStyle {
+                                font: Handle::default(),
+                                font_size: 13.0,
+                                color: Color::srgb(0.9, 0.8, 0.3),
+                            },
+                        }],
+                        justify: JustifyText::Center,
+                        ..default()
+                    },
+                    transform: Transform::from_translation(Vec3::new(0.0, text_y, 2.0)),
+                    ..default()
+                },
+                RollStatusTextNode,
             ));
 
             for idx in 0..layout_capacity {
