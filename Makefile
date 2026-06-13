@@ -21,12 +21,13 @@ else
   IOS_SIM_TARGET := aarch64-apple-ios-sim
 endif
 
-.PHONY: help critique-plan android-emulator iphone-emulator build-android build-iphone-sim build-iphone-release check-env-testflight deploy-testflight
+.PHONY: help critique-plan android-emulator iphone-emulator build-android build-iphone-sim build-iphone-release check-env-testflight deploy-testflight mac
 
 help:
 	@echo "🟢 Paradox Plus Mobile Build & Emulation Makefile"
 	@echo "================================================="
 	@echo "Available targets:"
+	@echo "  make mac                   - Run native macOS client"
 	@echo "  make android-emulator      - Boot Android AVD and poll completion"
 	@echo "  make iphone-emulator       - Boot iOS Simulator for $(IOS_SIM_DEVICE)"
 	@echo "  make build-android         - Compile for Android & install via USB-C"
@@ -34,6 +35,9 @@ help:
 	@echo "  make build-iphone-release  - Compile static library for physical iOS"
 	@echo "  make deploy-testflight     - Upload IPA bundle to TestFlight via Transporter"
 	@echo "  make critique-plan         - Run automated implementation plan critique"
+
+mac:
+	cargo run -p client
 
 critique-plan:
 	@echo "Running automated implementation plan critique..."
