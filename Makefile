@@ -127,9 +127,9 @@ build-iphone-release:
 		if [ ! -z "$(DEVELOPMENT_TEAM)" ]; then \
 			TEAM_ARG="DEVELOPMENT_TEAM=$(DEVELOPMENT_TEAM)"; \
 		fi; \
-		if xcodebuild -project ios/ParadoxPlus.xcodeproj -scheme ParadoxPlus -configuration Release -archivePath ios/build/ParadoxPlus.xcarchive $$TEAM_ARG archive; then \
+		if xcodebuild -project ios/ParadoxPlus.xcodeproj -scheme ParadoxPlus -configuration Release -archivePath ios/build/ParadoxPlus.xcarchive $$TEAM_ARG -allowProvisioningUpdates archive; then \
 			echo "Exporting IPA bundle..."; \
-			xcodebuild -exportArchive -archivePath ios/build/ParadoxPlus.xcarchive -exportOptionsPlist ios/exportOptions.plist -exportPath build/ios/ipa; \
+			xcodebuild -exportArchive -archivePath ios/build/ParadoxPlus.xcarchive -exportOptionsPlist ios/exportOptions.plist -exportPath build/ios/ipa -allowProvisioningUpdates; \
 		else \
 			echo ""; \
 			echo "========================================================================"; \
@@ -157,10 +157,10 @@ ifndef APP_SPECIFIC_PASSWORD
 endif
 
 deploy-testflight: check-env-testflight
-	@if [ -f "build/ios/ipa/ParadoxPlus.ipa" ]; then \
-		echo "Uploading ParadoxPlus.ipa to TestFlight..."; \
-		xcrun transporter -m upload -u "$(APPLE_ID)" -p "$(APP_SPECIFIC_PASSWORD)" -f build/ios/ipa/ParadoxPlus.ipa; \
+	@if [ -f "build/ios/ipa/Paradox.ipa" ]; then \
+		echo "Uploading Paradox.ipa to TestFlight..."; \
+		xcrun transporter -m upload -u "$(APPLE_ID)" -p "$(APP_SPECIFIC_PASSWORD)" -f build/ios/ipa/Paradox.ipa; \
 	else \
-		echo "ERROR: build/ios/ipa/ParadoxPlus.ipa not found. Run 'make build-iphone-release' first."; \
+		echo "ERROR: build/ios/ipa/Paradox.ipa not found. Run 'make build-iphone-release' first."; \
 		exit 1; \
 	fi
