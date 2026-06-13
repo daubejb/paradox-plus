@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use bevy::render::camera::Viewport;
 use bevy::window::PrimaryWindow;
-use crate::ui::components::{BoardContainerNode, ClientScreenState};
+use crate::replication::ClientGameState;
+use crate::ui::components::{BoardContainerNode, ClientScreenState, ShowScorecard};
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BoardCameraNode;
@@ -30,6 +31,8 @@ pub fn setup_board_camera_system(
 /// Synchronizes the 2D camera's viewport to align precisely with the Bevy UI layout spacer.
 pub fn sync_board_camera_viewport_system(
     screen_state: Res<State<ClientScreenState>>,
+    game_state: Res<State<ClientGameState>>,
+    show_scorecard: Res<ShowScorecard>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut camera_query: Query<(&mut Camera, &mut OrthographicProjection), With<BoardCameraNode>>,
     container_query: Query<(&Node, &GlobalTransform), With<BoardContainerNode>>,
@@ -40,6 +43,12 @@ pub fn sync_board_camera_viewport_system(
 
     // Deactivate 2D camera if we are not actively in the gameplay screen
     if *screen_state.get() != ClientScreenState::Gameplay {
+        camera.is_active = false;
+        return;
+    }
+
+    // Deactivate 2D camera if scorecard is active (either in-progress or completed match)
+    if show_scorecard.0 || *game_state.get() == ClientGameState::MatchCompleted {
         camera.is_active = false;
         return;
     }

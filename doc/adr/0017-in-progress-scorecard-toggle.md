@@ -15,8 +15,9 @@ We implemented the in-progress scorecard toggle with the following architecture:
 1. **ShowScorecard Toggle Resource**: Introduced a simple Bevy resource `ShowScorecard(pub bool)` to track if the scorecard has been manually opened.
 2. **Modular Button Layout Module**: Extracted the scorecard buttons container spawning logic into a new sibling layout module: `crates/client/src/ui/layout/scorecard_buttons.rs`. This keeps `match_summary.rs` extremely clean (well below 200 lines).
 3. **Upfront Spawning and Visibility Toggling**: Spawned all three buttons (the `CloseScorecardButtonNode` for "BACK TO GAME", and the `PlayAgainButtonNode` / `MainMenuButtonNode` pair) upfront when the scorecard container is initialized. We toggle their display styles (`Display::Flex` vs `Display::None`) inside `toggle_match_completed_ui_system` based on whether the game state is `MatchCompleted` or in-progress. This avoids any runtime entity spawning or despawning allocations in the hot loop.
-4. **Interaction Handling and Cleanup**: Clicking `"SCORECARD"` sets `ShowScorecard(true)`, and clicking `"BACK TO GAME"` sets `ShowScorecard(false)`. The toggle state is reset to `false` when transitioning out of gameplay or restarting practice.
-5. **DPI/Layout Resiliency**: Handled restoring the bottom bar and wager panel layout settings cleanly when returning to the gameplay screen.
+4. **2D Board Camera Viewport Deactivation**: Since the gameboard is rendered in a separate 2D sprite viewport overlay rather than Bevy UI, setting the Bevy UI `BoardContainerNode` to `Display::None` does not automatically hide the 2D sprites. We updated the camera synchronization system to set `camera.is_active = false` whenever `ShowScorecard` is active or the match is completed, ensuring the board sprites do not overlay the scorecard screen.
+5. **Interaction Handling and Cleanup**: Clicking `"SCORECARD"` sets `ShowScorecard(true)`, and clicking `"BACK TO GAME"` sets `ShowScorecard(false)`. The toggle state is reset to `false` when transitioning out of gameplay or restarting practice.
+6. **DPI/Layout Resiliency**: Handled restoring the bottom bar and wager panel layout settings cleanly when returning to the gameplay screen.
 
 ## Consequences
 
