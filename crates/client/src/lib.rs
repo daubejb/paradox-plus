@@ -55,7 +55,7 @@ pub fn setup_client_app(app: &mut App) {
 }
 
 #[cfg(target_os = "android")]
-pub fn run_client(android_app: bevy::winit::AndroidApp) {
+pub fn run_client(android_app: android_activity::AndroidApp) {
     let mut app = App::new();
     app.insert_non_send_resource(android_app);
     setup_client_app(&mut app);

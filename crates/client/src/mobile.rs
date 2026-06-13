@@ -1,5 +1,5 @@
 #[cfg(target_os = "android")]
-use bevy::winit::AndroidApp;
+use android_activity::AndroidApp;
 
 #[cfg(target_os = "android")]
 #[no_mangle]

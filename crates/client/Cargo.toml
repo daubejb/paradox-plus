@@ -30,3 +30,8 @@ package = "com.paradox.plus.client"
 apk_name = "ParadoxPlus"
 assets = "../../assets"
 
+[package.metadata.android.sdk]
+min_sdk_version = 23
+target_sdk_version = 33
+
+

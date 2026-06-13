@@ -1,9 +1,16 @@
 -include .env
 export
 
+# Auto-detect Android SDK and NDK paths if not explicitly defined
+ANDROID_HOME ?= $(HOME)/Library/Android/sdk
+ANDROID_NDK_ROOT ?= $(shell ls -d $(ANDROID_HOME)/ndk/* 2>/dev/null | sort -V | tail -n 1)
+
+export ANDROID_HOME
+export ANDROID_NDK_ROOT
+
 # Variable definitions
-ADB ?= $(shell which adb || echo ~/Library/Android/sdk/platform-tools/adb)
-EMULATOR ?= $(shell which emulator || echo ~/Library/Android/sdk/emulator/emulator)
+ADB ?= $(shell which adb || echo $(ANDROID_HOME)/platform-tools/adb)
+EMULATOR ?= $(shell which emulator || echo $(ANDROID_HOME)/emulator/emulator)
 IOS_SIM_DEVICE ?= "iPhone 17 Pro"
 
 # Detect host architecture for iOS Simulator compilation
@@ -80,9 +87,9 @@ build-android:
 	@echo "Installing cargo-apk if not present..."
 	@cargo install --list | grep -q cargo-apk || cargo install cargo-apk
 	@echo "Building APK..."
-	cargo apk build --release --manifest-path crates/client/Cargo.toml
+	cargo apk build --lib --manifest-path crates/client/Cargo.toml
 	@echo "Installing APK to connected device..."
-	$(ADB) install -r -d target/aarch64-linux-android/release/apk/ParadoxPlus.apk
+	$(ADB) install -r -d target/debug/apk/ParadoxPlus.apk
 
 build-iphone-sim:
 	@echo "Adding Rust iOS Simulator target..."
@@ -97,9 +104,27 @@ build-iphone-release:
 	cargo build --release --target aarch64-apple-ios --manifest-path crates/client/Cargo.toml
 	@if [ -d "ios/ParadoxPlus.xcodeproj" ]; then \
 		echo "Archiving iOS project..."; \
-		xcodebuild -project ios/ParadoxPlus.xcodeproj -scheme ParadoxPlus -configuration Release -archivePath ios/build/ParadoxPlus.xcarchive archive; \
-		echo "Exporting IPA bundle..."; \
-		xcodebuild -exportArchive -archivePath ios/build/ParadoxPlus.xcarchive -exportOptionsPlist ios/exportOptions.plist -exportPath build/ios/ipa; \
+		TEAM_ARG=""; \
+		if [ ! -z "$(DEVELOPMENT_TEAM)" ]; then \
+			TEAM_ARG="DEVELOPMENT_TEAM=$(DEVELOPMENT_TEAM)"; \
+		fi; \
+		if xcodebuild -project ios/ParadoxPlus.xcodeproj -scheme ParadoxPlus -configuration Release -archivePath ios/build/ParadoxPlus.xcarchive $$TEAM_ARG archive; then \
+			echo "Exporting IPA bundle..."; \
+			xcodebuild -exportArchive -archivePath ios/build/ParadoxPlus.xcarchive -exportOptionsPlist ios/exportOptions.plist -exportPath build/ios/ipa; \
+		else \
+			echo ""; \
+			echo "========================================================================"; \
+			echo "Rust static library compiled successfully!"; \
+			echo "iOS App Archive failed due to Xcode signing requirements."; \
+			echo "To package the IPA, please either:"; \
+			echo "1. Set DEVELOPMENT_TEAM in your .env file or pass it to make:"; \
+			echo "   make build-iphone-release DEVELOPMENT_TEAM=XXXXXXXXXX"; \
+			echo "2. Open the project in Xcode (ios/ParadoxPlus.xcodeproj) and"; \
+			echo "   configure your Development Team under Signing & Capabilities."; \
+			echo "========================================================================"; \
+			echo ""; \
+			exit 0; \
+		fi; \
 	else \
 		echo "Warning: ios/ParadoxPlus.xcodeproj not found, compiled static library only."; \
 	fi
