@@ -151,6 +151,16 @@ This document catalogs the active milestones, development backlog iterations, an
     - Gracefully support headless tests suite by checking asset resource availability in `FromWorld`.
     - Run all unit and integration tests (`cargo test`).
 
+### [x] Iteration 13: Upright Custom Wager Markers (Completed 2026-06-13)
+*   **Objectives**:
+    - Upgrade the 2D visual wager markers (Guardian Shield, Trickster Banana, Golden Die) to high-fidelity upright custom shapes.
+    - Implement a flat parent-child entity traversal query using `WagerVisual` to toggle visibility of the active wager type.
+    - Guard change detection for both root and child visibility modifications to protect Bevy's rendering hierarchy cache.
+    - Keep all modified client-side rendering files strictly under the 300-line budget limit.
+*   **Verification**:
+    - Run native and WASM target compilation checks.
+    - Run all unit and integration tests (`cargo test`).
+
 ---
 
 ## 📈 Retrospective Log
@@ -164,7 +174,7 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Iteration 9 (Scrolling Ticker style Leaderboard):** Implemented a responsive scrolling ticker leaderboard showing player rank badges, names, and par relative scores updated only when holes are completed (Even Par "E" initially). Highlighted the active player, and implemented a Bevy UI autoscroll track when content exceeds container width. Extracted systems to `leaderboard.rs` to maintain strict compliance with the 300-line budget limit. All tests pass.
 - **Iteration 10 (2D World Space Board Rendering):** Refactored the gameplay viewport to a 2D world space paradigm using sprite tiles on a parametric capsule track layout. Standardized screen-to-world raycasting distance checks for click drafting, and added headless testing fallback logic. Clean recursive despawning avoids WASM leaks. All tests pass.
 - **Visual Refinement (Racetrack Tiles & Dividers):** Adjusted racetrack rendering logic so that green tile colors are precisely constrained within the radial divider boundaries, preventing corner bleeding. Removed boundary dot child sprites to clean up the track design and match the visual inspiration layout. All tests pass.
-- **Iteration 11 (1-Die Limit in the Rough & Sand Bunker):** Successfully enforced the 1-die roll restriction on Rough and Bunker terrain. Extracted the simulated roll handler into a new submodule `roll.rs` to respect the 300-line budget limit. Replaced magic card numbers with a type-safe `CardType` enum across all crates, ensuring bounded and type-safe serialization. All tests pass.
+- **Iteration 11 (1-Die Limit in the Rough & Sand Bunker):** Enforced the 1-die roll restriction on Rough and Bunker terrain. Extracted the simulated roll handler into a new submodule `roll.rs` to respect the 300-line budget limit. Replaced magic card numbers with a type-safe `CardType` enum across all crates, ensuring bounded and type-safe serialization. All tests pass.
 - **Visual Styling (Board Colors & Text Contrast):** Refactored cell tile background color configurations to distinguish the Green (lightest), Fairway (mid-shade), and Rough (darkest) green terrains. Extracted styling lookup logic into a new `style.rs` helper module to keep `spawning.rs` safely under the 300-line budget limit. Increased text label font size to `12.0` and implemented dynamic contrast adjustments (black on light terrains, white on dark terrains) to optimize legibility. All tests pass.
 - **Track Widening & Chamfering:** Widened the horizontal span of the capsule track by increasing the midline radius calculation multipliers. Implemented a ray-casting intersection solver (`calculate_outer_point`) in `geometry.rs` to flatten the top and bottom outer perimeter of the track, matching the rectangular/chamfered look of the inspiration design while keeping the inner loop curved and the dividers radial. Resolved an in/out naming and direction vector swap in Bevy rendering variables to fix coordinate starburst artifacts. Added unit tests for intersection math. All tests pass.
 - **Rounded Rectangle Track Geometry:** Replaced the capsule layout and raycasting chamfer calculations with a dedicated 8-segment portrait rounded rectangle trajectory for the midline path, producing perfectly straight vertical (left/right) and horizontal (top/bottom) walls and rounded corners (quarter-circles) on both the inside and outside of the track using clean parallel offsets. Resolved overlapping cell click hitboxes on smaller viewports by refactoring the click handler to select the closest cell under the threshold rather than the first matching element. All unit and integration tests compile and pass successfully.
@@ -174,6 +184,8 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Curved Racetrack Corners:** Subdivided the outer/inner cell boundary coords and cell tile backgrounds into 8 subdivisions. Consolidated border curves into unified ribbon meshes (one outer, one inner) to reduce Bevy entity overhead from 640 down to 2. Extracted geometry calculations to `borders.rs` to maintain compliance with the 300-line budget limit. All tests pass.
 - **Bunker Dice Choice Correction:** Fixed the Sand Bunker escape check to allow rolling 1 or 2 dice (per PARADOX_GAME.md rules). If 2 dice are chosen, the sum of the dice is checked (even sum escapes, odd fails). Rough terrain remains clamped to 1-die limit unless shielded. Added integration tests to verify both choices and limits. All tests pass.
 - **Iteration 12 (Premium Poker Chip Player Token):** Replaced the flat yellow marker with a multi-layered procedural poker chip. Avoided mesh/material duplication and memory leaks by caching asset handles in a `PlayerTokenAssets` resource. Handled Bevy's asset vs. entity lifecycles to ensure that despawning `BoardWorldRoot` cleans up visual entities while keeping cached assets loaded. Implemented headless resource check fallbacks to allow existing UI unit tests to pass without fully mock-initializing Bevy rendering assets. All tests passed.
+- **Iteration 13 (Upright Custom Wager Markers):** Redesigned the wager markers on the 2D gameboard to use custom procedurally-generated upright tokens (blue shield diamond, yellow banana circle, gold pip-die) with counter-rotation. Implemented parent-relative flat visual toggling with visibility change-detection guards. All tests passed.
+
 
 
 

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::{ColorMesh2dBundle, Mesh2dHandle, ColorMaterial};
 use protocol::terrain::presets::get_course_preset;
-use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, WagerTokenMarker, RollStatusTextNode};
+use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, RollStatusTextNode};
 use crate::ui::systems::simulation::board::geometry::calculate_capsule_layout;
 
 #[derive(Component)]
@@ -219,33 +219,12 @@ pub fn rebuild_board_on_hole_change_system(
                             layout.rotation_angle,
                         );
 
-                        // Wager Token Marker
-                        cell_sprite.spawn((
-                            SpriteBundle {
-                                sprite: Sprite {
-                                    color: Color::NONE,
-                                    custom_size: Some(Vec2::splat(12.0)),
-                                    ..default()
-                                },
-                                transform: Transform::from_translation(Vec3::new(-20.0, 10.0, 2.0)),
-                                visibility: Visibility::Hidden,
-                                ..default()
-                            },
-                            WagerTokenMarker,
-                        )).with_children(|wager_indicator| {
-                            wager_indicator.spawn(Text2dBundle {
-                                text: Text::from_section(
-                                    "",
-                                    TextStyle {
-                                        font_size: 8.0,
-                                        color: Color::WHITE,
-                                        ..default()
-                                    },
-                                ),
-                                transform: Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)),
-                                ..default()
-                            });
-                        });
+                        // Wager Token Marker (procedural custom wagers)
+                        super::token::spawn_wager_token(
+                            cell_sprite,
+                            &token_assets,
+                            layout.rotation_angle,
+                        );
                     });
                 }
             }

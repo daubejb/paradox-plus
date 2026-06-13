@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use protocol::messages::CardType;
 use crate::replication::Ball;
 use crate::ui::components::{BoardCellNode, PlayerTokenMarker, WagerTokenMarker, ClientWagers};
+
 
 /// Updates player ball location indicator on the 2D board.
 pub fn update_board_cell_visuals(
@@ -29,36 +29,43 @@ pub fn update_board_cell_visuals(
     }
 }
 
-/// Updates wager token overlays and colors on the 2D board.
+/// Updates wager token overlays and visibility on the 2D board.
 pub fn update_wagers_on_board(
     wagers: Res<ClientWagers>,
     cell_query: Query<(Entity, &BoardCellNode)>,
-    mut wager_marker_query: Query<(&Parent, &mut Visibility, &mut Sprite, &Children), With<WagerTokenMarker>>,
-    mut text_query: Query<&mut Text>,
+    mut wager_marker_query: Query<(Entity, &Parent, &mut Visibility), With<WagerTokenMarker>>,
+    mut wager_visual_query: Query<(&Parent, &super::token::WagerVisual, &mut Visibility), Without<WagerTokenMarker>>,
 ) {
     for (cell_entity, cell_node) in cell_query.iter() {
-        for (parent, mut visibility, mut sprite, children) in wager_marker_query.iter_mut() {
+        for (marker_entity, parent, mut root_visibility) in wager_marker_query.iter_mut() {
             if parent.get() == cell_entity {
                 if let Some(wager) = wagers.0.iter().find(|w| w.cell_index == cell_node.index) {
-                    *visibility = Visibility::Visible;
-                    sprite.color = match wager.card_type {
-                        CardType::Shield => Color::srgb(0.2, 0.4, 0.8),   // Shield (Blue)
-                        CardType::Banana => Color::srgb(0.9, 0.8, 0.1),   // Banana (Yellow)
-                        CardType::GoldenDie => Color::srgb(0.8, 0.1, 0.1),   // Golden Die (Red)
-                    };
-                    if let Some(&text_child) = children.first() {
-                        if let Ok(mut text) = text_query.get_mut(text_child) {
-                            text.sections[0].value = match wager.card_type {
-                                CardType::Shield => "S".to_string(),
-                                CardType::Banana => "B".to_string(),
-                                CardType::GoldenDie => "G".to_string(),
+                    let target_root_vis = Visibility::Inherited;
+                    if *root_visibility != target_root_vis {
+                        *root_visibility = target_root_vis;
+                    }
+
+                    for (visual_parent, visual, mut visual_visibility) in wager_visual_query.iter_mut() {
+                        if visual_parent.get() == marker_entity {
+                            let target_visual_vis = if visual.card_type == wager.card_type {
+                                Visibility::Inherited
+                            } else {
+                                Visibility::Hidden
                             };
+
+                            if *visual_visibility != target_visual_vis {
+                                *visual_visibility = target_visual_vis;
+                            }
                         }
                     }
                 } else {
-                    *visibility = Visibility::Hidden;
+                    let target_root_vis = Visibility::Hidden;
+                    if *root_visibility != target_root_vis {
+                        *root_visibility = target_root_vis;
+                    }
                 }
             }
         }
     }
 }
+
