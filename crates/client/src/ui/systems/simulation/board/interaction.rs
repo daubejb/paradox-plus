@@ -17,6 +17,7 @@ pub fn handle_board_clicks_system(
     settings: Res<crate::ui::components::GameSettings>,
     current_hole: Res<crate::ui::components::CurrentHole>,
     mouse_button_input: Res<ButtonInput<MouseButton>>,
+    touches: Res<Touches>,
     mut selected_card: ResMut<SelectedWagerCard>,
     mut events: EventWriter<ClientActionRequest>,
     cursor_pos_override: Option<Res<CursorPositionOverride>>,
@@ -25,7 +26,8 @@ pub fn handle_board_clicks_system(
         return;
     }
 
-    if !mouse_button_input.just_pressed(MouseButton::Left) {
+    let clicked = mouse_button_input.just_pressed(MouseButton::Left) || touches.any_just_pressed();
+    if !clicked {
         return;
     }
 
@@ -35,6 +37,8 @@ pub fn handle_board_clicks_system(
         Some(over)
     } else if let Ok(window) = window_query.get_single() {
         window.cursor_position()
+            .or_else(|| touches.first_pressed_position())
+            .or_else(|| touches.iter().next().map(|t| t.position()))
     } else {
         None
     };
@@ -68,6 +72,7 @@ pub fn handle_board_clicks_system(
     }
 
     let Some(cell_index) = closest_cell else { return };
+    println!("BOARD CLICKED: cell_index={}, min_dist={}, selected_card={:?}", cell_index, min_dist, selected_card.0);
     if min_dist > 85.0 {
         return;
     }

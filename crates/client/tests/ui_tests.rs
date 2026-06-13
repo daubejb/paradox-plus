@@ -1012,6 +1012,103 @@ fn test_corner_cell_outer_boundary_click() {
     }
 }
 
+#[test]
+fn test_touch_placement_interaction() {
+    let mut app = setup_headless_ui_app();
+    app.update();
+
+    // Transition state to SoloSetup, then start game
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
+        next_state.set(ClientScreenState::SoloSetup);
+    }
+    app.update();
+    app.update();
+
+    // Set hole to 2
+    {
+        let mut current_hole = app.world_mut().resource_mut::<client::ui::components::CurrentHole>();
+        current_hole.0 = 2;
+    }
+    app.update();
+
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<PlayGameButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Play Game button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+    app.update();
+    app.update();
+    app.update();
+
+    // Set ClientGameState to MarkerPlacement
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<client::replication::ClientGameState>>();
+        next_state.set(client::replication::ClientGameState::MarkerPlacement);
+    }
+    app.update();
+
+    // Select Shield wager card
+    {
+        let mut selected_card = app.world_mut().resource_mut::<SelectedWagerCard>();
+        selected_card.0 = Some(CardType::Shield);
+    }
+
+    // Find cell 1 (which is 1 RGH on Hole 2)
+    let cell_pos = {
+        let mut cell_query = app.world_mut().query::<(&BoardCellNode, &Transform)>();
+        let (_, cell_transform) = cell_query
+            .iter(app.world())
+            .find(|(node, _)| node.index == 1)
+            .expect("Board cell with index 1 (1 RGH) not found");
+        cell_transform.translation.xy()
+    };
+
+    // Simulate touch event instead of mouse click
+    {
+        use bevy::input::touch::{TouchInput, TouchPhase};
+        let window_entity = app.world_mut().query_filtered::<Entity, With<Window>>()
+            .get_single(app.world()).expect("Window entity missing");
+
+        let mut touch_events = app.world_mut().resource_mut::<Events<TouchInput>>();
+        touch_events.send(TouchInput {
+            phase: TouchPhase::Started,
+            position: cell_pos,
+            force: None,
+            id: 0,
+            window: window_entity,
+        });
+    }
+
+    // Run update once to process events and update the Touches resource
+    app.update();
+
+    // Run the clicks handler system directly
+    use bevy::ecs::system::RunSystemOnce;
+    use client::ui::systems::simulation::board::interaction::handle_board_clicks_system;
+    app.world_mut().run_system_once(handle_board_clicks_system);
+
+    // Verify that SelectedWagerCard resource was reset to None (meaning the touch was accepted and drafted)
+    {
+        let selected_card = app.world().resource::<SelectedWagerCard>();
+        assert_eq!(selected_card.0, None, "Expected SelectedWagerCard to be reset to None after successful touch");
+    }
+
+    // Verify that ClientActionRequest event for DraftCard was dispatched with cell_index = 1
+    let events = app.world().resource::<Events<ClientActionRequest>>();
+    let mut reader = events.get_reader();
+    let sent_events: Vec<&ClientActionRequest> = reader.read(events).collect();
+
+    let draft_card_event = sent_events.iter().find(|event| matches!(event.0, ClientAction::DraftCard { .. }));
+    assert!(draft_card_event.is_some(), "Expected a ClientAction::DraftCard event to be sent via touch");
+    if let Some(ClientActionRequest(ClientAction::DraftCard { card_type, cell_index })) = draft_card_event {
+        assert_eq!(*card_type, CardType::Shield, "Expected card_type to be CardType::Shield");
+        assert_eq!(*cell_index, 1, "Expected cell_index to be 1 (1 RGH)");
+    } else {
+        panic!("Sent event was not a ClientAction::DraftCard variant");
+    }
+}
+
 
 
 
