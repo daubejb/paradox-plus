@@ -111,11 +111,16 @@ pub fn sync_board_camera_viewport_system(
         depth: 0.0..1.0,
     });
 
-    // Enforce 1:1 aspect ratio locks inside orthographic projections to prevent squishing
-    let is_portrait = size.y > size.x;
-    if is_portrait {
-        projection.scaling_mode = bevy::render::camera::ScalingMode::FixedVertical(620.0);
-    } else {
-        projection.scaling_mode = bevy::render::camera::ScalingMode::FixedHorizontal(620.0);
-    }
+    // Dynamically query the visual track layout geometry dimensions
+    use crate::ui::systems::simulation::board::geometry::TrackGeometry;
+    let geom = TrackGeometry::calculate(size);
+
+    // Enforce minimum bounding box dimensions with padding to ensure track fits without cropping
+    let min_width = geom.outer_width + 32.0;
+    let min_height = geom.outer_height + 32.0;
+
+    projection.scaling_mode = bevy::render::camera::ScalingMode::AutoMin {
+        min_width,
+        min_height,
+    };
 }

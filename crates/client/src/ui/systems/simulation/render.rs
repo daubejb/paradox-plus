@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use protocol::messages::{ServerUpdate, GameStateEnum, CardType};
 use protocol::terrain::presets::get_course_preset;
 use protocol::terrain::TerrainType;
@@ -6,7 +7,7 @@ use crate::network::ServerUpdateEvent;
 use crate::ui::components::{
     HoleTitleTextNode, HoleStatsTextNode, PlayerScoreTextNode, RollStatusTextNode,
     GameSettings, PlayerNameTextNode, RollOneButtonNode, RollTwoButtonNode,
-    SkipPlacementButtonNode, WagerCardQtyTextNode
+    SkipPlacementButtonNode, WagerCardQtyTextNode, TopHudNode, BottomBarNode
 };
 
 pub fn update_ui_elements_system(
@@ -132,5 +133,44 @@ pub fn update_ui_elements_system(
             _ => {}
         }
     }
-
 }
+
+pub fn update_ui_safe_areas_system(
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    mut hud_query: Query<&mut Style, (With<TopHudNode>, Without<BottomBarNode>)>,
+    mut bottom_query: Query<&mut Style, (With<BottomBarNode>, Without<TopHudNode>)>,
+) {
+    if let Ok(window) = window_query.get_single() {
+        let width = window.width();
+        let height = window.height();
+        let is_portrait = height > width;
+        let is_mobile = cfg!(any(target_os = "android", target_os = "ios")) || (is_portrait && width < 600.0);
+
+        let (top_padding, hud_height) = if is_mobile {
+            (44.0, 70.0 + 34.0)
+        } else {
+            (10.0, 70.0)
+        };
+
+        let (bottom_padding, bar_height) = if is_mobile {
+            (24.0, 110.0 + 24.0)
+        } else {
+            (10.0, 110.0)
+        };
+
+        for mut style in hud_query.iter_mut() {
+            if style.padding.top != Val::Px(top_padding) || style.height != Val::Px(hud_height) {
+                style.padding.top = Val::Px(top_padding);
+                style.height = Val::Px(hud_height);
+            }
+        }
+
+        for mut style in bottom_query.iter_mut() {
+            if style.padding.bottom != Val::Px(bottom_padding) || style.height != Val::Px(bar_height) {
+                style.padding.bottom = Val::Px(bottom_padding);
+                style.height = Val::Px(bar_height);
+            }
+        }
+    }
+}
+

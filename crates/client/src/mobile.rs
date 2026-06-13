@@ -15,6 +15,8 @@ pub fn android_main(app: AndroidApp) {
         log::error!("Android Panic: {:?}", info);
     }));
 
+    let _ = bevy::winit::ANDROID_APP.set(app.clone());
+
     crate::init_client_environment();
     crate::run_client(app);
 }

@@ -6,15 +6,31 @@ use crate::ui::components::{
 };
 
 pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>) {
+    let top_padding = if cfg!(any(target_os = "android", target_os = "ios")) {
+        44.0
+    } else {
+        10.0
+    };
+    let hud_height = if cfg!(any(target_os = "android", target_os = "ios")) {
+        70.0 + 34.0
+    } else {
+        70.0
+    };
+
     parent.spawn((
         NodeBundle {
             style: Style {
                 width: Val::Percent(100.0),
-                height: Val::Px(70.0),
+                height: Val::Px(hud_height),
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::SpaceBetween,
-                padding: UiRect::axes(Val::Px(20.0), Val::Px(10.0)),
+                padding: UiRect {
+                    left: Val::Px(20.0),
+                    right: Val::Px(20.0),
+                    top: Val::Px(top_padding),
+                    bottom: Val::Px(10.0),
+                },
                 ..default()
             },
             background_color: Color::srgb(0.05, 0.15, 0.10).into(), // Dark green header overlay

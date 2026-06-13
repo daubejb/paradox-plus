@@ -171,6 +171,17 @@ This document catalogs the active milestones, development backlog iterations, an
 *   **Verification**:
     - Build static library targets using cargo and run all workspace tests successfully.
 
+### [x] Iteration 15: Mobile UI Layout & Aspect Ratio Adjustments (Completed 2026-06-13)
+*   **Objectives**:
+    - Prevent top HUD encroachment under the native device status bar notch.
+    - Overhaul the bottom control buttons into a non-overlapping two-row Column configuration.
+    - Avoid central board cropping on narrow portrait aspect ratios (e.g. Pixel 10 Pro).
+    - Implement a runtime-responsive safe-area adjustment system to handle WASM mobile browsers and desktop window resizing.
+*   **Verification**:
+    - Run all unit and integration tests (`cargo test`).
+    - Verify file line count budget limits (under 300 lines) for modified files.
+    - Compile mobile targets via `make build-android` and `make build-iphone-sim`.
+
 ---
 
 
@@ -199,7 +210,8 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Banana Slide Clicks Interaction:** Fixed a bug where players were unable to click cells to slide 0-4 spaces after landing on a Trickster Banana. Registered `ActivePlayerId` resource in the client network replication plugin and refactored the board click system to resolve path clicks against reachable cells during `BananaChoice`, dispatching the `ChooseBananaSlide` action. All tests passed.
 - **Match Completed Scorecard Screen:** Implemented the End of Round scorecard summary screen overlay with a detailed Front 9 / Back 9 hole breakdown. Tracked strokes history authoritatively using a bounded `heapless::Vec` in `Scorecard` messages and loopback states. Resolved a bug preventing play again or return to main menu buttons from functioning by correcting early returns on non-existent course presets. Added unit/integration tests and verified WASM target compatibility. All tests pass.
 - **In-Progress Scorecard Toggle:** Renamed "VIEW FULL" button to "SCORECARD". Toggling it during active gameplay opens the in-progress scorecard overlay. Implemented a "BACK TO GAME" button to return to play, while hiding "PLAY AGAIN" and "MAIN MENU". Handled clean visibility toggling for HUD, central board, and bottom bar without dynamic heap allocations in the hot render loop. Extracted scorecard buttons layout to a dedicated `scorecard_buttons` module to strictly comply with the 300-line budget limit. All tests pass.
-- **Iteration 14 (Mobile Emulation & Build Commands):** Configured Cargo and FFI library targets for cross-platform Android and iOS compilation. Scaffolded a native Swift/Xcode wrapper under `ios/` and added Makefile targets for launching emulators, compiling APKs/static libraries, deploying via USB-C (`adb`), and uploading to TestFlight via `transporter`. All tests pass.
+- **Iteration 15 (Mobile UI Layout & Aspect Ratio Adjustments):** Solved HUD safe area status bar overlap and bottom bar button clutter by transitioning to a dynamic safe-area update system based on Bevy window size query. Overhauled the bottom bar to a two-row column flex layout. Updated the board camera to `ScalingMode::AutoMin` to fit the rounded-rectangle layout vertically and horizontally on any viewport. Handled mobile WASM and desktop testing capabilities. Checked that all files conform to the strict 300-line budget limit. All tests pass.
+
 
 
 

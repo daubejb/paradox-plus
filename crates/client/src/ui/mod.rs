@@ -53,6 +53,7 @@ impl Plugin for ClientUiPlugin {
                     systems::simulation::update_board_cell_visuals,
                     systems::simulation::update_wagers_on_board,
                     systems::simulation::update_ui_elements_system,
+                    systems::simulation::update_ui_safe_areas_system,
                     systems::simulation::update_leaderboard_ticker_system,
                     systems::simulation::scroll_leaderboard_ticker_system,
                     systems::simulation::rebuild_board_on_hole_change_system

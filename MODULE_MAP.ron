@@ -144,5 +144,6 @@ Sitemap(
     Doc(path: "doc/adr/0016-scorecard-history-tracking.md", description: "ADR 0016: Bounded Scorecard History Tracking"),
     Doc(path: "doc/adr/0017-in-progress-scorecard-toggle.md", description: "ADR 0017: In-Progress Scorecard Toggle and Memory-Safe Visibility Toggles"),
     Doc(path: "doc/adr/0018-mobile-target-and-emulation-toolchains.md", description: "ADR 0018: Mobile Target Cross-Compilation and Emulation Toolchains"),
+    Doc(path: "doc/adr/0019-dynamic-safe-area-layouts.md", description: "ADR 0019: Dynamic Safe Area Layouts in Bevy UI"),
   ]
 )
