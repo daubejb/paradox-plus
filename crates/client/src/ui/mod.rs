@@ -13,6 +13,7 @@ impl Plugin for ClientUiPlugin {
             .init_resource::<components::GameSettings>()
             .init_resource::<components::SelectedWagerCard>()
             .init_resource::<components::LeaderboardCompletedHolesScore>()
+            .init_resource::<components::ShowScorecard>()
             .init_resource::<systems::simulation::board::token::PlayerTokenAssets>()
             .init_state::<ClientScreenState>()
             .add_systems(Startup, layout::spawn_ui_layout)
@@ -56,7 +57,13 @@ impl Plugin for ClientUiPlugin {
                     systems::simulation::scroll_leaderboard_ticker_system,
                     systems::simulation::rebuild_board_on_hole_change_system
                         .after(crate::replication::sync_state_from_server),
+                ),
+            )
+            .add_systems(
+                Update,
+                (
                     systems::handle_match_completed_buttons,
+                    systems::handle_scorecard_toggle_buttons,
                     systems::simulation::toggle_match_completed_ui_system,
                     systems::simulation::render_scorecard_system,
                 ),

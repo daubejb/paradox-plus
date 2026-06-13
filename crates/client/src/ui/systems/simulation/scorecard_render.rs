@@ -4,33 +4,62 @@ use crate::replication::ClientGameState;
 use crate::ui::components::{
     TopHudNode, LeaderboardTickerContainerNode, BoardContainerNode,
     BottomBarNode, WagerPanelNode, MatchCompletedScreenNode,
-    ScorecardCellTextNode, ClientScorecards, GameSettings
+    ScorecardCellTextNode, ClientScorecards, GameSettings,
+    ShowScorecard, CloseScorecardButtonNode, PlayAgainButtonNode,
+    MainMenuButtonNode, GameMode
 };
 
 pub fn toggle_match_completed_ui_system(
     game_state: Res<State<ClientGameState>>,
-    mut hud_query: Query<&mut Style, (With<TopHudNode>, Without<MatchCompletedScreenNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>)>,
-    mut ticker_query: Query<&mut Style, (With<LeaderboardTickerContainerNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>)>,
-    mut board_query: Query<&mut Style, (With<BoardContainerNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>)>,
-    mut bottom_query: Query<&mut Style, (With<BottomBarNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<WagerPanelNode>)>,
-    mut wager_query: Query<&mut Style, (With<WagerPanelNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>)>,
-    mut summary_query: Query<&mut Style, (With<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>)>,
+    show_scorecard: Res<ShowScorecard>,
+    settings: Res<GameSettings>,
+    mut hud_query: Query<&mut Style, (With<TopHudNode>, Without<MatchCompletedScreenNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>, Without<CloseScorecardButtonNode>, Without<PlayAgainButtonNode>, Without<MainMenuButtonNode>)>,
+    mut ticker_query: Query<&mut Style, (With<LeaderboardTickerContainerNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>, Without<CloseScorecardButtonNode>, Without<PlayAgainButtonNode>, Without<MainMenuButtonNode>)>,
+    mut board_query: Query<&mut Style, (With<BoardContainerNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>, Without<CloseScorecardButtonNode>, Without<PlayAgainButtonNode>, Without<MainMenuButtonNode>)>,
+    mut bottom_query: Query<&mut Style, (With<BottomBarNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<WagerPanelNode>, Without<CloseScorecardButtonNode>, Without<PlayAgainButtonNode>, Without<MainMenuButtonNode>)>,
+    mut wager_query: Query<&mut Style, (With<WagerPanelNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<CloseScorecardButtonNode>, Without<PlayAgainButtonNode>, Without<MainMenuButtonNode>)>,
+    mut summary_query: Query<&mut Style, (With<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>, Without<CloseScorecardButtonNode>, Without<PlayAgainButtonNode>, Without<MainMenuButtonNode>)>,
+    mut close_btn_query: Query<&mut Style, (With<CloseScorecardButtonNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>, Without<PlayAgainButtonNode>, Without<MainMenuButtonNode>)>,
+    mut play_again_query: Query<&mut Style, (With<PlayAgainButtonNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>, Without<CloseScorecardButtonNode>, Without<MainMenuButtonNode>)>,
+    mut main_menu_query: Query<&mut Style, (With<MainMenuButtonNode>, Without<MatchCompletedScreenNode>, Without<TopHudNode>, Without<LeaderboardTickerContainerNode>, Without<BoardContainerNode>, Without<BottomBarNode>, Without<WagerPanelNode>, Without<CloseScorecardButtonNode>, Without<PlayAgainButtonNode>)>,
 ) {
-    if game_state.is_changed() {
+    if game_state.is_changed() || show_scorecard.is_changed() {
         let is_completed = *game_state.get() == ClientGameState::MatchCompleted;
+        let visible = show_scorecard.0 || is_completed;
 
-        if is_completed {
+        if visible {
             for mut style in hud_query.iter_mut() { style.display = Display::None; }
             for mut style in ticker_query.iter_mut() { style.display = Display::None; }
             for mut style in board_query.iter_mut() { style.display = Display::None; }
             for mut style in bottom_query.iter_mut() { style.display = Display::None; }
             for mut style in wager_query.iter_mut() { style.display = Display::None; }
             for mut style in summary_query.iter_mut() { style.display = Display::Flex; }
+
+            if is_completed {
+                for mut style in close_btn_query.iter_mut() { style.display = Display::None; }
+                for mut style in play_again_query.iter_mut() { style.display = Display::Flex; }
+                for mut style in main_menu_query.iter_mut() { style.display = Display::Flex; }
+            } else {
+                for mut style in close_btn_query.iter_mut() { style.display = Display::Flex; }
+                for mut style in play_again_query.iter_mut() { style.display = Display::None; }
+                for mut style in main_menu_query.iter_mut() { style.display = Display::None; }
+            }
         } else {
             for mut style in summary_query.iter_mut() { style.display = Display::None; }
             for mut style in hud_query.iter_mut() { style.display = Display::Flex; }
             for mut style in ticker_query.iter_mut() { style.display = Display::Flex; }
             for mut style in board_query.iter_mut() { style.display = Display::Flex; }
+            for mut style in bottom_query.iter_mut() { style.display = Display::Flex; }
+            
+            let wager_display = match settings.mode {
+                GameMode::Standard => Display::None,
+                GameMode::WagerCards => Display::Flex,
+            };
+            for mut style in wager_query.iter_mut() { style.display = wager_display; }
+
+            for mut style in close_btn_query.iter_mut() { style.display = Display::None; }
+            for mut style in play_again_query.iter_mut() { style.display = Display::None; }
+            for mut style in main_menu_query.iter_mut() { style.display = Display::None; }
         }
     }
 }

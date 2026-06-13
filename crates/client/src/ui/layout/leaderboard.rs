@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use crate::ui::components::{
-    LeaderboardTickerContainerNode, LeaderboardTickerTrackNode, ViewFullLeaderboardButtonNode
+    LeaderboardTickerContainerNode, LeaderboardTickerTrackNode, ScorecardButtonNode
 };
 
 pub fn spawn_leaderboard_ticker(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>) {
@@ -75,7 +75,7 @@ pub fn spawn_leaderboard_ticker(parent: &mut ChildBuilder, _asset_server: &Res<A
             ));
         });
 
-        // 3. View Full Button (Fixed Right)
+        // 3. Scorecard Button (Fixed Right)
         ticker.spawn((
             ButtonBundle {
                 style: Style {
@@ -90,10 +90,10 @@ pub fn spawn_leaderboard_ticker(parent: &mut ChildBuilder, _asset_server: &Res<A
                 border_color: Color::srgb(0.1, 0.25, 0.18).into(),
                 ..default()
             },
-            ViewFullLeaderboardButtonNode,
+            ScorecardButtonNode,
         )).with_children(|btn| {
             btn.spawn(TextBundle::from_section(
-                "VIEW FULL",
+                "SCORECARD",
                 TextStyle {
                     font_size: 10.0,
                     color: Color::srgb(0.7, 0.9, 0.8),

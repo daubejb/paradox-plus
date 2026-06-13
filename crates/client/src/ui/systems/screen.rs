@@ -82,10 +82,12 @@ pub fn handle_gameplay_exit(
     mut next_state: ResMut<NextState<ClientScreenState>>,
     mut events: EventWriter<ClientActionRequest>,
     mut settings: ResMut<GameSettings>,
+    mut show_scorecard: ResMut<ShowScorecard>,
     hamburger_btn: Query<&Interaction, (Changed<Interaction>, With<HamburgerButtonNode>)>,
 ) {
     for interaction in hamburger_btn.iter() {
         if *interaction == Interaction::Pressed {
+            show_scorecard.0 = false;
             *settings = GameSettings::default();
             events.send(ClientActionRequest(ClientAction::LeaveRoom));
             next_state.set(ClientScreenState::Landing);

@@ -29,6 +29,7 @@ Sitemap(
         File(path: "src/ui/layout/board.rs", description: "UI board container layout"),
         File(path: "src/ui/layout/bottom_bar.rs", description: "UI bottom bar controls layout"),
         File(path: "src/ui/layout/match_summary.rs", description: "UI match completed scorecard layout"),
+        File(path: "src/ui/layout/scorecard_buttons.rs", description: "UI scorecard overlay buttons layout"),
         File(path: "src/ui/systems/mod.rs", description: "UI systems re-exports"),
         File(path: "src/ui/systems/hover.rs", description: "UI button hover scaling animations"),
         File(path: "src/ui/systems/interactions.rs", description: "UI click interactions and network action triggers"),
@@ -139,5 +140,7 @@ Sitemap(
     Doc(path: "doc/adr/0013-rounded-rectangle-track-geometry.md", description: "ADR 0013: Rounded Rectangle Track Geometry Model"),
     Doc(path: "doc/adr/0014-track-aspect-ratio-fitting.md", description: "ADR 0014: Constant Aspect Ratio Fitting for Track Geometry"),
     Doc(path: "doc/adr/0015-track-proportions-expansion.md", description: "ADR 0015: Track Proportions and Width Expansion"),
+    Doc(path: "doc/adr/0016-scorecard-history-tracking.md", description: "ADR 0016: Bounded Scorecard History Tracking"),
+    Doc(path: "doc/adr/0017-in-progress-scorecard-toggle.md", description: "ADR 0017: In-Progress Scorecard Toggle and Memory-Safe Visibility Toggles"),
   ]
 )

@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::ui::components::{RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode, SelectedWagerCard};
+use crate::ui::components::{
+    RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode,
+    SelectedWagerCard, ScorecardButtonNode, CloseScorecardButtonNode, ShowScorecard
+};
 use crate::network::events::ClientActionRequest;
 use protocol::messages::ClientAction;
 
@@ -51,11 +54,13 @@ pub fn handle_match_completed_buttons(
     mut events: EventWriter<ClientActionRequest>,
     settings: Res<crate::ui::components::GameSettings>,
     mut screen_state: ResMut<NextState<crate::ui::components::ClientScreenState>>,
+    mut show_scorecard: ResMut<ShowScorecard>,
     play_again_query: Query<&Interaction, (Changed<Interaction>, With<crate::ui::components::PlayAgainButtonNode>)>,
     main_menu_query: Query<&Interaction, (Changed<Interaction>, With<crate::ui::components::MainMenuButtonNode>)>,
 ) {
     for interaction in play_again_query.iter() {
         if *interaction == Interaction::Pressed {
+            show_scorecard.0 = false;
             let nickname = heapless::String::try_from(settings.nickname.as_str()).unwrap_or_default();
             let course = heapless::String::try_from(settings.course.as_str()).unwrap_or_default();
             let is_wager_mode = settings.mode == crate::ui::components::GameMode::WagerCards;
@@ -69,8 +74,27 @@ pub fn handle_match_completed_buttons(
     }
     for interaction in main_menu_query.iter() {
         if *interaction == Interaction::Pressed {
+            show_scorecard.0 = false;
             events.send(ClientActionRequest(ClientAction::LeaveRoom));
             screen_state.set(crate::ui::components::ClientScreenState::Landing);
+        }
+    }
+}
+
+/// System to handle opening and closing of the scorecard overlay.
+pub fn handle_scorecard_toggle_buttons(
+    mut show_scorecard: ResMut<ShowScorecard>,
+    scorecard_btn_query: Query<&Interaction, (Changed<Interaction>, With<ScorecardButtonNode>)>,
+    close_btn_query: Query<&Interaction, (Changed<Interaction>, With<CloseScorecardButtonNode>)>,
+) {
+    for interaction in scorecard_btn_query.iter() {
+        if *interaction == Interaction::Pressed {
+            show_scorecard.0 = true;
+        }
+    }
+    for interaction in close_btn_query.iter() {
+        if *interaction == Interaction::Pressed {
+            show_scorecard.0 = false;
         }
     }
 }

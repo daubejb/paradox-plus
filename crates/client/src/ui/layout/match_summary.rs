@@ -64,43 +64,7 @@ pub fn spawn_match_summary_screen(parent: &mut ChildBuilder, _asset_server: &Res
 
             card.spawn(NodeBundle { style: Style { height: Val::Px(16.0), ..default() }, ..default() });
 
-            card.spawn(NodeBundle {
-                style: Style {
-                    flex_direction: FlexDirection::Row, justify_content: JustifyContent::SpaceBetween,
-                    width: Val::Percent(100.0), column_gap: Val::Px(12.0), ..default()
-                },
-                ..default()
-            }).with_children(|buttons| {
-                buttons.spawn((
-                    ButtonBundle {
-                        style: Style {
-                            flex_grow: 1.0, height: Val::Px(44.0), justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center, border: UiRect::all(Val::Px(2.0)), ..default()
-                        },
-                        background_color: Color::srgb(0.02, 0.35, 0.15).into(),
-                        border_color: Color::srgb(0.05, 0.65, 0.25).into(),
-                        border_radius: BorderRadius::all(Val::Px(22.0)), ..default()
-                    },
-                    PlayAgainButtonNode,
-                )).with_children(|btn| {
-                    btn.spawn(TextBundle::from_section("PLAY AGAIN", TextStyle { font_size: 13.0, color: Color::WHITE, ..default() }));
-                });
-
-                buttons.spawn((
-                    ButtonBundle {
-                        style: Style {
-                            flex_grow: 1.0, height: Val::Px(44.0), justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center, border: UiRect::all(Val::Px(2.0)), ..default()
-                        },
-                        background_color: Color::srgba(0.0, 0.0, 0.0, 0.0).into(),
-                        border_color: Color::srgb(0.5, 0.6, 0.55).into(),
-                        border_radius: BorderRadius::all(Val::Px(22.0)), ..default()
-                    },
-                    MainMenuButtonNode,
-                )).with_children(|btn| {
-                    btn.spawn(TextBundle::from_section("MAIN MENU", TextStyle { font_size: 13.0, color: Color::srgb(0.85, 0.9, 0.88), ..default() }));
-                });
-            });
+            super::scorecard_buttons::spawn_scorecard_buttons(card);
         });
     });
 }

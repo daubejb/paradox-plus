@@ -191,7 +191,13 @@ pub struct LeaderboardTickerTrackNode {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ViewFullLeaderboardButtonNode;
+pub struct ScorecardButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CloseScorecardButtonNode;
+
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ShowScorecard(pub bool);
 
 #[derive(Resource, Default, Debug, Clone)]
 pub struct LeaderboardCompletedHolesScore {

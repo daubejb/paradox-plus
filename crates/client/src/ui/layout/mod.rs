@@ -5,6 +5,7 @@ pub mod landing;
 pub mod setup;
 pub mod leaderboard;
 pub mod match_summary;
+pub mod scorecard_buttons;
 
 use bevy::prelude::*;
 use crate::ui::components::{RootUiNode, GameplayScreenNode};

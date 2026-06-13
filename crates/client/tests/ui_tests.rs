@@ -791,6 +791,105 @@ fn test_match_completed_scorecard_screen() {
     }
 }
 
+#[test]
+fn test_in_progress_scorecard_toggle() {
+    let mut app = setup_headless_ui_app();
+    app.update();
+
+    // Transition state to SoloSetup, then trigger PlayGameButton click to start game and spawn board
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
+        next_state.set(ClientScreenState::SoloSetup);
+    }
+    app.update();
+    app.update();
+
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<PlayGameButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Play Game button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+    app.update();
+    app.update();
+    app.update();
+
+    // Verify initial screen layout (HUD visible, MatchSummary hidden)
+    {
+        let summary_style = app.world_mut().query_filtered::<&Style, With<MatchCompletedScreenNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(summary_style.display, Display::None);
+
+        let hud_style = app.world_mut().query_filtered::<&Style, With<TopHudNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(hud_style.display, Display::Flex);
+    }
+
+    // Simulate clicking the SCORECARD button
+    {
+        let scorecard_btn = app.world_mut().query_filtered::<Entity, With<ScorecardButtonNode>>()
+            .get_single(app.world()).expect("Scorecard button missing");
+        app.world_mut().entity_mut(scorecard_btn).insert(Interaction::Pressed);
+    }
+    app.update(); // trigger interactions
+    app.update(); // trigger render and toggles
+
+    // Verify ShowScorecard is true
+    {
+        let show_scorecard = app.world().resource::<ShowScorecard>();
+        assert!(show_scorecard.0);
+    }
+
+    // Verify screen layout toggled (HUD hidden, MatchSummary visible)
+    {
+        let summary_style = app.world_mut().query_filtered::<&Style, With<MatchCompletedScreenNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(summary_style.display, Display::Flex);
+
+        let hud_style = app.world_mut().query_filtered::<&Style, With<TopHudNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(hud_style.display, Display::None);
+    }
+
+    // Verify button visibility context: BACK TO GAME is Flex, others are None
+    {
+        let close_btn_style = app.world_mut().query_filtered::<&Style, With<CloseScorecardButtonNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(close_btn_style.display, Display::Flex);
+
+        let play_again_style = app.world_mut().query_filtered::<&Style, With<PlayAgainButtonNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(play_again_style.display, Display::None);
+
+        let main_menu_style = app.world_mut().query_filtered::<&Style, With<MainMenuButtonNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(main_menu_style.display, Display::None);
+    }
+
+    // Simulate clicking the BACK TO GAME button
+    {
+        let close_btn = app.world_mut().query_filtered::<Entity, With<CloseScorecardButtonNode>>()
+            .get_single(app.world()).expect("Close scorecard button missing");
+        app.world_mut().entity_mut(close_btn).insert(Interaction::Pressed);
+    }
+    app.update(); // trigger interactions
+    app.update(); // trigger render and toggles
+
+    // Verify ShowScorecard is false and HUD is back to Flex
+    {
+        let show_scorecard = app.world().resource::<ShowScorecard>();
+        assert!(!show_scorecard.0);
+
+        let summary_style = app.world_mut().query_filtered::<&Style, With<MatchCompletedScreenNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(summary_style.display, Display::None);
+
+        let hud_style = app.world_mut().query_filtered::<&Style, With<TopHudNode>>()
+            .get_single(app.world()).unwrap();
+        assert_eq!(hud_style.display, Display::Flex);
+    }
+}
+
+
 
 
 
