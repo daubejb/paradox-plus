@@ -633,5 +633,94 @@ fn test_capsule_geometry_calculations() {
     }
 }
 
+#[test]
+fn test_banana_slide_click_interaction() {
+    let mut app = setup_headless_ui_app();
+    app.update();
+
+    // Transition state to SoloSetup, then trigger PlayGameButton click to start game and spawn board
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<ClientScreenState>>();
+        next_state.set(ClientScreenState::SoloSetup);
+    }
+    app.update();
+    app.update();
+
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<PlayGameButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("Play Game button missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+    app.update();
+    app.update();
+    app.update();
+
+    // Set ClientGameState state to BananaChoice
+    {
+        let mut next_state = app.world_mut().resource_mut::<NextState<client::replication::ClientGameState>>();
+        next_state.set(client::replication::ClientGameState::BananaChoice);
+    }
+    app.update();
+
+    // Verify state transitioned
+    {
+        let state = app.world().resource::<State<client::replication::ClientGameState>>();
+        assert_eq!(*state.get(), client::replication::ClientGameState::BananaChoice);
+    }
+
+    // Set ActivePlayerId and spawn a Ball entity
+    let active_id = 9999;
+    app.world_mut().insert_resource(client::replication::ActivePlayerId(active_id));
+    app.world_mut().spawn((
+        client::replication::Player { player_id: active_id },
+        client::replication::Ball {
+            cell_index: 11, // space 11
+            direction: protocol::physics::MovementDirection::Forward,
+            origin_cell: 11,
+        },
+        Transform::default(),
+        GlobalTransform::default(),
+    ));
+
+    // Cell G0 (index 15) is reachable by moving 4 spaces
+    // Find G0's position
+    let cell_pos = {
+        let mut cell_query = app.world_mut().query::<(&BoardCellNode, &Transform)>();
+        let (_, cell_transform) = cell_query
+            .iter(app.world())
+            .find(|(node, _)| node.index == 15)
+            .expect("Board cell with index 15 (G0) not found");
+        cell_transform.translation.xy()
+    };
+
+    // Set cursor position override resource
+    app.insert_resource(client::ui::components::CursorPositionOverride(Some(cell_pos)));
+
+    // Simulate clicking the board cell
+    {
+        let mut mouse_input = app.world_mut().resource_mut::<ButtonInput<MouseButton>>();
+        mouse_input.press(MouseButton::Left);
+    }
+
+    // Run the click handler system directly
+    use bevy::ecs::system::RunSystemOnce;
+    use client::ui::systems::simulation::board::interaction::handle_board_clicks_system;
+    app.world_mut().run_system_once(handle_board_clicks_system);
+
+    // Verify that ClientActionRequest event for ChooseBananaSlide was dispatched with step_count = 4
+    let events = app.world().resource::<Events<ClientActionRequest>>();
+    let mut reader = events.get_reader();
+    let sent_events: Vec<&ClientActionRequest> = reader.read(events).collect();
+
+    let choose_slide_event = sent_events.iter().find(|event| matches!(event.0, ClientAction::ChooseBananaSlide { .. }));
+    assert!(choose_slide_event.is_some(), "Expected a ClientAction::ChooseBananaSlide event to be sent");
+    if let Some(ClientActionRequest(ClientAction::ChooseBananaSlide { step_count })) = choose_slide_event {
+        assert_eq!(*step_count, 4, "Expected step_count to be 4");
+    } else {
+        panic!("Sent event was not a ClientAction::ChooseBananaSlide variant");
+    }
+}
+
+
 
 

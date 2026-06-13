@@ -30,6 +30,9 @@ pub struct Ball {
     pub origin_cell: u16,
 }
 
+#[derive(Resource, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ActivePlayerId(pub u64);
+
 pub fn map_enum_to_bevy_state(state: GameStateEnum) -> ClientGameState {
     match state {
         GameStateEnum::Lobby => ClientGameState::Lobby,
@@ -70,6 +73,8 @@ pub fn sync_state_from_server(
                 current_hole.0 = *sync_hole;
             }
 
+            commands.insert_resource(ActivePlayerId(*active_player_id));
+
             // Update ClientGameState
             let target_state = map_enum_to_bevy_state(*game_state);
             next_state.set(target_state);
@@ -104,6 +109,7 @@ impl Plugin for ClientReplicationPlugin {
         app.init_state::<ClientGameState>()
             .init_resource::<crate::ui::components::CurrentHole>()
             .init_resource::<crate::ui::components::ClientWagers>()
+            .init_resource::<ActivePlayerId>()
             .add_systems(Update, sync_state_from_server);
     }
 }
