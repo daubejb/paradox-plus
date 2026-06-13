@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 use crate::ui::components::{
     RollOneButtonNode, RollTwoButtonNode, WagerCardButtonNode, SkipPlacementButtonNode,
-    SelectedWagerCard, ScorecardButtonNode, CloseScorecardButtonNode, ShowScorecard
+    SelectedWagerCard, ScorecardButtonNode, CloseScorecardButtonNode, ShowScorecard,
+    ClientScorecards
 };
 use crate::network::events::ClientActionRequest;
 use protocol::messages::ClientAction;
@@ -27,11 +28,28 @@ pub fn handle_roll_buttons(
 /// System to handle wager card buttons clicks.
 pub fn handle_wager_card_buttons(
     mut selected_card: ResMut<SelectedWagerCard>,
+    scorecards: Res<ClientScorecards>,
     card_query: Query<(&Interaction, &WagerCardButtonNode), Changed<Interaction>>,
 ) {
+    let score_val = scorecards.0.first();
+    let shield_count = score_val.map(|s| s.earned_cards.iter().filter(|&&c| c == 0).count()).unwrap_or(0);
+    let banana_count = score_val.map(|s| s.earned_cards.iter().filter(|&&c| c == 1).count()).unwrap_or(0);
+    let die_count = score_val.map(|s| s.earned_cards.iter().filter(|&&c| c == 2).count()).unwrap_or(0);
+
     for (interaction, card) in card_query.iter() {
         if *interaction == Interaction::Pressed {
-            selected_card.0 = Some(card.card_type);
+            let count = match card.card_type {
+                protocol::messages::CardType::Shield => shield_count,
+                protocol::messages::CardType::Banana => banana_count,
+                protocol::messages::CardType::GoldenDie => die_count,
+            };
+            if count > 0 {
+                if selected_card.0 == Some(card.card_type) {
+                    selected_card.0 = None;
+                } else {
+                    selected_card.0 = Some(card.card_type);
+                }
+            }
         }
     }
 }

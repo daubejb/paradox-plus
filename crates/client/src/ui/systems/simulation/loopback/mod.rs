@@ -106,6 +106,12 @@ pub fn local_offline_server_system(
                 state.player_name = nickname.to_string();
                 state.is_initialized = true;
                 
+                if state.is_wager_mode && !state.inventory.is_empty() {
+                    state.game_state = GameStateEnum::MarkerPlacement;
+                } else {
+                    state.game_state = GameStateEnum::AwaitingTurn;
+                }
+
                 let mut player_positions = HVec::new();
                 player_positions.push(state.player_position).unwrap();
                 let mut player_scores = HVec::new();

@@ -98,6 +98,22 @@ fn test_wager_card_selection_interaction() {
     app.update();
     app.update();
 
+    // Populate ClientScorecards with a Banana card in hand (card value = 1)
+    {
+        use heapless::Vec as HVec;
+        let mut hand = HVec::new();
+        hand.push(1).unwrap(); // Banana card (card_type = 1)
+        app.insert_resource(client::ui::components::ClientScorecards(vec![
+            protocol::messages::Scorecard {
+                running_strokes: 0,
+                total_strokes: 0,
+                earned_cards: hand,
+                cards_earned_this_hole: HVec::new(),
+                strokes_per_hole: HVec::new(),
+            }
+        ]));
+    }
+
     // Query for a WagerCardButtonNode with card_type = CardType::Banana
     let mut banana_query = app.world_mut().query_filtered::<(Entity, &WagerCardButtonNode), With<Button>>();
     let (banana_entity, _) = banana_query

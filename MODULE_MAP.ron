@@ -55,6 +55,7 @@ Sitemap(
         File(path: "src/ui/systems/simulation/board/tokens.rs", description: "Player and wager cell token visual synchronization"),
         File(path: "src/ui/systems/simulation/board/interaction.rs", description: "Screen-to-world raycasted cursor click drafting input system"),
         File(path: "src/ui/systems/simulation/render.rs", description: "Offline simulation HUD text updates"),
+        File(path: "src/ui/systems/simulation/wager_buttons.rs", description: "Visual highlight selection and desaturation system for wager card buttons"),
         File(path: "src/ui/systems/simulation/leaderboard.rs", description: "Offline simulation leaderboard par score logic"),
         File(path: "src/ui/systems/simulation/scorecard_render.rs", description: "Offline simulation scorecard display and UI toggle systems"),
         File(path: "tests/replication_tests.rs", description: "Integration tests for FSM replication and presenter interpolation"),
