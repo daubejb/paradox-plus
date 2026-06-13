@@ -40,7 +40,7 @@ pub fn update_ui_elements_system(
                     text.sections[0].value = format!("🏆 {} strokes", running_strokes);
                 }
 
-                if let Ok(mut text) = name_query.get_single_mut() {
+                for mut text in name_query.iter_mut() {
                     text.sections[0].value = settings.nickname.to_uppercase();
                 }
 
@@ -147,7 +147,7 @@ pub fn update_ui_safe_areas_system(
         let is_mobile = cfg!(any(target_os = "android", target_os = "ios")) || (is_portrait && width < 600.0);
 
         let (top_padding, hud_height) = if is_mobile {
-            (44.0, 70.0 + 34.0)
+            (59.0, 119.0)
         } else {
             (10.0, 70.0)
         };

@@ -5,10 +5,14 @@ pub fn spawn_match_summary_screen(parent: &mut ChildBuilder, _asset_server: &Res
     parent.spawn((
         NodeBundle {
             style: Style {
-                width: Val::Percent(100.0), height: Val::Percent(100.0),
+                position_type: PositionType::Absolute,
+                left: Val::Px(0.0),
+                right: Val::Px(0.0),
+                top: Val::Px(0.0),
+                bottom: Val::Px(0.0),
                 flex_direction: FlexDirection::Column, align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center, padding: UiRect::all(Val::Px(16.0)),
-                display: Display::None, position_type: PositionType::Absolute, ..default()
+                display: Display::None, ..default()
             },
             background_color: Color::srgba(0.01, 0.05, 0.02, 0.95).into(),
             z_index: ZIndex::Global(100), ..default()

@@ -3,6 +3,7 @@ use network::{ClientNetworkPlugin, ClientActionSender, ServerUpdateReceiver};
 use replication::ClientReplicationPlugin;
 use presenter::FixedToFloatPlugin;
 use ui::ClientUiPlugin;
+use std::sync::Mutex;
 
 pub mod network;
 pub mod replication;
@@ -12,6 +13,8 @@ pub mod ui;
 #[cfg(any(target_os = "android", target_os = "ios"))]
 mod mobile;
 
+pub static IOS_SCREEN_SIZE: Mutex<Option<(f32, f32)>> = Mutex::new(None);
+
 pub fn init_client_environment() {
     #[cfg(target_arch = "wasm32")]
     {
@@ -20,12 +23,27 @@ pub fn init_client_environment() {
 }
 
 pub fn setup_client_app(app: &mut App) {
-    app.add_plugins(DefaultPlugins.set(WindowPlugin {
-        primary_window: Some(Window {
+    let primary_window = if cfg!(any(target_os = "android", target_os = "ios")) {
+        let (width, height) = if let Ok(lock) = IOS_SCREEN_SIZE.lock() {
+            lock.unwrap_or((430.0, 932.0)) // Fallback to iPhone 17 Pro
+        } else {
+            (430.0, 932.0)
+        };
+        Some(Window {
             title: "Paradox Plus".to_string(),
-            resolution: (450.0, 800.0).into(), // Mobile portrait ratio
+            resolution: (width, height).into(),
             ..default()
-        }),
+        })
+    } else {
+        Some(Window {
+            title: "Paradox Plus".to_string(),
+            resolution: (450.0, 800.0).into(), // Mobile emulation portrait ratio
+            ..default()
+        })
+    };
+
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window,
         ..default()
     }));
 

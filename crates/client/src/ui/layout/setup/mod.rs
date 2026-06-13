@@ -10,11 +10,11 @@ pub fn spawn_setup_screen(parent: &mut ChildBuilder, asset_server: &Res<AssetSer
     parent.spawn((
         NodeBundle {
             style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
                 position_type: PositionType::Absolute,
                 left: Val::Px(0.0),
+                right: Val::Px(0.0),
                 top: Val::Px(0.0),
+                bottom: Val::Px(0.0),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
                 padding: UiRect::all(Val::Px(16.0)),

@@ -7,12 +7,12 @@ use crate::ui::components::{
 
 pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>) {
     let top_padding = if cfg!(any(target_os = "android", target_os = "ios")) {
-        44.0
+        59.0
     } else {
         10.0
     };
     let hud_height = if cfg!(any(target_os = "android", target_os = "ios")) {
-        70.0 + 34.0
+        119.0
     } else {
         70.0
     };
@@ -42,8 +42,8 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
         hud.spawn((
             ButtonBundle {
                 style: Style {
-                    width: Val::Px(40.0),
-                    height: Val::Px(40.0),
+                    width: Val::Px(48.0),
+                    height: Val::Px(32.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
                     border: UiRect::all(Val::Px(1.0)),
@@ -51,14 +51,15 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
                 },
                 background_color: Color::srgb(0.1, 0.25, 0.18).into(),
                 border_color: Color::srgb(0.2, 0.4, 0.3).into(),
+                border_radius: BorderRadius::all(Val::Px(4.0)),
                 ..default()
             },
             HamburgerButtonNode,
         )).with_children(|btn| {
             btn.spawn(TextBundle::from_section(
-                "☰",
+                "MENU",
                 TextStyle {
-                    font_size: 24.0,
+                    font_size: 11.0,
                     color: Color::WHITE,
                     ..default()
                 },
@@ -114,20 +115,7 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
             },
             PlayerInfoNode,
         )).with_children(|player| {
-            // Avatar Placeholder (a roundish box)
-            player.spawn(NodeBundle {
-                style: Style {
-                    width: Val::Px(32.0),
-                    height: Val::Px(32.0),
-                    border: UiRect::all(Val::Px(1.0)),
-                    ..default()
-                },
-                background_color: Color::srgb(0.8, 0.6, 0.2).into(), // Warm gold avatar placeholder
-                border_color: Color::WHITE.into(),
-                ..default()
-            });
-
-            // Name & Differential Stack
+            // Name & Differential Stack (Now on the left of the avatar)
             player.spawn(NodeBundle {
                 style: Style {
                     flex_direction: FlexDirection::Column,
@@ -158,6 +146,20 @@ pub fn spawn_top_hud(parent: &mut ChildBuilder, _asset_server: &Res<AssetServer>
                     ),
                     PlayerScoreTextNode,
                 ));
+            });
+
+            // Avatar Placeholder (Now on the right edge)
+            player.spawn(NodeBundle {
+                style: Style {
+                    width: Val::Px(32.0),
+                    height: Val::Px(32.0),
+                    border: UiRect::all(Val::Px(1.0)),
+                    ..default()
+                },
+                background_color: Color::srgb(0.8, 0.6, 0.2).into(), // Warm gold avatar placeholder
+                border_color: Color::WHITE.into(),
+                border_radius: BorderRadius::all(Val::Px(4.0)),
+                ..default()
             });
         });
     });

@@ -23,10 +23,14 @@ pub fn android_main(app: AndroidApp) {
 
 #[cfg(target_os = "ios")]
 #[no_mangle]
-pub extern "C" fn start_ios_client() {
+pub extern "C" fn start_ios_client(width: f32, height: f32) {
     std::panic::set_hook(Box::new(|info| {
         eprintln!("iOS Panic: {:?}", info);
     }));
+
+    if let Ok(mut lock) = crate::IOS_SCREEN_SIZE.lock() {
+        *lock = Some((width, height));
+    }
 
     crate::init_client_environment();
     crate::run_client();
