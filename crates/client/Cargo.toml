@@ -27,8 +27,8 @@ log = "0.4"
 
 [package.metadata.android]
 package = "com.paradox.plus.client"
-apk_name = "ParadoxPlus"
-label = "Paradox Plus"
+apk_name = "Paradox"
+label = "Paradox"
 icon = "../../assets/logo.png"
 assets = "../../assets"
 

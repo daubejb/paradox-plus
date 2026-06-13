@@ -89,7 +89,7 @@ build-android:
 	@echo "Building APK..."
 	cargo apk build --lib --manifest-path crates/client/Cargo.toml
 	@echo "Installing APK to connected device..."
-	$(ADB) install -r -d target/debug/apk/ParadoxPlus.apk
+	$(ADB) install -r -d target/debug/apk/Paradox.apk
 
 build-iphone-sim:
 	@echo "Adding Rust iOS Simulator target..."
