@@ -15,7 +15,7 @@ def main():
 /* Begin PBXBuildFile section */
 		FFFFFFFFFFFFFFFFFFFFFFFF /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 222222222222222222222222 /* App.swift */; };
 		000000000000000000000000 /* libclient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 444444444444444444444444 /* libclient.a */; };
-		666666666666666666666667 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 666666666666666666666666 /* Assets.xcassets */; };
+		555555555555555555555558 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 555555555555555555555557 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,7 +23,7 @@ def main():
 		333333333333333333333333 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		444444444444444444444444 /* libclient.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libclient.a; path = "../target/aarch64-apple-ios/release/libclient.a"; sourceTree = "<group>"; };
 		555555555555555555555556 /* ParadoxPlus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParadoxPlus.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		666666666666666666666666 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
+		555555555555555555555557 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,7 +42,7 @@ def main():
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				666666666666666666666667 /* Assets.xcassets in Resources */,
+				555555555555555555555558 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,7 +56,7 @@ def main():
 				333333333333333333333333 /* Info.plist */,
 				444444444444444444444444 /* libclient.a */,
 				555555555555555555555556 /* ParadoxPlus.app */,
-				666666666666666666666666 /* Assets.xcassets */,
+				555555555555555555555557 /* Assets.xcassets */,
 			);
 			path = ParadoxPlus;
 			sourceTree = "<group>";

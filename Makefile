@@ -21,7 +21,7 @@ else
   IOS_SIM_TARGET := aarch64-apple-ios-sim
 endif
 
-.PHONY: help critique-plan android-emulator iphone-emulator build-android build-iphone-sim build-iphone-release check-env-testflight deploy-testflight mac
+.PHONY: help critique-plan android-emulator iphone-emulator build-android build-iphone-sim build-iphone-release check-env-testflight deploy-testflight mac run-iphone-sim
 
 help:
 	@echo "🟢 Paradox Plus Mobile Build & Emulation Makefile"
@@ -30,6 +30,7 @@ help:
 	@echo "  make mac                   - Run native macOS client"
 	@echo "  make android-emulator      - Boot Android AVD and poll completion"
 	@echo "  make iphone-emulator       - Boot iOS Simulator for $(IOS_SIM_DEVICE)"
+	@echo "  make run-iphone-sim        - Compile, build, and launch on iOS Simulator"
 	@echo "  make build-android         - Compile for Android & install via USB-C"
 	@echo "  make build-iphone-sim      - Compile static library for iOS Simulator"
 	@echo "  make build-iphone-release  - Compile static library for physical iOS"
@@ -38,6 +39,20 @@ help:
 
 mac:
 	cargo run -p client
+
+run-iphone-sim: build-iphone-sim iphone-emulator
+	@echo "Locating simulator..."
+	@UDID=$$(xcrun simctl list devices | grep -m 1 $(IOS_SIM_DEVICE) | grep -o '[A-F0-9]\{8\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{4\}-[A-F0-9]\{12\}'); \
+	if [ -z "$$UDID" ]; then \
+		echo "ERROR: Could not find iOS simulator matching '$(IOS_SIM_DEVICE)'."; \
+		exit 1; \
+	fi; \
+	echo "Building Xcode project for Simulator..."; \
+	xcodebuild -project ios/ParadoxPlus.xcodeproj -scheme ParadoxPlus -configuration Debug -sdk iphonesimulator -derivedDataPath ios/build/derivedData -arch arm64; \
+	echo "Installing App on Simulator..."; \
+	xcrun simctl install "$$UDID" ios/build/derivedData/Build/Products/Debug-iphonesimulator/ParadoxPlus.app; \
+	echo "Launching App on Simulator..."; \
+	xcrun simctl launch "$$UDID" com.paradox.plus.client
 
 critique-plan:
 	@echo "Running automated implementation plan critique..."

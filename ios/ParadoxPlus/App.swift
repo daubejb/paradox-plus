@@ -1,7 +1,7 @@
 import SwiftUI
 
 // Declare the Rust FFI function
-@_cdecl("start_ios_client")
+@_silgen_name("start_ios_client")
 func start_ios_client()
 
 @main
