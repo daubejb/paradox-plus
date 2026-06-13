@@ -13,6 +13,7 @@ impl Plugin for ClientUiPlugin {
             .init_resource::<components::GameSettings>()
             .init_resource::<components::SelectedWagerCard>()
             .init_resource::<components::LeaderboardCompletedHolesScore>()
+            .init_resource::<systems::simulation::board::token::PlayerTokenAssets>()
             .init_state::<ClientScreenState>()
             .add_systems(Startup, layout::spawn_ui_layout)
             .add_systems(

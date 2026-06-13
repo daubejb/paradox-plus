@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::sprite::{ColorMesh2dBundle, Mesh2dHandle, ColorMaterial};
 use protocol::terrain::presets::get_course_preset;
-use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, PlayerTokenMarker, WagerTokenMarker};
+use crate::ui::components::{BoardContainerNode, CurrentHole, GameSettings, BoardCellNode, WagerTokenMarker};
 use crate::ui::systems::simulation::board::geometry::calculate_capsule_layout;
 
 #[derive(Component)]
@@ -18,6 +18,7 @@ pub fn rebuild_board_on_hole_change_system(
     mut commands: Commands,
     current_hole: Res<CurrentHole>,
     settings: Res<GameSettings>,
+    token_assets: Res<super::token::PlayerTokenAssets>,
     container_query: Query<&Node, With<BoardContainerNode>>,
     root_query: Query<Entity, With<BoardWorldRoot>>,
     visuals_query: Query<&TrackTileVisuals>,
@@ -182,20 +183,13 @@ pub fn rebuild_board_on_hole_change_system(
                             ..default()
                         });
 
-                        // Player Token Marker
-                        cell_sprite.spawn((
-                            SpriteBundle {
-                                sprite: Sprite {
-                                    color: Color::srgb(0.95, 0.85, 0.1),
-                                    custom_size: Some(Vec2::splat(8.0)),
-                                    ..default()
-                                },
-                                transform: Transform::from_translation(Vec3::new(20.0, -10.0, 2.0)),
-                                visibility: Visibility::Hidden,
-                                ..default()
-                            },
-                            PlayerTokenMarker,
-                        ));
+                        // Player Token Marker (modelled as a poker chip with counter-rotation)
+                        super::token::spawn_player_token(
+                            cell_sprite,
+                            &token_assets,
+                            &settings.nickname,
+                            layout.rotation_angle,
+                        );
 
                         // Wager Token Marker
                         cell_sprite.spawn((

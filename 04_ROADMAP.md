@@ -141,6 +141,16 @@ This document catalogs the active milestones, development backlog iterations, an
     - Verified all unit and integration tests compile and pass.
     - Verified WASM target compatibility check.
 
+### [x] Iteration 12: Premium Poker Chip Player Token (Completed 2026-06-13)
+*   **Objectives**:
+    - Upgrade the 2D visual player ball marker to a premium poker chip style token featuring the player's first initial in the center.
+    - Implement a `PlayerTokenAssets` Bevy resource to cache circle and rectangle meshes and color materials, avoiding asset duplication and memory leaks.
+    - Isolate the spawner and resource definition in `token.rs` to maintain compliance with the 300-line budget limit.
+    - Centered player's uppercase first initial in the center, and counter-rotated the text relative to the curved cell's rotation to keep it upright and readable.
+*   **Verification**:
+    - Gracefully support headless tests suite by checking asset resource availability in `FromWorld`.
+    - Run all unit and integration tests (`cargo test`).
+
 ---
 
 ## 📈 Retrospective Log
@@ -163,6 +173,7 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Track Corner Radius Optimization:** Increased `RADIUS_COEFFICIENT` to `0.28` in `geometry.rs`, making the corner caps noticeably rounder and increasing the minimum inner corner radius to a smooth `27.6` units. Documented constant scopes for client-side rendering boundaries to clarify authoritative validation separation. All tests passed.
 - **Curved Racetrack Corners:** Subdivided the outer/inner cell boundary coords and cell tile backgrounds into 8 subdivisions. Consolidated border curves into unified ribbon meshes (one outer, one inner) to reduce Bevy entity overhead from 640 down to 2. Extracted geometry calculations to `borders.rs` to maintain compliance with the 300-line budget limit. All tests pass.
 - **Bunker Dice Choice Correction:** Fixed the Sand Bunker escape check to allow rolling 1 or 2 dice (per PARADOX_GAME.md rules). If 2 dice are chosen, the sum of the dice is checked (even sum escapes, odd fails). Rough terrain remains clamped to 1-die limit unless shielded. Added integration tests to verify both choices and limits. All tests pass.
+- **Iteration 12 (Premium Poker Chip Player Token):** Replaced the flat yellow marker with a multi-layered procedural poker chip. Avoided mesh/material duplication and memory leaks by caching asset handles in a `PlayerTokenAssets` resource. Handled Bevy's asset vs. entity lifecycles to ensure that despawning `BoardWorldRoot` cleans up visual entities while keeping cached assets loaded. Implemented headless resource check fallbacks to allow existing UI unit tests to pass without fully mock-initializing Bevy rendering assets. All tests passed.
 
 
 
