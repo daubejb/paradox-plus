@@ -28,12 +28,13 @@ log = "0.4"
 [package.metadata.android]
 package = "com.paradox.plus.client"
 apk_name = "Paradox"
-label = "Paradox"
-icon = "../../assets/logo.png"
+resources = "res"
 assets = "../../assets"
+
+[package.metadata.android.application]
+label = "Paradox"
+icon = "@mipmap/ic_launcher"
 
 [package.metadata.android.sdk]
 min_sdk_version = 23
 target_sdk_version = 33
-
-
