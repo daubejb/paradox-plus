@@ -36,7 +36,7 @@ impl FromWorld for PlayerTokenAssets {
                     meshes.add(Circle::new(8.0)),
                     meshes.add(Rectangle::new(3.0, 1.0)),
                     meshes.add(super::wager_meshes::generate_shield_mesh()),
-                    meshes.add(super::wager_meshes::generate_banana_peel_mesh()),
+                    meshes.add(super::wager_meshes::generate_banana_mesh()),
                     meshes.add(Rectangle::new(16.0, 16.0)),
                     meshes.add(Circle::new(1.5)),
                 )
@@ -200,7 +200,7 @@ pub fn spawn_wager_token(
             SpatialBundle::default(),
             WagerVisual { card_type: CardType::Banana },
         )).with_children(|banana| {
-            // Yellow Banana Peel (custom mesh)
+            // Yellow Single Banana (custom mesh)
             banana.spawn(ColorMesh2dBundle {
                 mesh: Mesh2dHandle(assets.wager_banana_mesh.clone()),
                 material: assets.wager_banana_material.clone(),

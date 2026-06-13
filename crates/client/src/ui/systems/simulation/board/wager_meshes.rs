@@ -3,15 +3,15 @@ use bevy::render::mesh::{Indices, PrimitiveTopology};
 use bevy::render::render_asset::RenderAssetUsages;
 
 /// Generates a flat 2D crest shield polygon (7 vertices, centered at origin).
+/// Resized to exactly 16.0 x 16.0 (matching the Golden Die size).
 pub fn generate_shield_mesh() -> Mesh {
-    // 7 vertices defining the crest shield geometry
     let positions = vec![
-        [0.0, 8.0, 0.0],   // 0: Top-center dip
-        [-6.0, 10.0, 0.0], // 1: Top-left peak
-        [-6.0, 0.0, 0.0],  // 2: Mid-left edge
-        [0.0, -10.0, 0.0], // 3: Bottom point
-        [6.0, 0.0, 0.0],   // 4: Mid-right edge
-        [6.0, 10.0, 0.0],  // 5: Top-right peak
+        [0.0, 6.0, 0.0],   // 0: Top-center dip
+        [-8.0, 8.0, 0.0],  // 1: Top-left peak
+        [-8.0, 0.0, 0.0],  // 2: Mid-left edge
+        [0.0, -8.0, 0.0],  // 3: Bottom point
+        [8.0, 0.0, 0.0],   // 4: Mid-right edge
+        [8.0, 8.0, 0.0],   // 5: Top-right peak
         [0.0, 0.0, 0.0],   // 6: Center anchor for triangulation
     ];
 
@@ -20,7 +20,7 @@ pub fn generate_shield_mesh() -> Mesh {
 
     // Simple normalized UV coordinates mapped from the bounding box
     let uvs = vec![
-        [0.5, 0.9],
+        [0.5, 0.875],
         [0.0, 1.0],
         [0.0, 0.5],
         [0.5, 0.0],
@@ -52,38 +52,47 @@ pub fn generate_shield_mesh() -> Mesh {
     mesh
 }
 
-/// Generates a flat 2D 3-lobed splayed banana peel polygon (7 vertices).
-pub fn generate_banana_peel_mesh() -> Mesh {
+/// Generates a flat 2D single banana crescent polygon (10 vertices).
+/// Resized to exactly 16.0 x 16.0 (matching the Golden Die size).
+pub fn generate_banana_mesh() -> Mesh {
     let positions = vec![
-        [0.0, 0.0, 0.0],    // 0: Stem center
-        [-2.0, 8.0, 0.0],   // 1: Left lobe tip
-        [-7.0, 2.0, 0.0],   // 2: Left lobe base
-        [0.0, -9.0, 0.0],   // 3: Middle lobe tip
-        [7.0, 2.0, 0.0],    // 4: Right lobe base
-        [2.0, 8.0, 0.0],    // 5: Right lobe tip
-        [0.0, 3.0, 0.0],    // 6: Central splay junction
+        [-6.0, 8.0, 0.0],   // 0: Inner Left peak (stem)
+        [-8.0, 6.0, 0.0],   // 1: Outer Left peak
+        [-3.0, 0.0, 0.0],   // 2: Inner Mid-Left
+        [-4.0, -4.0, 0.0],  // 3: Outer Mid-Left
+        [0.0, -3.0, 0.0],   // 4: Inner Center
+        [0.0, -8.0, 0.0],   // 5: Outer Center
+        [3.0, 0.0, 0.0],    // 6: Inner Mid-Right
+        [4.0, -4.0, 0.0],   // 7: Outer Mid-Right
+        [6.0, 8.0, 0.0],    // 8: Inner Right peak (tip)
+        [8.0, 6.0, 0.0],    // 9: Outer Right peak
     ];
 
-    let normals = vec![[0.0, 0.0, 1.0]; 7];
+    let normals = vec![[0.0, 0.0, 1.0]; 10];
 
     let uvs = vec![
-        [0.5, 0.5],
-        [0.35, 0.9],
-        [0.05, 0.6],
-        [0.5, 0.05],
-        [0.95, 0.6],
-        [0.65, 0.9],
-        [0.5, 0.65],
+        [0.125, 1.0],
+        [0.0, 0.875],
+        [0.3125, 0.5],
+        [0.25, 0.25],
+        [0.5, 0.3125],
+        [0.5, 0.0],
+        [0.6875, 0.5],
+        [0.75, 0.25],
+        [0.875, 1.0],
+        [1.0, 0.875],
     ];
 
     // CCW winding order to prevent backface culling
     let indices = Indices::U32(vec![
-        0, 6, 1, // Left lobe partition A
-        1, 2, 6, // Left lobe partition B
-        2, 3, 6, // Center lobe partition A
-        3, 4, 6, // Center lobe partition B
-        4, 5, 6, // Right lobe partition A
-        5, 6, 0, // Right lobe partition B
+        0, 1, 3,
+        0, 3, 2,
+        2, 3, 5,
+        2, 5, 4,
+        4, 5, 7,
+        4, 7, 6,
+        6, 7, 9,
+        6, 9, 8,
     ]);
 
     let mut mesh = Mesh::new(

@@ -183,7 +183,8 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Track Corner Radius Optimization:** Increased `RADIUS_COEFFICIENT` to `0.28` in `geometry.rs`, making the corner caps noticeably rounder and increasing the minimum inner corner radius to a smooth `27.6` units. Documented constant scopes for client-side rendering boundaries to clarify authoritative validation separation. All tests passed.
 - **Curved Racetrack Corners:** Subdivided the outer/inner cell boundary coords and cell tile backgrounds into 8 subdivisions. Consolidated border curves into unified ribbon meshes (one outer, one inner) to reduce Bevy entity overhead from 640 down to 2. Extracted geometry calculations to `borders.rs` to maintain compliance with the 300-line budget limit. All tests pass.
 - **Bunker Dice Choice Correction:** Fixed the Sand Bunker escape check to allow rolling 1 or 2 dice (per PARADOX_GAME.md rules). If 2 dice are chosen, the sum of the dice is checked (even sum escapes, odd fails). Rough terrain remains clamped to 1-die limit unless shielded. Added integration tests to verify both choices and limits. All tests pass.
-- **Iteration 13 (Upright Custom Wager Markers):** Redesigned the wager markers on the 2D gameboard to use custom procedurally-generated upright tokens (blue crest shield polygon, yellow splayed banana peel polygon, larger gold pip-die) with counter-rotation. Implemented parent-relative flat visual toggling with visibility change-detection guards. All tests passed.
+- **Iteration 13 (Upright Custom Wager Markers):** Redesigned the wager markers on the 2D gameboard to use custom procedurally-generated upright tokens (blue crest shield polygon, yellow single banana crescent polygon, gold pip-die) scaled uniformly to 16.0 x 16.0. Implemented parent-relative flat visual toggling with visibility change-detection guards. All tests passed.
+
 
 
 
