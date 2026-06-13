@@ -25,10 +25,13 @@ pub fn spawn_match_summary_screen(parent: &mut ChildBuilder, _asset_server: &Res
             border_color: Color::srgb(0.85, 0.65, 0.15).into(),
             border_radius: BorderRadius::all(Val::Px(16.0)), ..default()
         }).with_children(|card| {
-            card.spawn(TextBundle::from_section(
-                "MATCH COMPLETED",
-                TextStyle { font_size: 26.0, color: Color::srgb(0.95, 0.8, 0.2), ..default() },
-            ).with_style(Style { margin: UiRect::bottom(Val::Px(4.0)), ..default() }));
+            card.spawn((
+                TextBundle::from_section(
+                    "MATCH COMPLETED",
+                    TextStyle { font_size: 26.0, color: Color::srgb(0.95, 0.8, 0.2), ..default() },
+                ).with_style(Style { margin: UiRect::bottom(Val::Px(4.0)), ..default() }),
+                ScorecardTitleTextNode,
+            ));
 
             card.spawn((
                 TextBundle::from_section(

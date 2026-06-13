@@ -66,10 +66,22 @@ pub fn toggle_match_completed_ui_system(
 
 pub fn render_scorecard_system(
     mut scorecard_cell_query: Query<(&mut Text, &ScorecardCellTextNode)>,
+    mut title_query: Query<&mut Text, (With<crate::ui::components::ScorecardTitleTextNode>, Without<ScorecardCellTextNode>)>,
     scorecards: Res<ClientScorecards>,
     settings: Res<GameSettings>,
+    game_state: Res<State<ClientGameState>>,
 ) {
-    if scorecards.is_changed() {
+    if scorecards.is_changed() || game_state.is_changed() {
+        let is_completed = *game_state.get() == ClientGameState::MatchCompleted;
+        if let Ok(mut text) = title_query.get_single_mut() {
+            if is_completed {
+                text.sections[0].value = "MATCH COMPLETED".to_string();
+            } else {
+                let course_name = settings.course.to_uppercase();
+                text.sections[0].value = format!("{} COURSE", course_name);
+            }
+        }
+
         let Some(scorecard) = scorecards.0.first() else { return; };
 
         let mut out_par = 0u16;
@@ -89,13 +101,17 @@ pub fn render_scorecard_system(
             }
         }
 
-        // Second pass: accumulate scores from history
+        // Second pass: accumulate scores from history and par of completed holes
+        let mut completed_par = 0u16;
         for hole in 1..=18 {
             if let Some(&strokes) = scorecard.strokes_per_hole.get((hole as usize).saturating_sub(1)) {
                 if hole <= 9 {
                     out_score = out_score.saturating_add(strokes);
                 } else {
                     in_score = in_score.saturating_add(strokes);
+                }
+                if let Some(preset) = get_course_preset(&settings.course, hole) {
+                    completed_par = completed_par.saturating_add(preset.par as u16);
                 }
             }
         }
@@ -138,9 +154,8 @@ pub fn render_scorecard_system(
                     text.sections[0].value = in_score.to_string();
                 }
             } else if hole == 22 {
-                let total_par = out_par.saturating_add(in_par);
                 let total_score = out_score.saturating_add(in_score);
-                let diff = total_score as i32 - total_par as i32;
+                let diff = total_score as i32 - completed_par as i32;
                 let diff_str = if diff < 0 {
                     format!(" ({} Under Par)", diff.abs())
                 } else if diff == 0 {

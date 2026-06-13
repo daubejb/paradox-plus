@@ -780,6 +780,13 @@ fn test_match_completed_scorecard_screen() {
     let style = summary_style_query.get_single(app.world()).expect("MatchCompletedScreenNode missing");
     assert_eq!(style.display, Display::Flex);
 
+    // Verify title text is MATCH COMPLETED
+    {
+        let mut title_query = app.world_mut().query_filtered::<&Text, With<client::ui::components::ScorecardTitleTextNode>>();
+        let title_text = title_query.get_single(app.world()).unwrap();
+        assert_eq!(title_text.sections[0].value, "MATCH COMPLETED");
+    }
+
     let mut cell_query = app.world_mut().query::<(&Text, &client::ui::components::ScorecardCellTextNode)>();
     let cells: Vec<(&Text, &client::ui::components::ScorecardCellTextNode)> = cell_query.iter(app.world()).collect();
     assert!(!cells.is_empty(), "Expected scorecard cells to be populated");
@@ -837,6 +844,13 @@ fn test_in_progress_scorecard_toggle() {
     {
         let show_scorecard = app.world().resource::<ShowScorecard>();
         assert!(show_scorecard.0);
+    }
+
+    // Verify title matches active course name during play
+    {
+        let mut title_query = app.world_mut().query_filtered::<&Text, With<ScorecardTitleTextNode>>();
+        let title_text = title_query.get_single(app.world()).unwrap();
+        assert_eq!(title_text.sections[0].value, "GREEN COURSE");
     }
 
     // Verify screen layout toggled (HUD hidden, MatchSummary visible)

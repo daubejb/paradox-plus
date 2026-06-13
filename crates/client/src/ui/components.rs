@@ -212,6 +212,9 @@ pub struct ClientScorecards(pub Vec<protocol::messages::Scorecard>);
 pub struct MatchCompletedScreenNode;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ScorecardTitleTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlayAgainButtonNode;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
