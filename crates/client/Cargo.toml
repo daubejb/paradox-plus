@@ -3,6 +3,11 @@ name = "client"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "client"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+
 [dependencies]
 bevy = { version = "0.14.0", default-features = false, features = ["bevy_state", "bevy_ui", "bevy_text", "bevy_asset", "bevy_winit", "bevy_core_pipeline", "bevy_sprite", "default_font", "png"] }
 fixed = { version = "1.23.0", features = ["serde"] }
@@ -14,3 +19,14 @@ getrandom = { version = "0.3", features = ["wasm_js"] }
 uuid = { version = "1.12", features = ["js"] }
 rand = "0.8.5"
 protocol = { path = "../protocol" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+android-activity = { version = "0.5", features = ["game-activity"] }
+android_logger = "0.13"
+log = "0.4"
+
+[package.metadata.android]
+package = "com.paradox.plus.client"
+apk_name = "ParadoxPlus"
+assets = "../../assets"
+

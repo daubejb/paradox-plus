@@ -7,6 +7,7 @@ Sitemap(
       files: [
         File(path: "src/main.rs", description: "Client entrypoint launching Bevy app"),
         File(path: "src/lib.rs", description: "Client library interface and WASM hooks"),
+        File(path: "src/mobile.rs", description: "Mobile entrypoint FFI definitions for Android Activity and iOS Swift wrapper linking"),
         File(path: "src/network/mod.rs", description: "Re-exports network events, resources, and plugins"),
         File(path: "src/network/events.rs", description: "Client replication network events (ServerUpdateEvent, ClientActionRequest)"),
         File(path: "src/network/resources.rs", description: "Heap-allocated serialization buffer and std::sync::mpsc channel resources"),
@@ -142,5 +143,6 @@ Sitemap(
     Doc(path: "doc/adr/0015-track-proportions-expansion.md", description: "ADR 0015: Track Proportions and Width Expansion"),
     Doc(path: "doc/adr/0016-scorecard-history-tracking.md", description: "ADR 0016: Bounded Scorecard History Tracking"),
     Doc(path: "doc/adr/0017-in-progress-scorecard-toggle.md", description: "ADR 0017: In-Progress Scorecard Toggle and Memory-Safe Visibility Toggles"),
+    Doc(path: "doc/adr/0018-mobile-target-and-emulation-toolchains.md", description: "ADR 0018: Mobile Target Cross-Compilation and Emulation Toolchains"),
   ]
 )

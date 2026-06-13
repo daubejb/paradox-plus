@@ -161,7 +161,18 @@ This document catalogs the active milestones, development backlog iterations, an
     - Run native and WASM target compilation checks.
     - Run all unit and integration tests (`cargo test`).
 
+### [x] Iteration 14: Mobile Emulation & Build Commands (Completed 2026-06-13)
+*   **Objectives**:
+    - Configure the `client` package Cargo dependencies and targets to support library compilation (`staticlib`, `cdylib`, `rlib`) for mobile targets.
+    - Implement modular FFI entry points inside a dedicated `crates/client/src/mobile.rs` module.
+    - Scaffold a minimal native Xcode/Swift application wrapper under `ios/` to initialize and run the Bevy engine.
+    - Add Makefile targets for starting Android emulators and iOS simulators dynamically.
+    - Add build/deploy pipeline commands to Makefile to install to Android via USB-C and push to TestFlight via Transporter CLI.
+*   **Verification**:
+    - Build static library targets using cargo and run all workspace tests successfully.
+
 ---
+
 
 ## 📈 Retrospective Log
 
@@ -188,6 +199,8 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Banana Slide Clicks Interaction:** Fixed a bug where players were unable to click cells to slide 0-4 spaces after landing on a Trickster Banana. Registered `ActivePlayerId` resource in the client network replication plugin and refactored the board click system to resolve path clicks against reachable cells during `BananaChoice`, dispatching the `ChooseBananaSlide` action. All tests passed.
 - **Match Completed Scorecard Screen:** Implemented the End of Round scorecard summary screen overlay with a detailed Front 9 / Back 9 hole breakdown. Tracked strokes history authoritatively using a bounded `heapless::Vec` in `Scorecard` messages and loopback states. Resolved a bug preventing play again or return to main menu buttons from functioning by correcting early returns on non-existent course presets. Added unit/integration tests and verified WASM target compatibility. All tests pass.
 - **In-Progress Scorecard Toggle:** Renamed "VIEW FULL" button to "SCORECARD". Toggling it during active gameplay opens the in-progress scorecard overlay. Implemented a "BACK TO GAME" button to return to play, while hiding "PLAY AGAIN" and "MAIN MENU". Handled clean visibility toggling for HUD, central board, and bottom bar without dynamic heap allocations in the hot render loop. Extracted scorecard buttons layout to a dedicated `scorecard_buttons` module to strictly comply with the 300-line budget limit. All tests pass.
+- **Iteration 14 (Mobile Emulation & Build Commands):** Configured Cargo and FFI library targets for cross-platform Android and iOS compilation. Scaffolded a native Swift/Xcode wrapper under `ios/` and added Makefile targets for launching emulators, compiling APKs/static libraries, deploying via USB-C (`adb`), and uploading to TestFlight via `transporter`. All tests pass.
+
 
 
 
