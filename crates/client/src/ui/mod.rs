@@ -27,6 +27,10 @@ impl Plugin for ClientUiPlugin {
                 systems::show_setup_screen_system,
             )
             .add_systems(
+                OnEnter(ClientScreenState::Settings),
+                systems::show_settings_screen_system,
+            )
+            .add_systems(
                 OnEnter(ClientScreenState::Gameplay),
                 (
                     systems::show_gameplay_screen_system,
@@ -49,6 +53,13 @@ impl Plugin for ClientUiPlugin {
                     systems::handle_setup_button_clicks,
                     systems::handle_nickname_keyboard_input,
                     systems::update_setup_screen_ui,
+                    systems::handle_settings_button_clicks,
+                    systems::update_settings_screen_ui,
+                ),
+            )
+            .add_systems(
+                Update,
+                (
                     systems::simulation::sync_board_camera_viewport_system,
                     systems::simulation::handle_board_clicks_system,
                     systems::simulation::update_board_cell_visuals,

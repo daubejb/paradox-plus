@@ -70,10 +70,11 @@ pub fn play_ui_interaction_sounds(
     audio_sources: Option<Res<Assets<AudioSource>>>,
     audio_assets: Res<GameAudioAssets>,
     loaded: Res<AudioLoaded>,
+    settings: Res<GameSettings>,
     interaction_query: Query<&Interaction, (Changed<Interaction>, With<Button>)>,
     mut commands: Commands,
 ) {
-    if audio_sources.is_none() || !loaded.0 {
+    if audio_sources.is_none() || !loaded.0 || !settings.sound_effects_enabled {
         return;
     }
 
@@ -104,7 +105,7 @@ pub fn play_gameplay_sounds(
     settings: Res<GameSettings>,
     mut commands: Commands,
 ) {
-    if audio_sources.is_none() || !loaded.0 {
+    if audio_sources.is_none() || !loaded.0 || !settings.sound_effects_enabled {
         return;
     }
 

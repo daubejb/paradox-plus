@@ -191,6 +191,15 @@ This document catalogs the active milestones, development backlog iterations, an
     - Run all unit and integration tests (`cargo test`).
     - Verify WASM target compatibility check.
 
+### [x] Iteration 17: Settings Menu & Audio Toggle (Completed 2026-06-14)
+*   **Objectives**:
+    - Add a Settings Screen overlay card matching the Solo Practice card theme.
+    - Implement a custom sliding pill switch toggle for sound effects.
+    - Optimize style mutations using Bevy change detection resource check.
+*   **Verification**:
+    - Run UI integration tests (`cargo test --test ui_tests`).
+    - Verify WASM target cross-compatibility check.
+
 ---
 
 
@@ -221,6 +230,8 @@ This document catalogs the active milestones, development backlog iterations, an
 - **Match Completed Scorecard Screen:** Implemented the End of Round scorecard summary screen overlay with a detailed Front 9 / Back 9 hole breakdown. Tracked strokes history authoritatively using a bounded `heapless::Vec` in `Scorecard` messages and loopback states. Resolved a bug preventing play again or return to main menu buttons from functioning by correcting early returns on non-existent course presets. Added unit/integration tests and verified WASM target compatibility. All tests pass.
 - **In-Progress Scorecard Toggle:** Renamed "VIEW FULL" button to "SCORECARD". Toggling it during active gameplay opens the in-progress scorecard overlay. Implemented a "BACK TO GAME" button to return to play, while hiding "PLAY AGAIN" and "MAIN MENU". Handled clean visibility toggling for HUD, central board, and bottom bar without dynamic heap allocations in the hot render loop. Extracted scorecard buttons layout to a dedicated `scorecard_buttons` module to strictly comply with the 300-line budget limit. All tests pass.
 - **Iteration 15 (Mobile UI Layout & Aspect Ratio Adjustments):** Solved HUD safe area status bar overlap and bottom bar button clutter by transitioning to a dynamic safe-area update system based on Bevy window size query. Overhauled the bottom bar to a two-row column flex layout. Updated the board camera to `ScalingMode::AutoMin` to fit the rounded-rectangle layout vertically and horizontally on any viewport. Handled mobile WASM and desktop testing capabilities. Checked that all files conform to the strict 300-line budget limit. All tests pass.
+- **Iteration 16 (Audio Subsystem Scaffolding):** Scaffolded a modular client audio plugin, structured event channels, and configured Bevy asset decoding features. Verified WASM build compatibility. All tests pass.
+- **Iteration 17 (Settings Menu & Audio Toggle):** Implemented a themed Settings Card overlay with a custom sliding pill toggle switch for muting sound effects. Built Change-detection optimization to prevent layout thrashing and added mock UI integration tests. Verified target compilation for WASM. All tests pass.
 - **iOS Simulator Configuration Fix (2026-06-13):** Resolved simulator installation failure caused by missing `CFBundleExecutable` key in `Info.plist`. Confirmed successful iOS build, bundle packaging, and simulator launch.
 - **iOS Screen Resolution Alignment Fix (2026-06-13):** Resolved layout off-centering and edge clipping on iOS simulator by passing UIKit logical screen bounds from Swift to Bevy's window resolution configuration. Fixed HUD name update bug. All tests pass.
 - **iOS App Icon Scaling Refinement (2026-06-13):** Resized the central Paradox die logo emblem in the app icon to a balanced 55% of the total icon dimensions using a custom PIL script. Blended the resized logo's RGB and Alpha channels using alpha-minimum blending to avoid boundary artifacts. Discarded simulator caching issues by performing a clean reinstall of the application. The app icon proportions now align with Apple's human interface guidelines and match other native apps.

@@ -3,6 +3,7 @@ pub mod board;
 pub mod bottom_bar;
 pub mod landing;
 pub mod setup;
+pub mod settings;
 pub mod leaderboard;
 pub mod match_summary;
 pub mod scorecard_buttons;
@@ -11,6 +12,7 @@ use bevy::prelude::*;
 use crate::ui::components::{RootUiNode, GameplayScreenNode};
 use landing::spawn_landing_screen;
 use setup::spawn_setup_screen;
+use settings::spawn_settings_screen;
 use match_summary::spawn_match_summary_screen;
 
 pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -37,6 +39,9 @@ pub fn spawn_ui_layout(mut commands: Commands, asset_server: Res<AssetServer>) {
 
         // 2. Spawn Setup Screen (hidden by default)
         spawn_setup_screen(parent, &asset_server);
+
+        // 3. Spawn Settings Screen (hidden by default)
+        spawn_settings_screen(parent, &asset_server);
 
         // 2. Spawn Gameplay Screen (hidden by default)
         parent.spawn((

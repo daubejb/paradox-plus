@@ -1141,6 +1141,119 @@ fn test_touch_placement_interaction() {
     }
 }
 
+#[test]
+fn test_settings_screen_interactions() {
+    let mut app = setup_headless_ui_app();
+
+    // Run startup systems to spawn UI layouts
+    app.update();
+
+    // Verify initial state is Landing
+    {
+        let screen_state = app.world().resource::<State<ClientScreenState>>().get();
+        assert_eq!(*screen_state, ClientScreenState::Landing);
+    }
+
+    // Verify that SettingsScreenNode is display: None initially
+    {
+        let mut settings_style_query = app.world_mut().query_filtered::<&Style, With<SettingsScreenNode>>();
+        let settings_style = settings_style_query.get_single(app.world()).expect("SettingsScreenNode missing");
+        assert_eq!(settings_style.display, Display::None);
+    }
+
+    // Trigger settings button click on Landing page
+    {
+        let mut button_query = app.world_mut().query_filtered::<Entity, With<SettingsButtonNode>>();
+        let button_entity = button_query.get_single(app.world()).expect("SettingsButtonNode missing");
+        app.world_mut().entity_mut(button_entity).insert(Interaction::Pressed);
+    }
+    app.update(); // Process button clicks
+    app.update(); // Process OnEnter(Settings) state change
+
+    // Verify state transitioned to Settings
+    {
+        let screen_state = app.world().resource::<State<ClientScreenState>>().get();
+        assert_eq!(*screen_state, ClientScreenState::Settings);
+    }
+
+    // Verify SettingsScreenNode is now display: Flex
+    {
+        let mut settings_style_query = app.world_mut().query_filtered::<&Style, With<SettingsScreenNode>>();
+        let settings_style = settings_style_query.get_single(app.world()).expect("SettingsScreenNode missing");
+        assert_eq!(settings_style.display, Display::Flex);
+    }
+
+    // Verify default settings value is sound_effects_enabled = true
+    {
+        let settings = app.world().resource::<GameSettings>();
+        assert!(settings.sound_effects_enabled);
+    }
+
+    // Trigger sound effects toggle click
+    {
+        let mut toggle_query = app.world_mut().query_filtered::<Entity, With<SoundToggleButtonNode>>();
+        let toggle_entity = toggle_query.get_single(app.world()).expect("SoundToggleButtonNode missing");
+        app.world_mut().entity_mut(toggle_entity).insert(Interaction::Pressed);
+    }
+    app.update(); // Process clicks, toggle sound settings to false
+
+    // Verify settings updated
+    {
+        let settings = app.world().resource::<GameSettings>();
+        assert!(!settings.sound_effects_enabled);
+    }
+
+    // Verify toggle text changed to "OFF"
+    {
+        let mut text_query = app.world_mut().query_filtered::<&Text, With<SoundToggleTextNode>>();
+        let text = text_query.get_single(app.world()).expect("SoundToggleTextNode missing");
+        assert_eq!(text.sections[0].value, "OFF");
+    }
+
+    // Trigger sound effects toggle click again (to turn back ON)
+    {
+        let mut toggle_query = app.world_mut().query_filtered::<Entity, With<SoundToggleButtonNode>>();
+        let toggle_entity = toggle_query.get_single(app.world()).expect("SoundToggleButtonNode missing");
+        app.world_mut().entity_mut(toggle_entity).insert(Interaction::Pressed);
+    }
+    app.update(); // Process clicks, toggle sound settings to true
+
+    // Verify settings updated
+    {
+        let settings = app.world().resource::<GameSettings>();
+        assert!(settings.sound_effects_enabled);
+    }
+
+    // Verify toggle text changed back to "ON"
+    {
+        let mut text_query = app.world_mut().query_filtered::<&Text, With<SoundToggleTextNode>>();
+        let text = text_query.get_single(app.world()).expect("SoundToggleTextNode missing");
+        assert_eq!(text.sections[0].value, "ON");
+    }
+
+    // Trigger close settings click
+    {
+        let mut close_query = app.world_mut().query_filtered::<Entity, With<CloseSettingsButtonNode>>();
+        let close_entity = close_query.get_single(app.world()).expect("CloseSettingsButtonNode missing");
+        app.world_mut().entity_mut(close_entity).insert(Interaction::Pressed);
+    }
+    app.update(); // Process clicks
+    app.update(); // Process OnEnter(Landing) state change
+
+    // Verify state transitioned back to Landing
+    {
+        let screen_state = app.world().resource::<State<ClientScreenState>>().get();
+        assert_eq!(*screen_state, ClientScreenState::Landing);
+    }
+
+    // Verify SettingsScreenNode is display: None again
+    {
+        let mut settings_style_query = app.world_mut().query_filtered::<&Style, With<SettingsScreenNode>>();
+        let settings_style = settings_style_query.get_single(app.world()).expect("SettingsScreenNode missing");
+        assert_eq!(settings_style.display, Display::None);
+    }
+}
+
 
 
 

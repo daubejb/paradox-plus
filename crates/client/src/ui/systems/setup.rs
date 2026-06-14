@@ -8,6 +8,7 @@ pub fn show_setup_screen_system(
     mut landing_query: Query<&mut Style, With<LandingScreenNode>>,
     mut setup_query: Query<&mut Style, (With<SoloSetupScreenNode>, Without<LandingScreenNode>)>,
     mut gameplay_query: Query<&mut Style, (With<GameplayScreenNode>, Without<LandingScreenNode>, Without<SoloSetupScreenNode>)>,
+    mut settings_query: Query<&mut Style, (With<SettingsScreenNode>, Without<LandingScreenNode>, Without<SoloSetupScreenNode>, Without<GameplayScreenNode>)>,
 ) {
     if let Ok(mut style) = landing_query.get_single_mut() {
         style.display = Display::None;
@@ -16,6 +17,9 @@ pub fn show_setup_screen_system(
         style.display = Display::Flex;
     }
     if let Ok(mut style) = gameplay_query.get_single_mut() {
+        style.display = Display::None;
+    }
+    if let Ok(mut style) = settings_query.get_single_mut() {
         style.display = Display::None;
     }
 }

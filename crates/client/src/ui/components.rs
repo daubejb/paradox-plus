@@ -71,6 +71,7 @@ pub enum ClientScreenState {
     #[default]
     Landing,
     SoloSetup,
+    Settings,
     Gameplay,
 }
 
@@ -87,6 +88,7 @@ pub struct GameSettings {
     pub course: String,
     pub mode: GameMode,
     pub is_input_focused: bool,
+    pub sound_effects_enabled: bool,
 }
 
 impl Default for GameSettings {
@@ -96,6 +98,7 @@ impl Default for GameSettings {
             course: "green".to_string(),
             mode: GameMode::Standard,
             is_input_focused: false,
+            sound_effects_enabled: true,
         }
     }
 }
@@ -226,6 +229,18 @@ pub struct ScorecardCellTextNode {
     pub is_par: bool,
     pub is_score: bool,
 }
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SettingsScreenNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SoundToggleButtonNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SoundToggleTextNode;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CloseSettingsButtonNode;
 
 
 
