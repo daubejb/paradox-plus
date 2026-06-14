@@ -1,44 +1,4 @@
-use fixed::types::I32F32;
-
 pub const MAX_SLIDES: usize = 16;
-
-pub trait SafeFixedMath {
-    fn safe_add(self, other: Self) -> Self;
-    fn safe_sub(self, other: Self) -> Self;
-    fn safe_mul(self, other: Self) -> Self;
-    fn safe_div(self, other: Self) -> Self;
-}
-
-impl SafeFixedMath for I32F32 {
-    #[inline]
-    fn safe_add(self, other: Self) -> Self {
-        self.checked_add(other).unwrap_or(I32F32::MAX)
-    }
-
-    #[inline]
-    fn safe_sub(self, other: Self) -> Self {
-        self.checked_sub(other).unwrap_or(I32F32::MIN)
-    }
-
-    #[inline]
-    fn safe_mul(self, other: Self) -> Self {
-        self.checked_mul(other).unwrap_or_else(|| {
-            if (self < 0) == (other < 0) { I32F32::MAX } else { I32F32::MIN }
-        })
-    }
-
-    #[inline]
-    fn safe_div(self, other: Self) -> Self {
-        if other == I32F32::ZERO {
-            if self < 0 { I32F32::MIN } else { I32F32::MAX }
-        } else {
-            self.checked_div(other).unwrap_or_else(|| {
-                if (self < 0) == (other < 0) { I32F32::MAX } else { I32F32::MIN }
-            })
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SlideError {
     CycleDetected,

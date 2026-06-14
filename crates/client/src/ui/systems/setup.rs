@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::input::keyboard::{KeyboardInput, Key};
 use crate::ui::components::*;
 use crate::network::events::ClientActionRequest;
 use protocol::messages::ClientAction;
@@ -91,7 +92,7 @@ pub fn handle_setup_button_clicks(
 }
 
 pub fn handle_nickname_keyboard_input(
-    mut char_evr: EventReader<ReceivedCharacter>,
+    mut keyboard_events: EventReader<KeyboardInput>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut settings: ResMut<GameSettings>,
 ) {
@@ -107,14 +108,19 @@ pub fn handle_nickname_keyboard_input(
         return;
     }
 
-    for ev in char_evr.read() {
-        let text = ev.char.as_str();
-        for c in text.chars() {
-            if !c.is_control() && settings.nickname.len() < 16 {
-                settings.nickname.push(c);
-                // Force mutation trigger
-                let n = settings.nickname.clone();
-                settings.nickname = n;
+    for ev in keyboard_events.read() {
+        if !ev.state.is_pressed() {
+            continue;
+        }
+
+        if let Key::Character(ref text) = ev.logical_key {
+            for c in text.chars() {
+                if !c.is_control() && settings.nickname.len() < 16 {
+                    settings.nickname.push(c);
+                    // Force mutation trigger
+                    let n = settings.nickname.clone();
+                    settings.nickname = n;
+                }
             }
         }
     }
