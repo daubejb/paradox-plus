@@ -79,20 +79,11 @@ pub fn play_ui_interaction_sounds(
     }
 
     for interaction in &interaction_query {
-        match interaction {
-            Interaction::Pressed => {
-                commands.spawn(AudioBundle {
-                    source: audio_assets.button_click.clone(),
-                    settings: PlaybackSettings::DESPAWN,
-                });
-            }
-            Interaction::Hovered => {
-                commands.spawn(AudioBundle {
-                    source: audio_assets.button_hover.clone(),
-                    settings: PlaybackSettings::DESPAWN,
-                });
-            }
-            Interaction::None => {}
+        if let Interaction::Pressed = interaction {
+            commands.spawn(AudioBundle {
+                source: audio_assets.button_click.clone(),
+                settings: PlaybackSettings::DESPAWN,
+            });
         }
     }
 }
