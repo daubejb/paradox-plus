@@ -3,6 +3,7 @@ pub mod interactions;
 pub mod simulation;
 pub mod screen;
 pub mod setup;
+pub mod audio;
 
 pub use hover::handle_button_hover;
 pub use interactions::{handle_roll_buttons, handle_wager_card_buttons, handle_skip_placement_button, handle_match_completed_buttons, handle_scorecard_toggle_buttons};

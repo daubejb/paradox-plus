@@ -181,7 +181,7 @@ This document catalogs the active milestones, development backlog iterations, an
     - Run all unit and integration tests (`cargo test`).
     - Verify file line count budget limits (under 300 lines) for modified files.
 
-### Iteration 16: Audio Subsystem Scaffolding
+### [x] Iteration 16: Audio Subsystem Scaffolding (Completed 2026-06-14)
 *   **Objectives**:
     - Configure Bevy's Cargo audio feature flags (`bevy_audio`, `vorbis`, `wav`, `mp3`).
     - Scaffold `ClientAudioPlugin`, `GameAudioAssets` resource, a startup loading system, and trigger systems for UI interaction sounds and gameplay sounds in `crates/client/src/ui/systems/audio.rs`.

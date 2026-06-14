@@ -16,6 +16,7 @@ impl Plugin for ClientUiPlugin {
             .init_resource::<components::ShowScorecard>()
             .init_resource::<systems::simulation::board::token::PlayerTokenAssets>()
             .init_state::<ClientScreenState>()
+            .add_plugins(systems::audio::ClientAudioPlugin)
             .add_systems(Startup, layout::spawn_ui_layout)
             .add_systems(
                 OnEnter(ClientScreenState::Landing),
