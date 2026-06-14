@@ -180,9 +180,19 @@ This document catalogs the active milestones, development backlog iterations, an
 *   **Verification**:
     - Run all unit and integration tests (`cargo test`).
     - Verify file line count budget limits (under 300 lines) for modified files.
-    - Compile mobile targets via `make build-android` and `make build-iphone-sim`.
+
+### Iteration 16: Audio Subsystem Scaffolding
+*   **Objectives**:
+    - Configure Bevy's Cargo audio feature flags (`bevy_audio`, `vorbis`, `wav`, `mp3`).
+    - Scaffold `ClientAudioPlugin`, `GameAudioAssets` resource, a startup loading system, and trigger systems for UI interaction sounds and gameplay sounds in `crates/client/src/ui/systems/audio.rs`.
+    - Register the plugin in `crates/client/src/ui/mod.rs` and export the module in `crates/client/src/ui/systems/mod.rs`.
+*   **Verification**:
+    - Compile check using `cargo check -p client`.
+    - Run all unit and integration tests (`cargo test`).
+    - Verify WASM target compatibility check.
 
 ---
+
 
 
 ## 📈 Retrospective Log
