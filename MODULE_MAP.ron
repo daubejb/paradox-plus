@@ -35,6 +35,7 @@ Sitemap(
         File(path: "src/ui/systems/hover.rs", description: "UI button hover scaling animations"),
         File(path: "src/ui/systems/interactions.rs", description: "UI click interactions and network action triggers"),
         File(path: "src/ui/systems/screen.rs", description: "UI screen transitions and button click handlers"),
+        File(path: "src/ui/systems/setup.rs", description: "UI setup screen transitions and keyboard nickname input handlers"),
         File(path: "src/ui/systems/simulation/mod.rs", description: "UI offline simulation system router"),
         File(path: "src/ui/systems/simulation/loopback/mod.rs", description: "Offline simulation loopback system"),
         File(path: "src/ui/systems/simulation/loopback/state.rs", description: "Offline simulation server state"),
@@ -96,7 +97,7 @@ Sitemap(
       files: [
         File(path: "src/lib.rs", description: "Re-exports shared messages, physics, terrain, and FSM validator modules"),
         File(path: "src/messages.rs", description: "Bounded serialization schemas for client actions and server updates"),
-        File(path: "src/physics.rs", description: "Encapsulated SlideTracker cycle checker and SafeFixedMath trait"),
+        File(path: "src/physics.rs", description: "Encapsulated SlideTracker cycle checker"),
         File(path: "src/terrain/mod.rs", description: "Exposes terrain types and strategy resolution modules"),
         File(path: "src/terrain/types.rs", description: "Zero-heap representations of course tracks and cells"),
         File(path: "src/terrain/resolution/mod.rs", description: "Exposes terrain-specific resolution functions"),
