@@ -27,6 +27,10 @@ pub extern "C" fn __cxa_pure_virtual() {
     loop {}
 }
 
+#[cfg(target_os = "android")]
+#[no_mangle]
+pub extern "C" fn __gxx_personality_v0() {}
+
 #[cfg(target_os = "ios")]
 #[no_mangle]
 pub extern "C" fn start_ios_client(width: f32, height: f32) {

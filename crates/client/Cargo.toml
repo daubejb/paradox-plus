@@ -30,6 +30,7 @@ package = "com.paradox.plus.client"
 apk_name = "Paradox"
 resources = "res"
 assets = "../../assets"
+include_cplusplus_shared = true
 
 [package.metadata.android.application]
 label = "Paradox"

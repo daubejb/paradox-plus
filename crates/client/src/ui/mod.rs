@@ -53,8 +53,10 @@ impl Plugin for ClientUiPlugin {
                     systems::handle_setup_button_clicks,
                     systems::handle_nickname_keyboard_input,
                     systems::update_setup_screen_ui,
-                    systems::handle_settings_button_clicks,
-                    systems::update_settings_screen_ui,
+                    (
+                        systems::handle_settings_button_clicks,
+                        systems::update_settings_screen_ui,
+                    ).chain(),
                 ),
             )
             .add_systems(
