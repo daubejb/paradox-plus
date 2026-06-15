@@ -10,3 +10,8 @@ members = [
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
 postcard = { version = "1.0", features = ["alloc"] }
+
+# Enable high optimizations for dependencies in dev mode for smooth mobile frame rates
+[profile.dev.package."*"]
+opt-level = 3
+debug-assertions = false

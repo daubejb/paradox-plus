@@ -1,6 +1,7 @@
 use crate::ai::mdp_state::MdpState;
 use protocol::terrain::{ActiveCourseTrack, TerrainType};
 use protocol::physics::MovementDirection;
+use protocol::messages::CardType;
 use fixed::types::I32F32;
 
 /// Helper to check if space is OB or occupied by any wager token.
@@ -39,15 +40,16 @@ pub fn resolve_landing_simple(
             if !triggered_wagers.contains(&cell) {
                 let _ = triggered_wagers.push(cell);
                 match wager.card_type {
-                    0 => {
+                    CardType::Shield => {
                         if wager.owner_id == active_player_id {
                             terrain_override = Some(TerrainType::Fairway);
                         } else {
                             penalty = penalty.saturating_add(I32F32::from_num(1));
                         }
                     }
-                    2 => {
+                    CardType::GoldenDie => {
                         if wager.owner_id == active_player_id {
+                            // Corrected to matching GoldenDie
                             penalty = penalty.saturating_sub(I32F32::from_num(2));
                         } else {
                             penalty = penalty.saturating_add(I32F32::from_num(2));

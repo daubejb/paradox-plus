@@ -19,6 +19,7 @@ fn test_packet_serialization_without_alloc() {
         active_player_id: 1,
         current_hole: 1,
         player_positions: heapless::Vec::new(),
+        player_directions: heapless::Vec::new(),
         player_scores: heapless::Vec::new(),
         placed_wagers: heapless::Vec::new(),
     };

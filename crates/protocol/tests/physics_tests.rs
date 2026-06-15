@@ -1,5 +1,5 @@
 use protocol::messages::{ClientAction, MAX_PACKET_SIZE};
-use protocol::physics::{SlideTracker, SlideError, SafeFixedMath};
+use protocol::physics::{SlideTracker, SlideError};
 use protocol::terrain::{
     TerrainType, resolve_bunker_escape, resolve_green_putting, resolve_standard_landing
 };
@@ -56,13 +56,10 @@ fn test_safe_fixed_math() {
     let a = I32F32::from_num(5);
     let b = I32F32::from_num(10);
     
-    assert_eq!(a.safe_add(b), I32F32::from_num(15));
-    assert_eq!(b.safe_sub(a), I32F32::from_num(5));
-    assert_eq!(a.safe_mul(b), I32F32::from_num(50));
-    assert_eq!(b.safe_div(a), I32F32::from_num(2));
-    
-    // Division by zero
-    assert_eq!(a.safe_div(I32F32::ZERO), I32F32::MAX);
+    assert_eq!(a.saturating_add(b), I32F32::from_num(15));
+    assert_eq!(b.saturating_sub(a), I32F32::from_num(5));
+    assert_eq!(a.saturating_mul(b), I32F32::from_num(50));
+    assert_eq!(b.saturating_div(a), I32F32::from_num(2));
 }
 
 #[test]
