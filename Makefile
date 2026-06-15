@@ -8,6 +8,24 @@ ANDROID_NDK_ROOT ?= $(shell ls -d $(ANDROID_HOME)/ndk/* 2>/dev/null | sort -V | 
 export ANDROID_HOME
 export ANDROID_NDK_ROOT
 
+# Host OS & NDK Host Tag Detection
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    NDK_HOST_TAG := darwin-x86_64
+else ifeq ($(UNAME_S),Linux)
+    NDK_HOST_TAG := linux-x86_64
+else
+    $(error Unsupported host OS: $(UNAME_S))
+endif
+
+CLIENT_DIR := crates/client
+TARGET_TRIPLES := aarch64-linux-android x86_64-linux-android
+
+# Map Rust target triples to Android NDK ABI names for legacy layout fallback
+define get_abi
+$(if $(filter aarch64-linux-android,$(1)),arm64-v8a,$(if $(filter x86_64-linux-android,$(1)),x86_64,unknown))
+endef
+
 # Variable definitions
 ADB ?= $(shell which adb || echo $(ANDROID_HOME)/platform-tools/adb)
 EMULATOR ?= $(shell which emulator || echo $(ANDROID_HOME)/emulator/emulator)
@@ -101,12 +119,40 @@ iphone-emulator:
 	xcrun simctl bootstatus "$$UDID"
 
 build-android:
-	@echo "Adding Rust Android target..."
-	rustup target add aarch64-linux-android
-	@echo "Installing cargo-apk if not present..."
-	@cargo install --list | grep -q cargo-apk || cargo install cargo-apk
+	@if [ -z "$(ANDROID_NDK_ROOT)" ]; then \
+		echo "ERROR: ANDROID_NDK_ROOT environment variable is not set." >&2; \
+		exit 1; \
+	fi
+	
+	# Idempotently update gitignore in client crate
+	@mkdir -p $(CLIENT_DIR)/android_libs
+	@if ! grep -q "^android_libs/" $(CLIENT_DIR)/.gitignore 2>/dev/null; then \
+		echo "android_libs/" >> $(CLIENT_DIR)/.gitignore; \
+	fi
+
+	# Install target toolchains
+	rustup target add aarch64-linux-android x86_64-linux-android
+
+	# Copy dynamic C++ runtimes for each target
+	@for target in $(TARGET_TRIPLES); do \
+		abi=$$(echo $$target | sed -e 's/aarch64-linux-android/arm64-v8a/' -e 's/x86_64-linux-android/x86_64/'); \
+		mkdir -p $(CLIENT_DIR)/android_libs/$$abi; \
+		SYSROOT_SO="$(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/$(NDK_HOST_TAG)/sysroot/usr/lib/$$target/libc++_shared.so"; \
+		LEGACY_SO="$(ANDROID_NDK_ROOT)/sources/cxx-stl/llvm-libc++/libs/$$abi/libc++_shared.so"; \
+		if [ -f "$$SYSROOT_SO" ]; then \
+			cp "$$SYSROOT_SO" "$(CLIENT_DIR)/android_libs/$$abi/"; \
+			echo "Bundled sysroot libc++_shared.so for $$abi"; \
+		elif [ -f "$$LEGACY_SO" ]; then \
+			cp "$$LEGACY_SO" "$(CLIENT_DIR)/android_libs/$$abi/"; \
+			echo "Bundled legacy libc++_shared.so for $$abi"; \
+		else \
+			echo "ERROR: Could not locate libc++_shared.so for $$target in NDK sysroot or legacy paths." >&2; \
+			exit 1; \
+		fi; \
+	done
+
 	@echo "Building APK..."
-	cargo apk build --lib --manifest-path crates/client/Cargo.toml
+	RUSTFLAGS="-C link-arg=-lc++_shared" cargo apk build --lib --manifest-path $(CLIENT_DIR)/Cargo.toml
 	@echo "Installing APK to connected device..."
 	$(ADB) install -r -d target/debug/apk/Paradox.apk
 
